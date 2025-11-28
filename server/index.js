@@ -11,7 +11,11 @@ const PORT = process.env.PORT || 3001;
 // Middleware
 app.use(helmet({
   contentSecurityPolicy: false,
-  hsts: false
+  hsts: false,
+  crossOriginOpenerPolicy: false,
+  crossOriginResourcePolicy: false,
+  crossOriginEmbedderPolicy: false,
+  originAgentCluster: false
 }));
 app.use(cors());
 app.use(bodyParser.json());
@@ -53,6 +57,11 @@ app.use('/api/unraid', unraidRoutes);
 app.use('/api/config', configRoutes);
 app.use('/api/system', systemRoutes);
 
+// Health check endpoint (before wildcard route)
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 // Serve static files from React app in production
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, '../client/build')));
@@ -61,11 +70,6 @@ if (process.env.NODE_ENV === 'production') {
     res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
   });
 }
-
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
-});
 
 // Error handling middleware
 app.use((err, req, res, next) => {

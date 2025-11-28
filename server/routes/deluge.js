@@ -14,9 +14,14 @@ router.post('/rpc/:instanceId', async (req, res) => {
     const instance = instances.find(i => i.id === req.params.instanceId);
     if (!instance) return res.status(404).json({ error: 'Instance not found' });
 
-    const client = new ApiClient(instance.url, '');
-    const result = await client.post('/json', req.body);
-    res.json(result);
+    const axios = require('axios');
+    const result = await axios.post(`${instance.url}/json`, req.body, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Cookie': instance.password ? `_session_id=${instance.password}` : ''
+      }
+    });
+    res.json(result.data);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

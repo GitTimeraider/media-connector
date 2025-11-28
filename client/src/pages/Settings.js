@@ -57,12 +57,12 @@ function Settings() {
     { type: 'nzbget', label: 'NZBGet', requiresAuth: true },
     { type: 'qbittorrent', label: 'qBittorrent', requiresAuth: true },
     { type: 'transmission', label: 'Transmission', requiresAuth: true },
-    { type: 'deluge', label: 'Deluge', requiresAuth: true },
+    { type: 'deluge', label: 'Deluge', requiresAuth: true, passwordOnly: true },
     { type: 'overseerr', label: 'Overseerr', requiresApiKey: true },
     { type: 'tautulli', label: 'Tautulli', requiresApiKey: true },
     { type: 'prowlarr', label: 'Prowlarr', requiresApiKey: true },
     { type: 'jackett', label: 'Jackett', requiresApiKey: true },
-    { type: 'unraid', label: 'Unraid', requiresAuth: true }
+    { type: 'unraid', label: 'Unraid', requiresApiKey: true }
   ];
 
   useEffect(() => {
@@ -267,14 +267,16 @@ function Settings() {
             )}
             {currentServiceConfig?.requiresAuth && (
               <>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Username"
-                    value={formData.username}
-                    onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                  />
-                </Grid>
+                {!currentServiceConfig?.passwordOnly && (
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label="Username"
+                      value={formData.username}
+                      onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                    />
+                  </Grid>
+                )}
                 <Grid item xs={12}>
                   <TextField
                     fullWidth
@@ -282,6 +284,7 @@ function Settings() {
                     label="Password"
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    required={currentServiceConfig?.passwordOnly}
                   />
                 </Grid>
               </>

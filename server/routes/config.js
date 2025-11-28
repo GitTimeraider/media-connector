@@ -5,17 +5,9 @@ const configManager = require('../config/services');
 // Get all services configuration
 router.get('/services', (req, res) => {
   const services = configManager.getAllServices();
-  // Remove sensitive data
-  const sanitized = {};
-  for (const [type, instances] of Object.entries(services)) {
-    sanitized[type] = instances.map(inst => ({
-      id: inst.id,
-      name: inst.name,
-      url: inst.url,
-      enabled: inst.enabled !== false
-    }));
-  }
-  res.json(sanitized);
+  // Return full data including API keys/passwords for Settings page
+  // This endpoint should only be accessible from the web UI
+  res.json(services);
 });
 
 // Get services of a specific type
@@ -63,6 +55,21 @@ router.post('/test/:type', async (req, res) => {
       const axios = require('axios');
       const response = await axios.get(`${url}/api`, {
         params: { mode: 'version', output: 'json', apikey: apiKey }
+      });
+      return res.json({ success: true, data: response.data });
+    } else if (req.params.type === 'deluge') {
+      const axios = require('axios');
+      // Deluge uses password field for authentication
+      const { password } = req.body;
+      const response = await axios.post(`${url}/json`, {
+        method: 'web.connected',
+        params: [],
+        id: 1
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Cookie': password ? `_session_id=${password}` : ''
+        }
       });
       return res.json({ success: true, data: response.data });
     }

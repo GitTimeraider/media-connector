@@ -158,4 +158,58 @@ router.get('/calendar/:instanceId', async (req, res) => {
   }
 });
 
+// Get quality profiles
+router.get('/qualityprofile/:instanceId', async (req, res) => {
+  try {
+    const instances = configManager.getServices('sonarr');
+    const instance = instances.find(i => i.id === req.params.instanceId);
+    
+    if (!instance) {
+      return res.status(404).json({ error: 'Instance not found' });
+    }
+
+    const client = new ApiClient(instance.url, instance.apiKey);
+    const profiles = await client.get('/api/v3/qualityprofile');
+    res.json(profiles);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get root folders
+router.get('/rootfolder/:instanceId', async (req, res) => {
+  try {
+    const instances = configManager.getServices('sonarr');
+    const instance = instances.find(i => i.id === req.params.instanceId);
+    
+    if (!instance) {
+      return res.status(404).json({ error: 'Instance not found' });
+    }
+
+    const client = new ApiClient(instance.url, instance.apiKey);
+    const folders = await client.get('/api/v3/rootfolder');
+    res.json(folders);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get tags
+router.get('/tag/:instanceId', async (req, res) => {
+  try {
+    const instances = configManager.getServices('sonarr');
+    const instance = instances.find(i => i.id === req.params.instanceId);
+    
+    if (!instance) {
+      return res.status(404).json({ error: 'Instance not found' });
+    }
+
+    const client = new ApiClient(instance.url, instance.apiKey);
+    const tags = await client.get('/api/v3/tag');
+    res.json(tags);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;

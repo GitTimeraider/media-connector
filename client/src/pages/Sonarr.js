@@ -16,7 +16,12 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions
+  DialogActions,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  OutlinedInput
 } from '@mui/material';
 import { Search, Add } from '@mui/icons-material';
 import api from '../services/api';
@@ -29,6 +34,13 @@ function Sonarr() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [qualityProfiles, setQualityProfiles] = useState([]);
+  const [rootFolders, setRootFolders] = useState([]);
+  const [tags, setTags] = useState([]);
+  const [selectedSeries, setSelectedSeries] = useState(null);
+  const [selectedQualityProfile, setSelectedQualityProfile] = useState('');
+  const [selectedRootFolder, setSelectedRootFolder] = useState('');
+  const [selectedTags, setSelectedTags] = useState([]);
 
   useEffect(() => {
     loadInstances();
@@ -47,11 +59,29 @@ function Sonarr() {
       setInstances(data);
       if (data.length > 0) {
         setSelectedInstance(data[0].id);
+        await loadOptions(data[0].id);
       }
     } catch (error) {
       console.error('Error loading instances:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadOptions = async (instanceId) => {
+    try {
+      const [profiles, folders, tagsList] = await Promise.all([
+        api.getSonarrQualityProfiles(instanceId),
+        api.getSonarrRootFolders(instanceId),
+        api.getSonarrTags(instanceId)
+      ]);
+      setQualityProfiles(profiles);
+      setRootFolders(folders);
+      setTags(tagsList);
+      if (profiles.length > 0) setSelectedQualityProfile(profiles[0].id);
+      if (folders.length > 0) setSelectedRootFolder(folders[0].path);
+    } catch (error) {
+      console.error('Error loading options:', error);
     }
   };
 
@@ -78,21 +108,32 @@ function Sonarr() {
     }
   };
 
-  const handleAddSeries = async (show) => {
+  const handleSelectSeries = (show) => {
+    setSelectedSeries(show);
+    setSelectedTags([]);
+  };
+
+  const handleAddSeries = async () => {
+    if (!selectedSeries) return;
+    
     try {
       await api.addSonarrSeries(selectedInstance, {
-        title: show.title,
-        tvdbId: show.tvdbId,
-        qualityProfileId: 1,
-        rootFolderPath: '/',
+        title: selectedSeries.title,
+        tvdbId: selectedSeries.tvdbId,
+        qualityProfileId: selectedQualityProfile,
+        rootFolderPath: selectedRootFolder,
+        tags: selectedTags,
         monitored: true,
         seasonFolder: true,
         addOptions: {
           searchForMissingEpisodes: true
         }
       });
-      alert(`${show.title} added successfully!`);
+      alert(`${selectedSeries.title} added successfully!`);
       setSearchOpen(false);
+      setSelectedSeries(null);
+      setSearchResults([]);
+      setSearchQuery('');
       loadSeries();
     } catch (error) {
       console.error('Error adding series:', error);
@@ -216,35 +257,121 @@ function Sonarr() {
               }}
             />
           </Box>
-          <Grid container spacing={2}>
-            {searchResults.map((result) => (
-              <Grid item xs={12} key={result.tvdbId}>
-                <Card>
-                  <CardContent>
-                    <Box display="flex" justifyContent="space-between" alignItems="center">
-                      <Box flexGrow={1}>
-                        <Typography variant="h6">{result.title}</Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          {result.overview?.substring(0, 200)}...
-                        </Typography>
+          {!selectedSeries ? (
+            <Grid container spacing={2}>
+              {searchResults.map((result) => (
+                <Grid item xs={12} key={result.tvdbId}>
+                  <Card sx={{ cursor: 'pointer' }} onClick={() => handleSelectSeries(result)}>
+                    <CardContent>
+                      <Box display="flex" gap={2}>
+                        {result.images?.find(img => img.coverType === 'poster') && (
+                          <Box
+                            component="img"
+                            src={result.images.find(img => img.coverType === 'poster').remoteUrl}
+                            alt={result.title}
+                            sx={{ width: 80, height: 120, objectFit: 'cover', borderRadius: 1 }}
+                          />
+                        )}
+                        <Box flexGrow={1}>
+                          <Typography variant="h6">{result.title}</Typography>
+                          <Typography variant="body2" color="text.secondary" gutterBottom>
+                            {result.year} {result.seasonCount ? `• ${result.seasonCount} Season${result.seasonCount > 1 ? 's' : ''}` : ''} {result.network ? `• ${result.network}` : ''}
+                          </Typography>
+                          <Typography variant="body2">
+                            {result.overview || 'No description available'}
+                          </Typography>
+                        </Box>
                       </Box>
-                      <Button
-                        variant="contained"
-                        size="small"
-                        onClick={() => handleAddSeries(result)}
-                        sx={{ ml: 2 }}
-                      >
-                        Add
-                      </Button>
-                    </Box>
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+          ) : (
+            <Box>
+              <Card sx={{ mb: 3 }}>
+                <CardContent>
+                  <Typography variant="h6">{selectedSeries.title} ({selectedSeries.year})</Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {selectedSeries.seasonCount} Season{selectedSeries.seasonCount > 1 ? 's' : ''}
+                  </Typography>
+                </CardContent>
+              </Card>
+
+              <Grid container spacing={2}>
+                <Grid item xs={12}>
+                  <FormControl fullWidth>
+                    <InputLabel>Quality Profile</InputLabel>
+                    <Select
+                      value={selectedQualityProfile}
+                      label="Quality Profile"
+                      onChange={(e) => setSelectedQualityProfile(e.target.value)}
+                    >
+                      {qualityProfiles.map((profile) => (
+                        <MenuItem key={profile.id} value={profile.id}>
+                          {profile.name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12}>
+                  <FormControl fullWidth>
+                    <InputLabel>Root Folder</InputLabel>
+                    <Select
+                      value={selectedRootFolder}
+                      label="Root Folder"
+                      onChange={(e) => setSelectedRootFolder(e.target.value)}
+                    >
+                      {rootFolders.map((folder) => (
+                        <MenuItem key={folder.path} value={folder.path}>
+                          {folder.path} ({folder.freeSpace ? `${Math.round(folder.freeSpace / 1024 / 1024 / 1024)} GB free` : 'Unknown space'})
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12}>
+                  <FormControl fullWidth>
+                    <InputLabel>Tags</InputLabel>
+                    <Select
+                      multiple
+                      value={selectedTags}
+                      onChange={(e) => setSelectedTags(e.target.value)}
+                      input={<OutlinedInput label="Tags" />}
+                      renderValue={(selected) => (
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                          {selected.map((value) => (
+                            <Chip key={value} label={tags.find(t => t.id === value)?.label || value} size="small" />
+                          ))}
+                        </Box>
+                      )}
+                    >
+                      {tags.map((tag) => (
+                        <MenuItem key={tag.id} value={tag.id}>
+                          {tag.label}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
               </Grid>
-            ))}
-          </Grid>
+
+              <Box display="flex" gap={2} mt={3}>
+                <Button variant="outlined" onClick={() => setSelectedSeries(null)}>
+                  Back
+                </Button>
+                <Button variant="contained" onClick={handleAddSeries} fullWidth>
+                  Add Series
+                </Button>
+              </Box>
+            </Box>
+          )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setSearchOpen(false)}>Close</Button>
+          <Button onClick={() => { setSearchOpen(false); setSelectedSeries(null); setSearchResults([]); setSearchQuery(''); }}>
+            Close
+          </Button>
         </DialogActions>
       </Dialog>
     </Container>

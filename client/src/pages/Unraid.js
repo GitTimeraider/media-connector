@@ -68,9 +68,12 @@ function Unraid() {
         api.getUnraidArray(selectedInstance)
       ]);
 
-      if (stats.status === 'fulfilled') setSystemStats(stats.value);
-      if (docker.status === 'fulfilled') setDockerContainers(Array.isArray(docker.value) ? docker.value : []);
-      if (array.status === 'fulfilled') setArrayStatus(array.value);
+      if (stats.status === 'fulfilled') setSystemStats(stats.value?.info || stats.value);
+      if (docker.status === 'fulfilled') {
+        const containers = docker.value?.dockerContainers || docker.value;
+        setDockerContainers(Array.isArray(containers) ? containers : []);
+      }
+      if (array.status === 'fulfilled') setArrayStatus(array.value?.array || array.value);
     } catch (error) {
       console.error('Error loading Unraid data:', error);
     }
@@ -132,12 +135,8 @@ function Unraid() {
                   <Memory sx={{ mr: 1, color: 'primary.main' }} />
                   <Typography variant="h6">CPU</Typography>
                 </Box>
-                <Typography variant="h4">{systemStats.cpu || '0'}%</Typography>
-                <LinearProgress 
-                  variant="determinate" 
-                  value={parseFloat(systemStats.cpu || 0)} 
-                  sx={{ mt: 1 }}
-                />
+                <Typography variant="body2">{systemStats.cpu?.brand || systemStats.cpu?.manufacturer || 'N/A'}</Typography>
+                <Typography variant="caption">{systemStats.cpu?.cores || 0} cores, {systemStats.cpu?.threads || 0} threads</Typography>
               </CardContent>
             </Card>
           </Grid>
@@ -149,10 +148,11 @@ function Unraid() {
                   <Storage sx={{ mr: 1, color: 'success.main' }} />
                   <Typography variant="h6">Memory</Typography>
                 </Box>
-                <Typography variant="h4">{systemStats.memory || '0'}%</Typography>
+                <Typography variant="h4">{systemStats.memory ? Math.round((systemStats.memory.used / systemStats.memory.total) * 100) : 0}%</Typography>
+                <Typography variant="caption">{formatBytes(systemStats.memory?.used || 0)} / {formatBytes(systemStats.memory?.total || 0)}</Typography>
                 <LinearProgress 
                   variant="determinate" 
-                  value={parseFloat(systemStats.memory || 0)} 
+                  value={systemStats.memory ? (systemStats.memory.used / systemStats.memory.total) * 100 : 0} 
                   color="success"
                   sx={{ mt: 1 }}
                 />
@@ -164,15 +164,11 @@ function Unraid() {
             <Card>
               <CardContent>
                 <Box display="flex" alignItems="center" mb={1}>
-                  <Speed sx={{ mr: 1, color: 'warning.main' }} />
-                  <Typography variant="h6">Network</Typography>
+                  <Computer sx={{ mr: 1, color: 'info.main' }} />
+                  <Typography variant="h6">System</Typography>
                 </Box>
-                <Typography variant="body2">
-                  ↓ {formatBytes(systemStats.network_rx)}/s
-                </Typography>
-                <Typography variant="body2">
-                  ↑ {formatBytes(systemStats.network_tx)}/s
-                </Typography>
+                <Typography variant="body2">{systemStats.os?.distro || 'Unraid'} {systemStats.os?.release || ''}</Typography>
+                <Typography variant="caption">Uptime: {Math.floor((systemStats.os?.uptime || 0) / 3600)}h {Math.floor(((systemStats.os?.uptime || 0) % 3600) / 60)}m</Typography>
               </CardContent>
             </Card>
           </Grid>
@@ -201,27 +197,34 @@ function Unraid() {
       </Typography>
       <Grid container spacing={2}>
         {dockerContainers.map((container, index) => (
-          <Grid item xs={12} sm={6} md={4} key={index}>
+          <Grid item xs={12} sm={6} md={4} key={container.id || index}>
             <Card>
               <CardContent>
                 <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
                   <Typography variant="h6">
-                    {container.name || container.Names?.[0]?.replace('/', '')}
+                    {container.names?.[0] || container.name || container.Names?.[0]?.replace('/', '') || 'Unknown'}
                   </Typography>
                   <Chip
-                    icon={container.State === 'running' ? <CheckCircle /> : <ErrorIcon />}
-                    label={container.State || container.Status}
-                    color={container.State === 'running' ? 'success' : 'default'}
+                    icon={(container.state || container.State) === 'running' ? <CheckCircle /> : <ErrorIcon />}
+                    label={container.state || container.State || container.status || container.Status || 'unknown'}
+                    color={(container.state || container.State) === 'running' ? 'success' : 'default'}
                     size="small"
                   />
                 </Box>
 
-                <Typography variant="body2" color="text.secondary" noWrap>
-                  {container.Image}
+                <Typography variant="body2" color="text.secondary">
+                  {container.status || container.Status || 'No status'}
                 </Typography>
+                {container.autoStart !== undefined && (
+                  <Chip 
+                    label={container.autoStart ? 'Auto-start' : 'Manual start'} 
+                    size="small" 
+                    sx={{ mt: 1 }}
+                  />
+                )}
 
                 <Box display="flex" gap={1} mt={2}>
-                  {container.State === 'running' ? (
+                  {(container.state || container.State) === 'running' ? (
                     <Tooltip title="Stop">
                       <IconButton 
                         size="small" 

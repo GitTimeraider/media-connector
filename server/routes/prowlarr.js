@@ -43,20 +43,31 @@ router.get('/search/:instanceId', async (req, res) => {
     if (!instance) return res.status(404).json({ error: 'Instance not found' });
 
     const client = new ApiClient(instance.url, instance.apiKey);
-    const params = {
-      query: req.query.query,
-      type: 'search'
-    };
     
-    // Add categories if specified
+    // Build query params
+    let queryString = `/api/v1/search?query=${encodeURIComponent(req.query.query)}&type=search`;
+    
+    // Add categories if specified (comma-separated string)
     if (req.query.categories) {
-      params.categories = req.query.categories;
+      const categories = req.query.categories.split(',');
+      categories.forEach(cat => {
+        queryString += `&categories=${cat}`;
+      });
     }
     
-    const results = await client.get('/api/v1/search', params);
-    res.json(results);
+    // Make direct axios call with pre-formatted query string
+    const axios = require('axios');
+    const response = await axios.get(`${instance.url}${queryString}`, {
+      headers: {
+        'X-Api-Key': instance.apiKey
+      },
+      timeout: 30000
+    });
+    
+    res.json(response.data);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Prowlarr search error:', error.response?.data || error.message);
+    res.status(500).json({ error: error.message, details: error.response?.data });
   }
 });
 

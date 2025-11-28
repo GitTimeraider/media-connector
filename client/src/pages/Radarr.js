@@ -16,7 +16,12 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions
+  DialogActions,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  OutlinedInput
 } from '@mui/material';
 import { Search, Add } from '@mui/icons-material';
 import api from '../services/api';
@@ -31,6 +36,13 @@ function Radarr() {
   const [searchResults, setSearchResults] = useState([]);
   const [searchingMovies, setSearchingMovies] = useState(false);
   const [movieSearchQuery, setMovieSearchQuery] = useState('');
+  const [qualityProfiles, setQualityProfiles] = useState([]);
+  const [rootFolders, setRootFolders] = useState([]);
+  const [tags, setTags] = useState([]);
+  const [selectedMovie, setSelectedMovie] = useState(null);
+  const [selectedQualityProfile, setSelectedQualityProfile] = useState('');
+  const [selectedRootFolder, setSelectedRootFolder] = useState('');
+  const [selectedTags, setSelectedTags] = useState([]);
 
   useEffect(() => {
     loadInstances();
@@ -49,11 +61,29 @@ function Radarr() {
       setInstances(data);
       if (data.length > 0) {
         setSelectedInstance(data[0].id);
+        await loadOptions(data[0].id);
       }
     } catch (error) {
       console.error('Error loading instances:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadOptions = async (instanceId) => {
+    try {
+      const [profiles, folders, tagsList] = await Promise.all([
+        api.getRadarrQualityProfiles(instanceId),
+        api.getRadarrRootFolders(instanceId),
+        api.getRadarrTags(instanceId)
+      ]);
+      setQualityProfiles(profiles);
+      setRootFolders(folders);
+      setTags(tagsList);
+      if (profiles.length > 0) setSelectedQualityProfile(profiles[0].id);
+      if (folders.length > 0) setSelectedRootFolder(folders[0].path);
+    } catch (error) {
+      console.error('Error loading options:', error);
     }
   };
 
@@ -84,20 +114,31 @@ function Radarr() {
     }
   };
 
-  const handleAddMovie = async (movie) => {
+  const handleSelectMovie = (movie) => {
+    setSelectedMovie(movie);
+    setSelectedTags([]);
+  };
+
+  const handleAddMovie = async () => {
+    if (!selectedMovie) return;
+    
     try {
       await api.addRadarrMovie(selectedInstance, {
-        title: movie.title,
-        tmdbId: movie.tmdbId,
-        qualityProfileId: 1,
-        rootFolderPath: '/',
+        title: selectedMovie.title,
+        tmdbId: selectedMovie.tmdbId,
+        qualityProfileId: selectedQualityProfile,
+        rootFolderPath: selectedRootFolder,
+        tags: selectedTags,
         monitored: true,
         addOptions: {
           searchForMovie: true
         }
       });
-      alert(`${movie.title} added successfully!`);
+      alert(`${selectedMovie.title} added successfully!`);
       setAddDialogOpen(false);
+      setSelectedMovie(null);
+      setSearchResults([]);
+      setMovieSearchQuery('');
       loadMovies();
     } catch (error) {
       console.error('Error adding movie:', error);
@@ -159,32 +200,116 @@ function Radarr() {
             />
           </Box>
           
-          <Box sx={{ mt: 3 }}>
-            {searchResults.map((movie) => (
-              <Card key={movie.tmdbId} sx={{ mb: 2 }}>
-                <CardContent>
-                  <Box display="flex" justifyContent="space-between" alignItems="center">
-                    <Box>
-                      <Typography variant="h6">{movie.title}</Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {movie.year}
-                      </Typography>
+          {!selectedMovie ? (
+            <Box sx={{ mt: 3 }}>
+              {searchResults.map((movie) => (
+                <Card key={movie.tmdbId} sx={{ mb: 2, cursor: 'pointer' }} onClick={() => handleSelectMovie(movie)}>
+                  <CardContent>
+                    <Box display="flex" gap={2}>
+                      {movie.images?.find(img => img.coverType === 'poster') && (
+                        <Box
+                          component="img"
+                          src={movie.images.find(img => img.coverType === 'poster').remoteUrl}
+                          alt={movie.title}
+                          sx={{ width: 80, height: 120, objectFit: 'cover', borderRadius: 1 }}
+                        />
+                      )}
+                      <Box flexGrow={1}>
+                        <Typography variant="h6">{movie.title}</Typography>
+                        <Typography variant="body2" color="text.secondary" gutterBottom>
+                          {movie.year} {movie.runtime ? `• ${movie.runtime} min` : ''} {movie.genres?.join(', ')}
+                        </Typography>
+                        <Typography variant="body2" sx={{ mt: 1 }}>
+                          {movie.overview || 'No description available'}
+                        </Typography>
+                      </Box>
                     </Box>
-                    <Button
-                      variant="contained"
-                      size="small"
-                      onClick={() => handleAddMovie(movie)}
-                    >
-                      Add
-                    </Button>
-                  </Box>
+                  </CardContent>
+                </Card>
+              ))}
+            </Box>
+          ) : (
+            <Box sx={{ mt: 3 }}>
+              <Card sx={{ mb: 3 }}>
+                <CardContent>
+                  <Typography variant="h6">{selectedMovie.title} ({selectedMovie.year})</Typography>
                 </CardContent>
               </Card>
-            ))}
-          </Box>
+
+              <Grid container spacing={2}>
+                <Grid item xs={12}>
+                  <FormControl fullWidth>
+                    <InputLabel>Quality Profile</InputLabel>
+                    <Select
+                      value={selectedQualityProfile}
+                      label="Quality Profile"
+                      onChange={(e) => setSelectedQualityProfile(e.target.value)}
+                    >
+                      {qualityProfiles.map((profile) => (
+                        <MenuItem key={profile.id} value={profile.id}>
+                          {profile.name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12}>
+                  <FormControl fullWidth>
+                    <InputLabel>Root Folder</InputLabel>
+                    <Select
+                      value={selectedRootFolder}
+                      label="Root Folder"
+                      onChange={(e) => setSelectedRootFolder(e.target.value)}
+                    >
+                      {rootFolders.map((folder) => (
+                        <MenuItem key={folder.path} value={folder.path}>
+                          {folder.path} ({folder.freeSpace ? `${Math.round(folder.freeSpace / 1024 / 1024 / 1024)} GB free` : 'Unknown space'})
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12}>
+                  <FormControl fullWidth>
+                    <InputLabel>Tags</InputLabel>
+                    <Select
+                      multiple
+                      value={selectedTags}
+                      onChange={(e) => setSelectedTags(e.target.value)}
+                      input={<OutlinedInput label="Tags" />}
+                      renderValue={(selected) => (
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                          {selected.map((value) => (
+                            <Chip key={value} label={tags.find(t => t.id === value)?.label || value} size="small" />
+                          ))}
+                        </Box>
+                      )}
+                    >
+                      {tags.map((tag) => (
+                        <MenuItem key={tag.id} value={tag.id}>
+                          {tag.label}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+              </Grid>
+
+              <Box display="flex" gap={2} mt={3}>
+                <Button variant="outlined" onClick={() => setSelectedMovie(null)}>
+                  Back
+                </Button>
+                <Button variant="contained" onClick={handleAddMovie} fullWidth>
+                  Add Movie
+                </Button>
+              </Box>
+            </Box>
+          )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setAddDialogOpen(false)}>Cancel</Button>
+          <Button onClick={() => { setAddDialogOpen(false); setSelectedMovie(null); setSearchResults([]); setMovieSearchQuery(''); }}>
+            Cancel
+          </Button>
         </DialogActions>
       </Dialog>
 

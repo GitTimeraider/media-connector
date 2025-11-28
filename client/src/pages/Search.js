@@ -28,18 +28,118 @@ function Search() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedSubcategory, setSelectedSubcategory] = useState('all');
   const [prowlarrInstance, setProwlarrInstance] = useState(null);
 
   const categories = [
     { value: 'all', label: 'All' },
-    { value: '2000', label: 'Movies', subcategories: ['2010', '2020', '2030', '2040', '2045', '2050', '2060'] },
-    { value: '5000', label: 'TV', subcategories: ['5010', '5020', '5030', '5040', '5045', '5050', '5060', '5070', '5080'] },
-    { value: '3000', label: 'Audio', subcategories: ['3010', '3020', '3030', '3040', '3050', '3060'] },
-    { value: '7000', label: 'Books', subcategories: ['7010', '7020', '7030', '7040', '7050', '7060'] },
-    { value: '1000', label: 'Console', subcategories: ['1010', '1020', '1030', '1040', '1050', '1060', '1070', '1080'] },
-    { value: '4000', label: 'PC', subcategories: ['4010', '4020', '4030', '4040', '4050', '4060', '4070'] },
-    { value: '6000', label: 'XXX', subcategories: ['6010', '6020', '6030', '6040', '6050', '6060', '6070'] },
-    { value: '8000', label: 'Other', subcategories: ['8010'] }
+    { 
+      value: '2000', 
+      label: 'Movies', 
+      subcategories: [
+        { value: 'all', label: 'All Movies' },
+        { value: '2010', label: 'Foreign' },
+        { value: '2020', label: 'Other' },
+        { value: '2030', label: 'SD' },
+        { value: '2040', label: 'HD' },
+        { value: '2045', label: 'UHD' },
+        { value: '2050', label: 'BluRay' },
+        { value: '2060', label: '3D' }
+      ]
+    },
+    { 
+      value: '5000', 
+      label: 'TV', 
+      subcategories: [
+        { value: 'all', label: 'All TV' },
+        { value: '5010', label: 'WEB-DL' },
+        { value: '5020', label: 'Foreign' },
+        { value: '5030', label: 'SD' },
+        { value: '5040', label: 'HD' },
+        { value: '5045', label: 'UHD' },
+        { value: '5050', label: 'Other' },
+        { value: '5060', label: 'Sport' },
+        { value: '5070', label: 'Anime' },
+        { value: '5080', label: 'Documentary' }
+      ]
+    },
+    { 
+      value: '3000', 
+      label: 'Audio', 
+      subcategories: [
+        { value: 'all', label: 'All Audio' },
+        { value: '3010', label: 'MP3' },
+        { value: '3020', label: 'Video' },
+        { value: '3030', label: 'Audiobook' },
+        { value: '3040', label: 'Lossless' },
+        { value: '3050', label: 'Other' },
+        { value: '3060', label: 'Foreign' }
+      ]
+    },
+    { 
+      value: '7000', 
+      label: 'Books', 
+      subcategories: [
+        { value: 'all', label: 'All Books' },
+        { value: '7010', label: 'Mags' },
+        { value: '7020', label: 'Ebook' },
+        { value: '7030', label: 'Comics' },
+        { value: '7040', label: 'Technical' },
+        { value: '7050', label: 'Other' },
+        { value: '7060', label: 'Foreign' }
+      ]
+    },
+    { 
+      value: '1000', 
+      label: 'Console', 
+      subcategories: [
+        { value: 'all', label: 'All Console' },
+        { value: '1010', label: 'NDS' },
+        { value: '1020', label: 'PSP' },
+        { value: '1030', label: 'Wii' },
+        { value: '1040', label: 'Xbox' },
+        { value: '1050', label: 'Xbox 360' },
+        { value: '1060', label: 'Wii U' },
+        { value: '1070', label: 'Xbox One' },
+        { value: '1080', label: 'PS4' }
+      ]
+    },
+    { 
+      value: '4000', 
+      label: 'PC', 
+      subcategories: [
+        { value: 'all', label: 'All PC' },
+        { value: '4010', label: '0day' },
+        { value: '4020', label: 'ISO' },
+        { value: '4030', label: 'Mac' },
+        { value: '4040', label: 'Mobile-Other' },
+        { value: '4050', label: 'Games' },
+        { value: '4060', label: 'Mobile-iOS' },
+        { value: '4070', label: 'Mobile-Android' }
+      ]
+    },
+    { 
+      value: '6000', 
+      label: 'XXX', 
+      subcategories: [
+        { value: 'all', label: 'All XXX' },
+        { value: '6010', label: 'DVD' },
+        { value: '6020', label: 'WMV' },
+        { value: '6030', label: 'XviD' },
+        { value: '6040', label: 'x264' },
+        { value: '6050', label: 'Pack' },
+        { value: '6060', label: 'ImgSet' },
+        { value: '6070', label: 'Other' }
+      ]
+    },
+    { 
+      value: '8000', 
+      label: 'Other', 
+      subcategories: [
+        { value: 'all', label: 'All Other' },
+        { value: '8010', label: 'Misc' }
+      ]
+    }
   ];
 
   useEffect(() => {
@@ -73,14 +173,21 @@ function Search() {
         query: searchQuery
       };
       
-      // Add categories including all subcategories as comma-separated string
+      // Add categories based on selection
       if (selectedCategory !== 'all') {
         const category = categories.find(c => c.value === selectedCategory);
-        const categoryIds = [selectedCategory];
-        if (category?.subcategories) {
-          categoryIds.push(...category.subcategories);
+        
+        if (selectedSubcategory !== 'all') {
+          // Only search specific subcategory
+          params.categories = selectedSubcategory;
+        } else {
+          // Search all subcategories in the main category
+          const categoryIds = [selectedCategory];
+          if (category?.subcategories) {
+            categoryIds.push(...category.subcategories.filter(s => s.value !== 'all').map(s => s.value));
+          }
+          params.categories = categoryIds.join(',');
         }
-        params.categories = categoryIds.join(',');
       }
       
       const results = await api.searchProwlarr(prowlarrInstance, params);
@@ -171,13 +278,16 @@ function Search() {
               }}
             />
           </Grid>
-          <Grid item xs={12} md={3}>
+          <Grid item xs={12} md={2}>
             <FormControl fullWidth>
               <InputLabel>Category</InputLabel>
               <Select
                 value={selectedCategory}
                 label="Category"
-                onChange={(e) => setSelectedCategory(e.target.value)}
+                onChange={(e) => {
+                  setSelectedCategory(e.target.value);
+                  setSelectedSubcategory('all');
+                }}
               >
                 {categories.map(cat => (
                   <MenuItem key={cat.value} value={cat.value}>{cat.label}</MenuItem>
@@ -185,7 +295,23 @@ function Search() {
               </Select>
             </FormControl>
           </Grid>
-          <Grid item xs={12} md={3}>
+          {selectedCategory !== 'all' && categories.find(c => c.value === selectedCategory)?.subcategories && (
+            <Grid item xs={12} md={2}>
+              <FormControl fullWidth>
+                <InputLabel>Subcategory</InputLabel>
+                <Select
+                  value={selectedSubcategory}
+                  label="Subcategory"
+                  onChange={(e) => setSelectedSubcategory(e.target.value)}
+                >
+                  {categories.find(c => c.value === selectedCategory)?.subcategories.map(sub => (
+                    <MenuItem key={sub.value} value={sub.value}>{sub.label}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+          )}
+          <Grid item xs={12} md={selectedCategory !== 'all' && categories.find(c => c.value === selectedCategory)?.subcategories ? 2 : 3}>
             <Button
               fullWidth
               variant="contained"

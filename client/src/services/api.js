@@ -75,6 +75,21 @@ class ApiService {
     return response.data;
   }
 
+  async getSonarrQualityProfiles(instanceId) {
+    const response = await this.client.get(`/sonarr/qualityprofile/${instanceId}`);
+    return response.data;
+  }
+
+  async getSonarrRootFolders(instanceId) {
+    const response = await this.client.get(`/sonarr/rootfolder/${instanceId}`);
+    return response.data;
+  }
+
+  async getSonarrTags(instanceId) {
+    const response = await this.client.get(`/sonarr/tag/${instanceId}`);
+    return response.data;
+  }
+
   // Radarr endpoints
   async getRadarrStatus(instanceId) {
     const response = await this.client.get(`/radarr/status/${instanceId}`);
@@ -98,6 +113,21 @@ class ApiService {
 
   async getRadarrQueue(instanceId) {
     const response = await this.client.get(`/radarr/queue/${instanceId}`);
+    return response.data;
+  }
+
+  async getRadarrQualityProfiles(instanceId) {
+    const response = await this.client.get(`/radarr/qualityprofile/${instanceId}`);
+    return response.data;
+  }
+
+  async getRadarrRootFolders(instanceId) {
+    const response = await this.client.get(`/radarr/rootfolder/${instanceId}`);
+    return response.data;
+  }
+
+  async getRadarrTags(instanceId) {
+    const response = await this.client.get(`/radarr/tag/${instanceId}`);
     return response.data;
   }
 
@@ -220,8 +250,8 @@ class ApiService {
     return response.data;
   }
 
-  async unraidDockerAction(instanceId, container, action) {
-    const response = await this.client.post(`/unraid/docker/action/${instanceId}`, { container, action });
+  async unraidDockerAction(instanceId, containerId, action) {
+    const response = await this.client.post(`/unraid/docker/action/${instanceId}`, { containerId, action });
     return response.data;
   }
 

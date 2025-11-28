@@ -28,7 +28,6 @@ function Downloads() {
   const loadDownloads = async () => {
     try {
       const servicesData = await api.getServices();
-      setServices(servicesData);
 
       const allDownloads = [];
 

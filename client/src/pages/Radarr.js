@@ -16,11 +16,7 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem
+  DialogActions
 } from '@mui/material';
 import { Search, Add } from '@mui/icons-material';
 import api from '../services/api';

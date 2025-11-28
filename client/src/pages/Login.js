@@ -72,7 +72,7 @@ function Login() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'linear-gradient(135deg, #1976d2 0%, #9c27b0 100%)',
+        background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%)',
         p: 2,
         position: 'relative',
         overflow: 'hidden',
@@ -81,7 +81,7 @@ function Login() {
           position: 'absolute',
           width: '200%',
           height: '200%',
-          background: 'radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px)',
+          background: 'radial-gradient(circle, rgba(25, 118, 210, 0.05) 1px, transparent 1px)',
           backgroundSize: '50px 50px',
           animation: 'drift 20s linear infinite',
         },
@@ -105,13 +105,14 @@ function Login() {
             elevation={24}
             sx={{
               backdropFilter: 'blur(20px)',
-              background: 'rgba(255, 255, 255, 0.1)',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
+              background: 'rgba(18, 18, 18, 0.95)',
+              border: '1px solid rgba(25, 118, 210, 0.3)',
               borderRadius: 4,
               transition: 'all 0.3s ease',
               '&:hover': {
                 transform: 'translateY(-8px)',
-                boxShadow: '0 20px 60px rgba(0,0,0,0.4)',
+                boxShadow: '0 20px 60px rgba(25, 118, 210, 0.3)',
+                border: '1px solid rgba(25, 118, 210, 0.5)',
               }
             }}
           >
@@ -184,14 +185,33 @@ function Login() {
                   sx={{ 
                     mb: 3,
                     '& .MuiOutlinedInput-root': {
-                      background: 'rgba(255, 255, 255, 0.9)',
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      color: 'white',
+                      '& fieldset': {
+                        borderColor: 'rgba(255, 255, 255, 0.23)',
+                      },
                       '&:hover': {
-                        background: 'rgba(255, 255, 255, 1)',
+                        background: 'rgba(255, 255, 255, 0.08)',
+                        '& fieldset': {
+                          borderColor: 'rgba(25, 118, 210, 0.5)',
+                        },
                       },
                       '&.Mui-focused': {
-                        background: 'rgba(255, 255, 255, 1)',
-                      }
-                    }
+                        background: 'rgba(255, 255, 255, 0.08)',
+                        '& fieldset': {
+                          borderColor: '#1976d2',
+                        },
+                      },
+                    },
+                    '& .MuiInputLabel-root': {
+                      color: 'rgba(255, 255, 255, 0.7)',
+                      '&.Mui-focused': {
+                        color: '#1976d2',
+                      },
+                    },
+                    '& .MuiInputBase-input': {
+                      color: 'white',
+                    },
                   }}
                   autoFocus
                   required
@@ -208,14 +228,33 @@ function Login() {
                   sx={{ 
                     mb: 2,
                     '& .MuiOutlinedInput-root': {
-                      background: 'rgba(255, 255, 255, 0.9)',
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      color: 'white',
+                      '& fieldset': {
+                        borderColor: 'rgba(255, 255, 255, 0.23)',
+                      },
                       '&:hover': {
-                        background: 'rgba(255, 255, 255, 1)',
+                        background: 'rgba(255, 255, 255, 0.08)',
+                        '& fieldset': {
+                          borderColor: 'rgba(25, 118, 210, 0.5)',
+                        },
                       },
                       '&.Mui-focused': {
-                        background: 'rgba(255, 255, 255, 1)',
-                      }
-                    }
+                        background: 'rgba(255, 255, 255, 0.08)',
+                        '& fieldset': {
+                          borderColor: '#1976d2',
+                        },
+                      },
+                    },
+                    '& .MuiInputLabel-root': {
+                      color: 'rgba(255, 255, 255, 0.7)',
+                      '&.Mui-focused': {
+                        color: '#1976d2',
+                      },
+                    },
+                    '& .MuiInputBase-input': {
+                      color: 'white',
+                    },
                   }}
                   required
                   InputProps={{
@@ -224,6 +263,7 @@ function Login() {
                         <IconButton
                           onClick={() => setShowPassword(!showPassword)}
                           edge="end"
+                          sx={{ color: 'rgba(255, 255, 255, 0.7)' }}
                         >
                           {showPassword ? <VisibilityOff /> : <Visibility />}
                       </IconButton>

@@ -50,7 +50,16 @@ router.get('/search/:instanceId', async (req, res) => {
     // Add categories if specified (comma-separated string)
     if (req.query.categories) {
       const categories = req.query.categories.split(',');
+      
+      // Filter out console categories when PC is selected
+      const consoleCategories = ['1000', '1010', '1020', '1030', '1040', '1050', '1060', '1070', '1080'];
+      const isPCSearch = categories.includes('4000') || categories.includes('4050');
+      
       categories.forEach(cat => {
+        // Skip console categories if this is a PC search
+        if (isPCSearch && consoleCategories.includes(cat)) {
+          return;
+        }
         queryString += `&categories=${cat}`;
       });
     }

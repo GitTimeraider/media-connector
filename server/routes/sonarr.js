@@ -80,7 +80,31 @@ router.get('/search/:instanceId', async (req, res) => {
 
     const client = new ApiClient(instance.url, instance.apiKey);
     const results = await client.get('/api/v3/series/lookup', { term: req.query.term });
-    res.json(results);
+    
+    // Sort results to prioritize exact phrase matches
+    const searchTerm = req.query.term.toLowerCase();
+    const sortedResults = results.sort((a, b) => {
+      const aTitle = (a.title || '').toLowerCase();
+      const bTitle = (b.title || '').toLowerCase();
+      
+      // Exact match comes first
+      if (aTitle === searchTerm && bTitle !== searchTerm) return -1;
+      if (bTitle === searchTerm && aTitle !== searchTerm) return 1;
+      
+      // Contains exact phrase comes second
+      const aContains = aTitle.includes(searchTerm);
+      const bContains = bTitle.includes(searchTerm);
+      if (aContains && !bContains) return -1;
+      if (bContains && !aContains) return 1;
+      
+      // Then by relevance (starts with search term)
+      if (aTitle.startsWith(searchTerm) && !bTitle.startsWith(searchTerm)) return -1;
+      if (bTitle.startsWith(searchTerm) && !aTitle.startsWith(searchTerm)) return 1;
+      
+      return 0;
+    });
+    
+    res.json(sortedResults);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

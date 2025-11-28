@@ -69,9 +69,12 @@ function Unraid() {
         api.getUnraidArray(selectedInstance)
       ]);
 
+      console.log('Unraid Data Loaded:', { stats, docker, array });
+
       if (stats.status === 'fulfilled') setSystemStats(stats.value?.info || stats.value);
       if (docker.status === 'fulfilled') {
         const containers = docker.value?.dockerContainers || docker.value;
+        console.log('Docker containers:', containers);
         setDockerContainers(Array.isArray(containers) ? containers : []);
       }
       if (array.status === 'fulfilled') setArrayStatus(array.value?.array || array.value);

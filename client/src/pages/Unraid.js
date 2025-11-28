@@ -19,7 +19,6 @@ import {
   Refresh,
   Storage,
   Memory,
-  Speed,
   CheckCircle,
   Error as ErrorIcon,
   Computer

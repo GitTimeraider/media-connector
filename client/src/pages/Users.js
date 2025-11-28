@@ -26,7 +26,7 @@ import {
   CircularProgress,
   Tooltip
 } from '@mui/material';
-import { Add, Delete, VpnKey, Edit } from '@mui/icons-material';
+import { Add, Delete, VpnKey } from '@mui/icons-material';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -36,7 +36,6 @@ function Users() {
   const [error, setError] = useState('');
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [newUser, setNewUser] = useState({ username: '', password: '', role: 'User' });
   const [newPassword, setNewPassword] = useState('');

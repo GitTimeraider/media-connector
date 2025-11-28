@@ -224,8 +224,6 @@ function Dashboard() {
       : item.first_air_date ? new Date(item.first_air_date).getFullYear()
       : item.year || '';
     
-    const overview = item.overview || '';
-    
     return (
       <Zoom in timeout={300 + (index * 50)}>
         <Card 

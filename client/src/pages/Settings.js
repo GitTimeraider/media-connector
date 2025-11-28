@@ -20,9 +20,34 @@ import {
   ListItem,
   ListItemText,
   ListItemSecondaryAction,
-  CircularProgress
+  CircularProgress,
+  Chip,
+  Fade,
+  Zoom,
+  Paper,
+  Divider,
+  Tooltip,
+  InputAdornment
 } from '@mui/material';
-import { Delete, Add, Edit, CheckCircle, Error } from '@mui/icons-material';
+import { 
+  Delete, 
+  Add, 
+  Edit, 
+  CheckCircle, 
+  Error,
+  Settings as SettingsIcon,
+  Cloud,
+  Download,
+  Search,
+  Tv,
+  Movie as MovieIcon,
+  MusicNote,
+  Book,
+  Visibility,
+  VisibilityOff,
+  Link as LinkIcon,
+  VpnKey
+} from '@mui/icons-material';
 import api from '../services/api';
 
 function TabPanel({ children, value, index }) {
@@ -134,74 +159,286 @@ function Settings() {
     }
   };
 
+  const [showPassword, setShowPassword] = useState(false);
+  const [hoveredCard, setHoveredCard] = useState(null);
+
+  const getServiceIcon = (type) => {
+    const icons = {
+      sonarr: <Tv />,
+      radarr: <MovieIcon />,
+      lidarr: <MusicNote />,
+      readarr: <Book />,
+      sabnzbd: <Download />,
+      nzbget: <Download />,
+      qbittorrent: <Download />,
+      transmission: <Download />,
+      deluge: <Download />,
+      prowlarr: <Search />,
+      jackett: <Search />,
+      overseerr: <Cloud />,
+      tautulli: <Tv />,
+      unraid: <SettingsIcon />
+    };
+    return icons[type] || <SettingsIcon />;
+  };
+
   const ServiceList = ({ serviceType, label }) => {
     const instances = services[serviceType] || [];
 
     return (
-      <Card sx={{ mb: 2 }}>
-        <CardContent>
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-            <Typography variant="h6">{label}</Typography>
-            <Button
-              variant="contained"
-              startIcon={<Add />}
-              onClick={() => handleAddService(serviceType)}
-            >
-              Add {label}
-            </Button>
-          </Box>
+      <Zoom in={true} style={{ transitionDelay: '100ms' }}>
+        <Card 
+          sx={{ 
+            mb: 3,
+            background: 'linear-gradient(135deg, rgba(25, 118, 210, 0.05) 0%, rgba(156, 39, 176, 0.05) 100%)',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            transition: 'all 0.3s ease',
+            '&:hover': {
+              transform: 'translateY(-4px)',
+              boxShadow: '0 12px 40px rgba(0,0,0,0.3)',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+            }
+          }}
+        >
+          <CardContent>
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+              <Box display="flex" alignItems="center" gap={2}>
+                <Box
+                  sx={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 2,
+                    background: 'linear-gradient(135deg, #1976d2 0%, #9c27b0 100%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'white',
+                    fontSize: 24
+                  }}
+                >
+                  {getServiceIcon(serviceType)}
+                </Box>
+                <Box>
+                  <Typography variant="h6" fontWeight="bold">{label}</Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {instances.length} {instances.length === 1 ? 'instance' : 'instances'} configured
+                  </Typography>
+                </Box>
+              </Box>
+              <Button
+                variant="contained"
+                startIcon={<Add />}
+                onClick={() => handleAddService(serviceType)}
+                sx={{
+                  background: 'linear-gradient(135deg, #1976d2 0%, #9c27b0 100%)',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #1565c0 0%, #7b1fa2 100%)',
+                    transform: 'scale(1.05)',
+                  },
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                Add {label}
+              </Button>
+            </Box>
 
-          {instances.length === 0 ? (
-            <Alert severity="info">No {label} instances configured</Alert>
-          ) : (
-            <List>
-              {instances.map((instance) => (
-                <ListItem key={instance.id}>
-                  <ListItemText
-                    primary={instance.name}
-                    secondary={instance.url}
-                  />
-                  <ListItemSecondaryAction>
-                    <IconButton
-                      edge="end"
-                      onClick={() => handleEditService(serviceType, instance)}
-                      sx={{ mr: 1 }}
-                    >
-                      <Edit />
-                    </IconButton>
-                    <IconButton
-                      edge="end"
-                      onClick={() => handleDeleteService(serviceType, instance.id)}
-                      color="error"
-                    >
-                      <Delete />
-                    </IconButton>
-                  </ListItemSecondaryAction>
-                </ListItem>
-              ))}
-            </List>
-          )}
-        </CardContent>
-      </Card>
+            {instances.length === 0 ? (
+              <Fade in={true}>
+                <Paper
+                  sx={{
+                    p: 4,
+                    textAlign: 'center',
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    border: '2px dashed rgba(255, 255, 255, 0.1)',
+                    borderRadius: 2
+                  }}
+                >
+                  <Typography variant="body2" color="text.secondary">
+                    No {label} instances configured yet
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Click "Add {label}" to get started
+                  </Typography>
+                </Paper>
+              </Fade>
+            ) : (
+              <Grid container spacing={2}>
+                {instances.map((instance, index) => (
+                  <Grid item xs={12} key={instance.id}>
+                    <Fade in={true} style={{ transitionDelay: `${index * 50}ms` }}>
+                      <Paper
+                        elevation={hoveredCard === instance.id ? 8 : 2}
+                        onMouseEnter={() => setHoveredCard(instance.id)}
+                        onMouseLeave={() => setHoveredCard(null)}
+                        sx={{
+                          p: 2,
+                          background: hoveredCard === instance.id 
+                            ? 'linear-gradient(135deg, rgba(25, 118, 210, 0.1) 0%, rgba(156, 39, 176, 0.1) 100%)'
+                            : 'rgba(255, 255, 255, 0.05)',
+                          border: hoveredCard === instance.id
+                            ? '1px solid rgba(25, 118, 210, 0.5)'
+                            : '1px solid rgba(255, 255, 255, 0.1)',
+                          transition: 'all 0.3s ease',
+                          cursor: 'pointer',
+                          '&:hover': {
+                            transform: 'translateX(8px)',
+                          }
+                        }}
+                      >
+                        <Box display="flex" justifyContent="space-between" alignItems="center">
+                          <Box flex={1}>
+                            <Box display="flex" alignItems="center" gap={1} mb={1}>
+                              <Typography variant="h6" fontWeight="bold">
+                                {instance.name}
+                              </Typography>
+                              <Chip 
+                                label="Active" 
+                                size="small" 
+                                color="success"
+                                sx={{ height: 20, fontSize: '0.7rem' }}
+                              />
+                            </Box>
+                            <Box display="flex" alignItems="center" gap={1}>
+                              <LinkIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                              <Typography variant="body2" color="text.secondary">
+                                {instance.url}
+                              </Typography>
+                            </Box>
+                            {instance.apiKey && (
+                              <Box display="flex" alignItems="center" gap={1} mt={0.5}>
+                                <VpnKey sx={{ fontSize: 16, color: 'text.secondary' }} />
+                                <Typography variant="caption" color="text.secondary">
+                                  API Key: {instance.apiKey.substring(0, 8)}...
+                                </Typography>
+                              </Box>
+                            )}
+                          </Box>
+                          <Box display="flex" gap={1}>
+                            <Tooltip title="Edit" arrow>
+                              <IconButton
+                                onClick={() => handleEditService(serviceType, instance)}
+                                sx={{
+                                  background: 'rgba(25, 118, 210, 0.1)',
+                                  '&:hover': {
+                                    background: 'rgba(25, 118, 210, 0.2)',
+                                    transform: 'rotate(90deg)',
+                                  },
+                                  transition: 'all 0.3s ease'
+                                }}
+                              >
+                                <Edit />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Delete" arrow>
+                              <IconButton
+                                onClick={() => handleDeleteService(serviceType, instance.id)}
+                                sx={{
+                                  background: 'rgba(244, 67, 54, 0.1)',
+                                  color: 'error.main',
+                                  '&:hover': {
+                                    background: 'rgba(244, 67, 54, 0.2)',
+                                    transform: 'scale(1.1)',
+                                  },
+                                  transition: 'all 0.3s ease'
+                                }}
+                              >
+                                <Delete />
+                              </IconButton>
+                            </Tooltip>
+                          </Box>
+                        </Box>
+                      </Paper>
+                    </Fade>
+                  </Grid>
+                ))}
+              </Grid>
+            )}
+          </CardContent>
+        </Card>
+      </Zoom>
     );
   };
 
   const currentServiceConfig = serviceTypes.find(s => s.type === currentServiceType);
 
   return (
-    <Container maxWidth="xl">
-      <Typography variant="h4" gutterBottom>
-        Settings
-      </Typography>
+    <Container maxWidth="xl" sx={{ py: 4 }}>
+      <Fade in={true}>
+        <Box mb={4}>
+          <Box display="flex" alignItems="center" gap={2} mb={1}>
+            <Box
+              sx={{
+                width: 56,
+                height: 56,
+                borderRadius: 3,
+                background: 'linear-gradient(135deg, #1976d2 0%, #9c27b0 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'white'
+              }}
+            >
+              <SettingsIcon sx={{ fontSize: 32 }} />
+            </Box>
+            <Box>
+              <Typography 
+                variant="h3" 
+                fontWeight="bold"
+                sx={{
+                  background: 'linear-gradient(135deg, #1976d2 0%, #9c27b0 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text'
+                }}
+              >
+                Settings
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Configure your media services and download clients
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
+      </Fade>
 
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-        <Tabs value={tabValue} onChange={(e, v) => setTabValue(v)}>
-          <Tab label="Media Managers" />
-          <Tab label="Download Clients" />
-          <Tab label="Indexers & Search" />
-          <Tab label="Other Services" />
+      <Paper 
+        elevation={3}
+        sx={{ 
+          mb: 3,
+          background: 'rgba(255, 255, 255, 0.05)',
+          backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+        }}
+      >
+        <Tabs 
+          value={tabValue} 
+          onChange={(e, v) => setTabValue(v)}
+          variant="fullWidth"
+          sx={{
+            '& .MuiTab-root': {
+              py: 2,
+              fontWeight: 'bold',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                background: 'rgba(25, 118, 210, 0.1)',
+              },
+              '&.Mui-selected': {
+                background: 'linear-gradient(135deg, rgba(25, 118, 210, 0.15) 0%, rgba(156, 39, 176, 0.15) 100%)',
+              }
+            },
+            '& .MuiTabs-indicator': {
+              height: 3,
+              background: 'linear-gradient(135deg, #1976d2 0%, #9c27b0 100%)',
+            }
+          }}
+        >
+          <Tab label="Media Managers" icon={<Tv />} iconPosition="start" />
+          <Tab label="Download Clients" icon={<Download />} iconPosition="start" />
+          <Tab label="Indexers & Search" icon={<Search />} iconPosition="start" />
+          <Tab label="Other Services" icon={<Cloud />} iconPosition="start" />
         </Tabs>
-      </Box>
+      </Paper>
 
       <TabPanel value={tabValue} index={0}>
         <ServiceList serviceType="sonarr" label="Sonarr" />
@@ -229,12 +466,48 @@ function Settings() {
         <ServiceList serviceType="unraid" label="Unraid" />
       </TabPanel>
 
-      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>
-          {editingService ? 'Edit' : 'Add'} {currentServiceConfig?.label}
+      <Dialog 
+        open={dialogOpen} 
+        onClose={() => setDialogOpen(false)} 
+        maxWidth="sm" 
+        fullWidth
+        PaperProps={{
+          sx: {
+            background: 'linear-gradient(135deg, rgba(25, 118, 210, 0.05) 0%, rgba(156, 39, 176, 0.05) 100%)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+          }
+        }}
+      >
+        <DialogTitle sx={{ pb: 1 }}>
+          <Box display="flex" alignItems="center" gap={2}>
+            <Box
+              sx={{
+                width: 48,
+                height: 48,
+                borderRadius: 2,
+                background: 'linear-gradient(135deg, #1976d2 0%, #9c27b0 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'white'
+              }}
+            >
+              {getServiceIcon(currentServiceType)}
+            </Box>
+            <Box>
+              <Typography variant="h6" fontWeight="bold">
+                {editingService ? 'Edit' : 'Add'} {currentServiceConfig?.label}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Configure your {currentServiceConfig?.label} instance
+              </Typography>
+            </Box>
+          </Box>
         </DialogTitle>
-        <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
+        <Divider />
+        <DialogContent sx={{ pt: 3 }}>
+          <Grid container spacing={3}>
             <Grid item xs={12}>
               <TextField
                 fullWidth
@@ -242,6 +515,14 @@ function Settings() {
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 required
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SettingsIcon />
+                    </InputAdornment>
+                  ),
+                }}
+                placeholder={`My ${currentServiceConfig?.label}`}
               />
             </Grid>
             <Grid item xs={12}>
@@ -252,6 +533,13 @@ function Settings() {
                 onChange={(e) => setFormData({ ...formData, url: e.target.value })}
                 placeholder="http://localhost:8989"
                 required
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <LinkIcon />
+                    </InputAdornment>
+                  ),
+                }}
               />
             </Grid>
             {currentServiceConfig?.requiresApiKey && (
@@ -259,9 +547,27 @@ function Settings() {
                 <TextField
                   fullWidth
                   label="API Key"
+                  type={showPassword ? 'text' : 'password'}
                   value={formData.apiKey}
                   onChange={(e) => setFormData({ ...formData, apiKey: e.target.value })}
                   required
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <VpnKey />
+                      </InputAdornment>
+                    ),
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          onClick={() => setShowPassword(!showPassword)}
+                          edge="end"
+                        >
+                          {showPassword ? <VisibilityOff /> : <Visibility />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
                 />
               </Grid>
             )}
@@ -280,11 +586,23 @@ function Settings() {
                 <Grid item xs={12}>
                   <TextField
                     fullWidth
-                    type="password"
+                    type={showPassword ? 'text' : 'password'}
                     label="Password"
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                     required={currentServiceConfig?.passwordOnly}
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            onClick={() => setShowPassword(!showPassword)}
+                            edge="end"
+                          >
+                            {showPassword ? <VisibilityOff /> : <Visibility />}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
                   />
                 </Grid>
               </>
@@ -295,26 +613,76 @@ function Settings() {
                 onClick={handleTestConnection}
                 disabled={testStatus?.loading}
                 fullWidth
+                size="large"
+                sx={{
+                  py: 1.5,
+                  borderWidth: 2,
+                  '&:hover': {
+                    borderWidth: 2,
+                    background: 'rgba(25, 118, 210, 0.1)',
+                  }
+                }}
               >
-                {testStatus?.loading ? <CircularProgress size={24} /> : 'Test Connection'}
+                {testStatus?.loading ? (
+                  <CircularProgress size={24} />
+                ) : (
+                  <>
+                    <CheckCircle sx={{ mr: 1 }} />
+                    Test Connection
+                  </>
+                )}
               </Button>
             </Grid>
             {testStatus && !testStatus.loading && (
               <Grid item xs={12}>
-                <Alert
-                  severity={testStatus.success ? 'success' : 'error'}
-                  icon={testStatus.success ? <CheckCircle /> : <Error />}
-                >
-                  {testStatus.message}
-                </Alert>
+                <Zoom in={true}>
+                  <Alert
+                    severity={testStatus.success ? 'success' : 'error'}
+                    icon={testStatus.success ? <CheckCircle /> : <Error />}
+                    sx={{
+                      '& .MuiAlert-icon': {
+                        fontSize: 28
+                      }
+                    }}
+                  >
+                    <Typography variant="body2" fontWeight="bold">
+                      {testStatus.message}
+                    </Typography>
+                  </Alert>
+                </Zoom>
               </Grid>
             )}
           </Grid>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
-          <Button onClick={handleSave} variant="contained">
-            Save
+        <Divider />
+        <DialogActions sx={{ p: 3, gap: 2 }}>
+          <Button 
+            onClick={() => setDialogOpen(false)}
+            variant="outlined"
+            size="large"
+            sx={{ 
+              px: 4,
+              borderWidth: 2,
+              '&:hover': { borderWidth: 2 }
+            }}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleSave} 
+            variant="contained"
+            size="large"
+            sx={{
+              px: 4,
+              background: 'linear-gradient(135deg, #1976d2 0%, #9c27b0 100%)',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #1565c0 0%, #7b1fa2 100%)',
+                transform: 'scale(1.02)',
+              },
+              transition: 'all 0.2s ease'
+            }}
+          >
+            {editingService ? 'Update' : 'Add'} Service
           </Button>
         </DialogActions>
       </Dialog>

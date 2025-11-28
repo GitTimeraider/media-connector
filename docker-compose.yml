@@ -10,6 +10,8 @@ services:
     volumes:
       - ./config:/config
     environment:
+      - PUID=1000
+      - PGID=1000
       - NODE_ENV=production
       - PORT=3001
       - CONFIG_FILE=/config/services.json

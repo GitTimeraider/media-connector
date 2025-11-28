@@ -17,8 +17,8 @@ COPY server/ ./server/
 FROM node:18-alpine
 WORKDIR /app
 
-# Install dumb-init for proper signal handling
-RUN apk add --no-cache dumb-init
+# Install dumb-init, shadow for user management, and su-exec for user switching
+RUN apk add --no-cache dumb-init shadow su-exec
 
 # Copy backend dependencies and code
 COPY --from=backend-build /app/node_modules ./node_modules
@@ -28,15 +28,18 @@ COPY --from=backend-build /app/server ./server
 # Copy frontend build
 COPY --from=frontend-build /app/client/build ./client/build
 
-# Create config directory
-RUN mkdir -p /config && chown -R node:node /config
+# Create config directory with proper permissions
+RUN mkdir -p /config
 
-# Set environment variables
+# Set default PUID and PGID
+ENV PUID=1000
+ENV PGID=1000
 ENV NODE_ENV=production
 ENV PORT=3001
 
-# Switch to non-root user
-USER node
+# Copy entrypoint script
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # Expose port
 EXPOSE 3001
@@ -45,8 +48,8 @@ EXPOSE 3001
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3001/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
-# Use dumb-init to handle signals properly
-ENTRYPOINT ["dumb-init", "--"]
+# Use entrypoint script to handle user switching
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 
 # Start the application
 CMD ["node", "server/index.js"]

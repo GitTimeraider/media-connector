@@ -64,6 +64,8 @@ Manage your entire media stack from one beautiful web interface. Control Sonarr,
 docker run -d \
   --name=media-connector \
   -p 3001:3001 \
+  -e PUID=1000 \
+  -e PGID=1000 \
   -v /path/to/config:/config \
   --restart unless-stopped \
   ghcr.io/gittimerider/media-connector:latest
@@ -84,6 +86,8 @@ services:
     volumes:
       - ./config:/config
     environment:
+      - PUID=1000
+      - PGID=1000
       - NODE_ENV=production
       - PORT=3001
       - CONFIG_FILE=/config/services.json
@@ -190,6 +194,28 @@ Create a `.env` file in the root directory:
 NODE_ENV=production
 PORT=3001
 CONFIG_FILE=/config/services.json
+```
+
+**Docker-Specific Environment Variables:**
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `PUID` | `1000` | User ID for file permissions |
+| `PGID` | `1000` | Group ID for file permissions |
+| `PORT` | `3001` | Port the application runs on |
+| `NODE_ENV` | `production` | Node environment |
+| `CONFIG_FILE` | `/config/services.json` | Path to configuration file |
+
+**Setting PUID/PGID:**
+
+To find your user and group IDs on Linux/Unraid:
+```bash
+id your_username
+```
+
+Then use those values in your docker run command or docker-compose.yml:
+```bash
+-e PUID=1000 -e PGID=100
 ```
 
 ### Supported Services Configuration

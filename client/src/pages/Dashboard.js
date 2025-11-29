@@ -27,7 +27,6 @@ import {
   MusicNote,
   Book,
   Warning,
-  TrendingUp,
   Download,
   CalendarToday,
   Star,

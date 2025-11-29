@@ -22,8 +22,8 @@ router.get('/movies/popular', async (req, res) => {
       }
     });
 
-    // Return first 10 results
-    res.json(response.data.results.slice(0, 10));
+    // Return first 20 results
+    res.json(response.data.results.slice(0, 20));
   } catch (error) {
     console.error('TMDB popular movies error:', error.message);
     res.status(500).json({ error: error.message });
@@ -45,8 +45,8 @@ router.get('/movies/upcoming', async (req, res) => {
       }
     });
 
-    // Return first 10 results
-    res.json(response.data.results.slice(0, 10));
+    // Return first 20 results with release dates
+    res.json(response.data.results.slice(0, 20));
   } catch (error) {
     console.error('TMDB upcoming movies error:', error.message);
     res.status(500).json({ error: error.message });
@@ -68,15 +68,59 @@ router.get('/tv/popular', async (req, res) => {
       }
     });
 
-    // Return first 10 results
-    res.json(response.data.results.slice(0, 10));
+    // Return first 20 results
+    res.json(response.data.results.slice(0, 20));
   } catch (error) {
     console.error('TMDB popular TV error:', error.message);
     res.status(500).json({ error: error.message });
   }
 });
 
-// Get trending (movies and TV combined)
+// Get trending movies
+router.get('/trending/movies', async (req, res) => {
+  try {
+    if (!TMDB_API_KEY) {
+      return res.status(400).json({ error: 'TMDB API key not configured' });
+    }
+
+    const response = await axios.get(`${TMDB_BASE_URL}/trending/movie/week`, {
+      params: {
+        api_key: TMDB_API_KEY,
+        language: 'en-US'
+      }
+    });
+
+    // Return first 20 results
+    res.json(response.data.results.slice(0, 20));
+  } catch (error) {
+    console.error('TMDB trending movies error:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get trending TV shows
+router.get('/trending/tv', async (req, res) => {
+  try {
+    if (!TMDB_API_KEY) {
+      return res.status(400).json({ error: 'TMDB API key not configured' });
+    }
+
+    const response = await axios.get(`${TMDB_BASE_URL}/trending/tv/week`, {
+      params: {
+        api_key: TMDB_API_KEY,
+        language: 'en-US'
+      }
+    });
+
+    // Return first 20 results
+    res.json(response.data.results.slice(0, 20));
+  } catch (error) {
+    console.error('TMDB trending TV error:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get trending (movies and TV combined) - legacy endpoint
 router.get('/trending', async (req, res) => {
   try {
     if (!TMDB_API_KEY) {
@@ -90,8 +134,8 @@ router.get('/trending', async (req, res) => {
       }
     });
 
-    // Return first 10 results
-    res.json(response.data.results.slice(0, 10));
+    // Return first 20 results
+    res.json(response.data.results.slice(0, 20));
   } catch (error) {
     console.error('TMDB trending error:', error.message);
     res.status(500).json({ error: error.message });

@@ -8,6 +8,23 @@ router.get('/instances', async (req, res) => {
   res.json(instances);
 });
 
+router.get('/status/:instanceId', async (req, res) => {
+  try {
+    const instances = await configManager.getServices('tautulli');
+    const instance = instances.find(i => i.id === req.params.instanceId);
+    if (!instance) return res.status(404).json({ error: 'Instance not found' });
+
+    const client = new ApiClient(instance.url, instance.apiKey, { timeout: 5000 });
+    const status = await client.get('/api/v2', { 
+      params: { cmd: 'get_server_info', apikey: instance.apiKey }
+    });
+    
+    res.json({ status: 'online', serverInfo: status });
+  } catch (error) {
+    res.status(200).json({ status: 'offline', error: error.message });
+  }
+});
+
 router.get('/activity/:instanceId', async (req, res) => {
   try {
     const instances = await configManager.getServices('tautulli');

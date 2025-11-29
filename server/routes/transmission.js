@@ -8,6 +8,29 @@ router.get('/instances', async (req, res) => {
   res.json(instances);
 });
 
+router.get('/status/:instanceId', async (req, res) => {
+  try {
+    const instances = await configManager.getServices('transmission');
+    const instance = instances.find(i => i.id === req.params.instanceId);
+    if (!instance) return res.status(404).json({ error: 'Instance not found' });
+
+    const auth = instance.username && instance.password 
+      ? Buffer.from(`${instance.username}:${instance.password}`).toString('base64')
+      : null;
+
+    const headers = auth ? { 'Authorization': `Basic ${auth}` } : {};
+    const client = new ApiClient(instance.url, '', { headers, timeout: 5000 });
+
+    const result = await client.post('/transmission/rpc', {
+      method: 'session-get'
+    });
+    
+    res.json({ status: 'online', session: result });
+  } catch (error) {
+    res.status(200).json({ status: 'offline', error: error.message });
+  }
+});
+
 router.post('/rpc/:instanceId', async (req, res) => {
   try {
     const instances = await configManager.getServices('transmission');

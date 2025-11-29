@@ -75,8 +75,20 @@ function Overview() {
         return await api.getReadarrStatus(instanceId);
       case 'sabnzbd':
         return await api.getSabnzbdStatus(instanceId);
+      case 'nzbget':
+        return await api.getNzbgetStatus(instanceId);
+      case 'qbittorrent':
+        return await api.getQbittorrentStatus(instanceId);
+      case 'deluge':
+        return await api.getDelugeStatus(instanceId);
+      case 'transmission':
+        return await api.getTransmissionStatus(instanceId);
       case 'overseerr':
         return await api.getOverseerrStatus(instanceId);
+      case 'prowlarr':
+        return await api.getProwlarrStatus(instanceId);
+      case 'tautulli':
+        return await api.getTautulliStatus(instanceId);
       default:
         throw new Error('Unknown service type');
     }

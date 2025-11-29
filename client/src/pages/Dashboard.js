@@ -48,7 +48,8 @@ function Dashboard() {
     readarr: { total: 0, monitored: 0 },
     downloads: { active: 0, queued: 0 }
   });
-  const [trendingContent, setTrendingContent] = useState([]);
+  const [trendingMovies, setTrendingMovies] = useState([]);
+  const [trendingTV, setTrendingTV] = useState([]);
   const [upcomingMovies, setUpcomingMovies] = useState([]);
   const [recentDownloads, setRecentDownloads] = useState({ movies: [], series: [] });
   const [tmdbLoading, setTmdbLoading] = useState(true);
@@ -122,13 +123,15 @@ function Dashboard() {
   const loadTMDBContent = async () => {
     try {
       setTmdbLoading(true);
-      const [trending, upcoming] = await Promise.allSettled([
-        api.getTrendingContent(),
+      const [trendingMoviesRes, trendingTVRes, upcomingRes] = await Promise.allSettled([
+        api.getTrendingMovies(),
+        api.getTrendingTVShows(),
         api.getUpcomingMovies()
       ]);
       
-      if (trending.status === 'fulfilled') setTrendingContent(trending.value || []);
-      if (upcoming.status === 'fulfilled') setUpcomingMovies(upcoming.value || []);
+      if (trendingMoviesRes.status === 'fulfilled') setTrendingMovies(trendingMoviesRes.value || []);
+      if (trendingTVRes.status === 'fulfilled') setTrendingTV(trendingTVRes.value || []);
+      if (upcomingRes.status === 'fulfilled') setUpcomingMovies(upcomingRes.value || []);
     } catch (error) {
       console.error('Error loading TMDB content:', error);
     } finally {
@@ -209,7 +212,7 @@ function Dashboard() {
     );
   }
 
-  const MediaCard = ({ item, type, index }) => {
+  const MediaCard = ({ item, type, index, showReleaseDate }) => {
     const [isHovered, setIsHovered] = useState(false);
     
     const imageUrl = item.poster_path || item.posterUrl
@@ -220,6 +223,9 @@ function Dashboard() {
     const year = item.release_date ? new Date(item.release_date).getFullYear() 
       : item.first_air_date ? new Date(item.first_air_date).getFullYear()
       : item.year || '';
+    
+    const releaseDate = item.release_date ? new Date(item.release_date) : null;
+    const formattedDate = releaseDate ? releaseDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : null;
     
     return (
       <Card 
@@ -352,6 +358,17 @@ function Dashboard() {
                     size="small"
                     icon={item.media_type === 'movie' ? <Movie sx={{ fontSize: 16 }} /> : <LiveTv sx={{ fontSize: 16 }} />}
                     variant="outlined"
+                  />
+                )}
+                {showReleaseDate && formattedDate && (
+                  <Chip 
+                    icon={<CalendarToday sx={{ fontSize: 16 }} />}
+                    label={formattedDate} 
+                    size="small" 
+                    sx={{ 
+                      fontWeight: 500,
+                      background: 'linear-gradient(45deg, #4CAF50 30%, #8BC34A 90%)'
+                    }}
                   />
                 )}
               </Box>
@@ -510,7 +527,7 @@ function Dashboard() {
         </Grid>
       </Grid>
 
-      {/* Trending Content */}
+      {/* Trending Movies */}
       <Box sx={{ mt: 5 }}>
         <Box 
           display="flex" 
@@ -524,33 +541,116 @@ function Dashboard() {
             borderColor: 'warning.main'
           }}
         >
-          <TrendingUp sx={{ mr: 1.5, fontSize: 32, color: 'warning.main' }} />
+          <Movie sx={{ mr: 1.5, fontSize: 32, color: 'warning.main' }} />
           <Box>
-            <Typography variant="h5" sx={{ fontWeight: 600 }}>Trending This Week</Typography>
-            <Typography variant="caption" color="text.secondary">Most popular content right now</Typography>
+            <Typography variant="h5" sx={{ fontWeight: 600 }}>Trending Movies</Typography>
+            <Typography variant="caption" color="text.secondary">Most popular movies this week</Typography>
           </Box>
         </Box>
         {tmdbLoading ? (
-          <Grid container spacing={3}>
-            {[1, 2, 3, 4, 5].map(i => (
-              <Grid item xs={6} sm={4} md={2.4} key={i}>
+          <Box sx={{ display: 'flex', gap: 3, overflowX: 'auto', pb: 2 }}>
+            {[1, 2, 3, 4, 5, 6].map(i => (
+              <Box key={i} sx={{ minWidth: 200, flexShrink: 0 }}>
                 <Skeleton variant="rectangular" height={300} sx={{ borderRadius: 2 }} />
                 <Skeleton variant="text" sx={{ mt: 1 }} />
                 <Skeleton variant="text" width="60%" />
-              </Grid>
+              </Box>
             ))}
-          </Grid>
-        ) : trendingContent.length > 0 ? (
-          <Grid container spacing={3}>
-            {trendingContent.slice(0, 5).map((item, index) => (
-              <Grid item xs={6} sm={4} md={2.4} key={index}>
-                <MediaCard item={item} type={item.media_type} index={index} />
-              </Grid>
+          </Box>
+        ) : trendingMovies.length > 0 ? (
+          <Box sx={{ 
+            display: 'flex', 
+            gap: 3, 
+            overflowX: 'auto', 
+            pb: 2,
+            '&::-webkit-scrollbar': {
+              height: 8
+            },
+            '&::-webkit-scrollbar-track': {
+              background: 'rgba(255,255,255,0.05)',
+              borderRadius: 4
+            },
+            '&::-webkit-scrollbar-thumb': {
+              background: 'rgba(255,255,255,0.2)',
+              borderRadius: 4,
+              '&:hover': {
+                background: 'rgba(255,255,255,0.3)'
+              }
+            }
+          }}>
+            {trendingMovies.map((item, index) => (
+              <Box key={index} sx={{ minWidth: 200, flexShrink: 0 }}>
+                <MediaCard item={item} type="movie" index={index} />
+              </Box>
             ))}
-          </Grid>
+          </Box>
         ) : (
           <Alert severity="info" sx={{ borderRadius: 2 }}>
-            Configure TMDB_API_KEY in environment variables to see trending content
+            Configure TMDB_API_KEY in environment variables to see trending movies
+          </Alert>
+        )}
+      </Box>
+
+      {/* Trending TV Shows */}
+      <Box sx={{ mt: 5 }}>
+        <Box 
+          display="flex" 
+          alignItems="center" 
+          mb={3}
+          sx={{
+            background: 'linear-gradient(90deg, rgba(156,39,176,0.1) 0%, transparent 100%)',
+            p: 2,
+            borderRadius: 2,
+            borderLeft: 4,
+            borderColor: 'secondary.main'
+          }}
+        >
+          <LiveTv sx={{ mr: 1.5, fontSize: 32, color: 'secondary.main' }} />
+          <Box>
+            <Typography variant="h5" sx={{ fontWeight: 600 }}>Trending TV Shows</Typography>
+            <Typography variant="caption" color="text.secondary">Most popular series this week</Typography>
+          </Box>
+        </Box>
+        {tmdbLoading ? (
+          <Box sx={{ display: 'flex', gap: 3, overflowX: 'auto', pb: 2 }}>
+            {[1, 2, 3, 4, 5, 6].map(i => (
+              <Box key={i} sx={{ minWidth: 200, flexShrink: 0 }}>
+                <Skeleton variant="rectangular" height={300} sx={{ borderRadius: 2 }} />
+                <Skeleton variant="text" sx={{ mt: 1 }} />
+                <Skeleton variant="text" width="60%" />
+              </Box>
+            ))}
+          </Box>
+        ) : trendingTV.length > 0 ? (
+          <Box sx={{ 
+            display: 'flex', 
+            gap: 3, 
+            overflowX: 'auto', 
+            pb: 2,
+            '&::-webkit-scrollbar': {
+              height: 8
+            },
+            '&::-webkit-scrollbar-track': {
+              background: 'rgba(255,255,255,0.05)',
+              borderRadius: 4
+            },
+            '&::-webkit-scrollbar-thumb': {
+              background: 'rgba(255,255,255,0.2)',
+              borderRadius: 4,
+              '&:hover': {
+                background: 'rgba(255,255,255,0.3)'
+              }
+            }
+          }}>
+            {trendingTV.map((item, index) => (
+              <Box key={index} sx={{ minWidth: 200, flexShrink: 0 }}>
+                <MediaCard item={item} type="tv" index={index} />
+              </Box>
+            ))}
+          </Box>
+        ) : (
+          <Alert severity="info" sx={{ borderRadius: 2 }}>
+            Configure TMDB_API_KEY in environment variables to see trending TV shows
           </Alert>
         )}
       </Box>
@@ -576,23 +676,42 @@ function Dashboard() {
           </Box>
         </Box>
         {tmdbLoading ? (
-          <Grid container spacing={3}>
-            {[1, 2, 3, 4, 5].map(i => (
-              <Grid item xs={6} sm={4} md={2.4} key={i}>
+          <Box sx={{ display: 'flex', gap: 3, overflowX: 'auto', pb: 2 }}>
+            {[1, 2, 3, 4, 5, 6].map(i => (
+              <Box key={i} sx={{ minWidth: 200, flexShrink: 0 }}>
                 <Skeleton variant="rectangular" height={300} sx={{ borderRadius: 2 }} />
                 <Skeleton variant="text" sx={{ mt: 1 }} />
                 <Skeleton variant="text" width="60%" />
-              </Grid>
+              </Box>
             ))}
-          </Grid>
+          </Box>
         ) : upcomingMovies.length > 0 ? (
-          <Grid container spacing={3}>
-            {upcomingMovies.slice(0, 5).map((item, index) => (
-              <Grid item xs={6} sm={4} md={2.4} key={index}>
-                <MediaCard item={item} type="movie" index={index} />
-              </Grid>
+          <Box sx={{ 
+            display: 'flex', 
+            gap: 3, 
+            overflowX: 'auto', 
+            pb: 2,
+            '&::-webkit-scrollbar': {
+              height: 8
+            },
+            '&::-webkit-scrollbar-track': {
+              background: 'rgba(255,255,255,0.05)',
+              borderRadius: 4
+            },
+            '&::-webkit-scrollbar-thumb': {
+              background: 'rgba(255,255,255,0.2)',
+              borderRadius: 4,
+              '&:hover': {
+                background: 'rgba(255,255,255,0.3)'
+              }
+            }
+          }}>
+            {upcomingMovies.map((item, index) => (
+              <Box key={index} sx={{ minWidth: 200, flexShrink: 0 }}>
+                <MediaCard item={item} type="movie" index={index} showReleaseDate />
+              </Box>
             ))}
-          </Grid>
+          </Box>
         ) : null}
       </Box>
 

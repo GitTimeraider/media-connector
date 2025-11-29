@@ -264,7 +264,18 @@ class ApiService {
     return response.data;
   }
 
+  // NZBGet endpoints
+  async getNzbgetStatus(instanceId) {
+    const response = await this.client.get(`/nzbget/status/${instanceId}`);
+    return response.data;
+  }
+
   // qBittorrent endpoints
+  async getQbittorrentStatus(instanceId) {
+    const response = await this.client.get(`/qbittorrent/status/${instanceId}`);
+    return response.data;
+  }
+
   async getQbittorrentTorrents(instanceId) {
     const response = await this.client.get(`/qbittorrent/torrents/${instanceId}`);
     return response.data;
@@ -286,8 +297,19 @@ class ApiService {
   }
 
   // Deluge endpoints
+  async getDelugeStatus(instanceId) {
+    const response = await this.client.get(`/deluge/status/${instanceId}`);
+    return response.data;
+  }
+
   async addToDeluge(instanceId, url) {
     const response = await this.client.post(`/deluge/add/${instanceId}`, { url });
+    return response.data;
+  }
+
+  // Transmission endpoints
+  async getTransmissionStatus(instanceId) {
+    const response = await this.client.get(`/transmission/status/${instanceId}`);
     return response.data;
   }
 
@@ -303,12 +325,21 @@ class ApiService {
   }
 
   // Tautulli endpoints
+  async getTautulliStatus(instanceId) {
+    const response = await this.client.get(`/tautulli/status/${instanceId}`);
+    return response.data;
+  }
+
   async getTautulliActivity(instanceId) {
     const response = await this.client.get(`/tautulli/activity/${instanceId}`);
     return response.data;
   }
 
   // Prowlarr endpoints
+  async getProwlarrStatus(instanceId) {
+    const response = await this.client.get(`/prowlarr/status/${instanceId}`);
+    return response.data;
+  }
   async searchProwlarr(instanceId, params) {
     const response = await this.client.get(`/prowlarr/search/${instanceId}`, { params });
     return response.data;
@@ -317,6 +348,16 @@ class ApiService {
   // TMDB endpoints
   async getTrendingContent() {
     const response = await this.client.get('/tmdb/trending');
+    return response.data;
+  }
+
+  async getTrendingMovies() {
+    const response = await this.client.get('/tmdb/trending/movies');
+    return response.data;
+  }
+
+  async getTrendingTVShows() {
+    const response = await this.client.get('/tmdb/trending/tv');
     return response.data;
   }
 

@@ -24,39 +24,14 @@ router.get('/status/:instanceId', async (req, res) => {
       headers['Authorization'] = `Bearer ${instance.apiKey}`;
     }
 
-    // Get system info via GraphQL API
-    const query = `
-      query {
-        info {
-          os {
-            platform
-            distro
-            release
-            uptime
-          }
-          cpu {
-            manufacturer
-            brand
-            cores
-            threads
-          }
-          memory {
-            total
-            free
-            used
-          }
-        }
-      }
-    `;
-
-    console.log(`Attempting Unraid status request to: ${instance.url}/graphql`);
+    // Get system info via REST API (v4.27.0+)
+    console.log(`Attempting Unraid status request to: ${instance.url}/api/system`);
     
-    const response = await axios.post(`${instance.url}/graphql`, 
-      { query },
+    const response = await axios.get(`${instance.url}/api/system`, 
       { headers, timeout: 10000 }
     );
 
-    res.json(response.data.data);
+    res.json(response.data);
   } catch (error) {
     console.error('Unraid status error:', error.message);
     // Return empty data instead of 500 to prevent UI errors
@@ -80,27 +55,14 @@ router.get('/docker/:instanceId', async (req, res) => {
       headers['Authorization'] = `Bearer ${instance.apiKey}`;
     }
 
-    // Get Docker containers via GraphQL API
-    const query = `
-      query {
-        dockerContainers {
-          id
-          names
-          state
-          status
-          autoStart
-        }
-      }
-    `;
+    // Get Docker containers via REST API (v4.27.0+)
+    console.log(`Attempting Unraid docker request to: ${instance.url}/api/docker`);
 
-    console.log(`Attempting Unraid docker request to: ${instance.url}/graphql`);
-
-    const response = await axios.post(`${instance.url}/graphql`,
-      { query },
+    const response = await axios.get(`${instance.url}/api/docker`,
       { headers, timeout: 10000 }
     );
 
-    res.json(response.data.data);
+    res.json(response.data);
   } catch (error) {
     console.error('Unraid docker error:', error.message);
     // Return empty data instead of 500 to prevent UI errors
@@ -119,23 +81,12 @@ router.get('/vms/:instanceId', async (req, res) => {
       'Content-Type': 'application/json'
     };
 
-    // Get VMs via GraphQL API
-    const query = `
-      query {
-        vms {
-          name
-          state
-          autoStart
-        }
-      }
-    `;
-
-    const response = await axios.post(`${instance.url}/graphql`,
-      { query },
+    // Get VMs via REST API (v4.27.0+)
+    const response = await axios.get(`${instance.url}/api/vms`,
       { headers, timeout: 10000 }
     );
 
-    res.json(response.data.data);
+    res.json(response.data);
   } catch (error) {
     console.error('Unraid VMs error:', error.message);
     res.status(500).json({ error: error.message, details: error.response?.data });
@@ -153,34 +104,12 @@ router.get('/array/:instanceId', async (req, res) => {
       'Content-Type': 'application/json'
     };
 
-    // Get array status via GraphQL API
-    const query = `
-      query {
-        array {
-          state
-          capacity {
-            disks {
-              free
-              used
-              total
-            }
-          }
-          disks {
-            name
-            size
-            status
-            temp
-          }
-        }
-      }
-    `;
-
-    const response = await axios.post(`${instance.url}/graphql`,
-      { query },
+    // Get array status via REST API (v4.27.0+)
+    const response = await axios.get(`${instance.url}/api/array`,
       { headers, timeout: 10000 }
     );
 
-    res.json(response.data.data);
+    res.json(response.data);
   } catch (error) {
     console.error('Unraid array error:', error.message);
     res.status(500).json({ error: error.message, details: error.response?.data });

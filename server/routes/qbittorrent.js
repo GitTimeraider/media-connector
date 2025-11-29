@@ -8,6 +8,22 @@ router.get('/instances', async (req, res) => {
   res.json(instances);
 });
 
+router.get('/status/:instanceId', async (req, res) => {
+  try {
+    const instances = await configManager.getServices('qbittorrent');
+    const instance = instances.find(i => i.id === req.params.instanceId);
+    if (!instance) return res.status(404).json({ error: 'Instance not found' });
+
+    const response = await axios.get(`${instance.url}/api/v2/app/version`, {
+      timeout: 5000
+    });
+    
+    res.json({ status: 'online', version: response.data });
+  } catch (error) {
+    res.status(200).json({ status: 'offline', error: error.message });
+  }
+});
+
 router.post('/login/:instanceId', async (req, res) => {
   try {
     const instances = await configManager.getServices('qbittorrent');

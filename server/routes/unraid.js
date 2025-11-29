@@ -24,36 +24,42 @@ router.get('/status/:instanceId', async (req, res) => {
       headers['Authorization'] = `Bearer ${instance.apiKey}`;
     }
 
-    // Get system info via REST API (v4.27.0+)
-    // Try multiple endpoint patterns
-    const endpoints = [
-      `${instance.url}/system`,
-      `${instance.url}/api/system`,
-      `${instance.url}/info`,
-      `${instance.url}/api/info`
-    ];
-
-    let response = null;
-    let lastError = null;
-
-    for (const endpoint of endpoints) {
-      try {
-        console.log(`Attempting Unraid status request to: ${endpoint}`);
-        response = await axios.get(endpoint, { headers, timeout: 5000 });
-        console.log(`Success! Unraid responded from: ${endpoint}`);
-        break;
-      } catch (error) {
-        lastError = error;
-        console.log(`Failed ${endpoint}: ${error.message}`);
+    // Get system info via GraphQL API
+    const query = `
+      query {
+        info {
+          cpu {
+            manufacturer
+            brand
+            cores
+            threads
+            clockSpeed
+          }
+          memory {
+            layout {
+              size
+              type
+            }
+          }
+          versions {
+            core {
+              unraid
+              api
+              kernel
+            }
+          }
+        }
       }
-    }
+    `;
 
-    if (response) {
-      res.json(response.data);
-    } else {
-      console.error('All Unraid status endpoints failed:', lastError?.message);
-      res.json({ info: null, error: 'No valid endpoint found' });
-    }
+    console.log(`Attempting Unraid status request to: ${instance.url}/graphql`);
+    
+    const response = await axios.post(`${instance.url}/graphql`, 
+      { query },
+      { headers, timeout: 10000 }
+    );
+
+    res.json(response.data);
   } catch (error) {
     console.error('Unraid status error:', error.message);
     // Return empty data instead of 500 to prevent UI errors
@@ -77,37 +83,30 @@ router.get('/docker/:instanceId', async (req, res) => {
       headers['Authorization'] = `Bearer ${instance.apiKey}`;
     }
 
-    // Get Docker containers via REST API (v4.27.0+)
-    // Try multiple endpoint patterns
-    const endpoints = [
-      `${instance.url}/docker`,
-      `${instance.url}/api/docker`,
-      `${instance.url}/containers`,
-      `${instance.url}/api/containers`,
-      `${instance.url}/docker/containers`
-    ];
-
-    let response = null;
-    let lastError = null;
-
-    for (const endpoint of endpoints) {
-      try {
-        console.log(`Attempting Unraid docker request to: ${endpoint}`);
-        response = await axios.get(endpoint, { headers, timeout: 5000 });
-        console.log(`Success! Unraid responded from: ${endpoint}`);
-        break;
-      } catch (error) {
-        lastError = error;
-        console.log(`Failed ${endpoint}: ${error.message}`);
+    // Get Docker containers via GraphQL API
+    const query = `
+      query {
+        docker {
+          containers {
+            id
+            names
+            image
+            state
+            status
+            autoStart
+          }
+        }
       }
-    }
+    `;
 
-    if (response) {
-      res.json(response.data);
-    } else {
-      console.error('All Unraid docker endpoints failed:', lastError?.message);
-      res.json({ dockerContainers: [], error: 'No valid endpoint found' });
-    }
+    console.log(`Attempting Unraid docker request to: ${instance.url}/graphql`);
+
+    const response = await axios.post(`${instance.url}/graphql`,
+      { query },
+      { headers, timeout: 10000 }
+    );
+
+    res.json(response.data);
   } catch (error) {
     console.error('Unraid docker error:', error.message);
     // Return empty data instead of 500 to prevent UI errors
@@ -122,34 +121,37 @@ router.get('/vms/:instanceId', async (req, res) => {
     if (!instance) return res.status(404).json({ error: 'Instance not found' });
 
     const headers = {
-      'x-api-key': instance.apiKey,
       'Content-Type': 'application/json'
     };
+    
+    if (instance.apiKey) {
+      headers['x-api-key'] = instance.apiKey;
+      headers['Authorization'] = `Bearer ${instance.apiKey}`;
+    }
 
-    // Get VMs via REST API (v4.27.0+)
-    const endpoints = [
-      `${instance.url}/vms`,
-      `${instance.url}/api/vms`,
-      `${instance.url}/vm`,
-      `${instance.url}/api/vm`
-    ];
-
-    let response = null;
-    for (const endpoint of endpoints) {
-      try {
-        response = await axios.get(endpoint, { headers, timeout: 5000 });
-        console.log(`Success! Unraid VMs from: ${endpoint}`);
-        break;
-      } catch (error) {
-        console.log(`Failed ${endpoint}: ${error.message}`);
+    // Get VMs via GraphQL API
+    const query = `
+      query {
+        vms {
+          domains {
+            id
+            uuid
+            name
+            state
+            autoStart
+          }
+        }
       }
-    }
+    `;
 
-    if (response) {
-      res.json(response.data);
-    } else {
-      res.json({ vms: [], error: 'No valid endpoint found' });
-    }
+    console.log(`Attempting Unraid VMs request to: ${instance.url}/graphql`);
+
+    const response = await axios.post(`${instance.url}/graphql`,
+      { query },
+      { headers, timeout: 10000 }
+    );
+
+    res.json(response.data);
   } catch (error) {
     console.error('Unraid VMs error:', error.message);
     res.status(500).json({ error: error.message, details: error.response?.data });
@@ -163,34 +165,46 @@ router.get('/array/:instanceId', async (req, res) => {
     if (!instance) return res.status(404).json({ error: 'Instance not found' });
 
     const headers = {
-      'x-api-key': instance.apiKey,
       'Content-Type': 'application/json'
     };
+    
+    if (instance.apiKey) {
+      headers['x-api-key'] = instance.apiKey;
+      headers['Authorization'] = `Bearer ${instance.apiKey}`;
+    }
 
-    // Get array status via REST API (v4.27.0+)
-    const endpoints = [
-      `${instance.url}/array`,
-      `${instance.url}/api/array`,
-      `${instance.url}/disks`,
-      `${instance.url}/api/disks`
-    ];
-
-    let response = null;
-    for (const endpoint of endpoints) {
-      try {
-        response = await axios.get(endpoint, { headers, timeout: 5000 });
-        console.log(`Success! Unraid array from: ${endpoint}`);
-        break;
-      } catch (error) {
-        console.log(`Failed ${endpoint}: ${error.message}`);
+    // Get array status via GraphQL API
+    const query = `
+      query {
+        array {
+          state
+          capacity {
+            disks {
+              free
+              used
+              total
+            }
+          }
+          disks {
+            name
+            device
+            size
+            status
+            temp
+            type
+          }
+        }
       }
-    }
+    `;
 
-    if (response) {
-      res.json(response.data);
-    } else {
-      res.json({ array: null, error: 'No valid endpoint found' });
-    }
+    console.log(`Attempting Unraid array request to: ${instance.url}/graphql`);
+
+    const response = await axios.post(`${instance.url}/graphql`,
+      { query },
+      { headers, timeout: 10000 }
+    );
+
+    res.json(response.data);
   } catch (error) {
     console.error('Unraid array error:', error.message);
     res.status(500).json({ error: error.message, details: error.response?.data });

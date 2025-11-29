@@ -274,7 +274,7 @@ function Dashboard() {
         onMouseLeave={() => setIsHovered(false)}
       >
         <CardActionArea onClick={() => handleOpenDialog(item)}>
-          <Box sx={{ position: 'relative', overflow: 'hidden', height: 225, width: '100%' }}>
+          <Box sx={{ position: 'relative', overflow: 'hidden', height: { xs: 200, sm: 225, md: 250 }, width: '100%' }}>
               <CardMedia
                 component="img"
                 image={imageUrl}
@@ -415,7 +415,7 @@ function Dashboard() {
   };
 
   return (
-    <Container maxWidth="xl" sx={{ pb: 4 }}>
+    <Container maxWidth="xl" sx={{ pb: 4, touchAction: 'pan-y' }}>
       {/* Search Bar */}
       <Paper 
         elevation={2}
@@ -490,10 +490,12 @@ function Dashboard() {
                   backgroundColor: 'rgba(255,255,255,0.4)',
                 },
               },
+              overscrollBehavior: 'contain',
+              WebkitOverflowScrolling: 'touch'
             }}
           >
             {searchResults.map((item, index) => (
-              <Box key={`${item.id}-${index}`} sx={{ width: { xs: 150, sm: 180, md: 200 }, minWidth: { xs: 150, sm: 180, md: 200 }, maxWidth: { xs: 150, sm: 180, md: 200 }, flexShrink: 0 }}>
+              <Box key={`${item.id}-${index}`} sx={{ width: { xs: 140, sm: 160, md: 200 }, minWidth: { xs: 140, sm: 160, md: 200 }, maxWidth: { xs: 140, sm: 160, md: 200 }, flexShrink: 0 }}>
                 <MediaCard item={item} type={item.media_type} index={index} />
               </Box>
             ))}
@@ -638,11 +640,12 @@ function Dashboard() {
               '&:hover': {
                 background: 'rgba(255,255,255,0.3)'
               }
-            }
-          }}>
+            },
+            overscrollBehavior: 'contain',
+            WebkitOverflowScrolling: 'touch'
           }}>
             {trendingMovies.map((item, index) => (
-              <Box key={index} sx={{ width: 200, minWidth: 200, maxWidth: 200, flexShrink: 0 }}>
+              <Box key={index} sx={{ width: { xs: 140, sm: 160, md: 200 }, minWidth: { xs: 140, sm: 160, md: 200 }, maxWidth: { xs: 140, sm: 160, md: 200 }, flexShrink: 0 }}>
                 <MediaCard item={item} type="movie" index={index} />
               </Box>
             ))}
@@ -703,10 +706,12 @@ function Dashboard() {
               '&:hover': {
                 background: 'rgba(255,255,255,0.3)'
               }
-            }
+            },
+            overscrollBehavior: 'contain',
+            WebkitOverflowScrolling: 'touch'
           }}>
             {trendingTV.map((item, index) => (
-              <Box key={index} sx={{ width: 200, minWidth: 200, maxWidth: 200, flexShrink: 0 }}>
+              <Box key={index} sx={{ width: { xs: 140, sm: 160, md: 200 }, minWidth: { xs: 140, sm: 160, md: 200 }, maxWidth: { xs: 140, sm: 160, md: 200 }, flexShrink: 0 }}>
                 <MediaCard item={item} type="tv" index={index} />
               </Box>
             ))}
@@ -767,10 +772,12 @@ function Dashboard() {
               '&:hover': {
                 background: 'rgba(255,255,255,0.3)'
               }
-            }
+            },
+            overscrollBehavior: 'contain',
+            WebkitOverflowScrolling: 'touch'
           }}>
             {upcomingMovies.map((item, index) => (
-              <Box key={index} sx={{ width: 200, minWidth: 200, maxWidth: 200, flexShrink: 0 }}>
+              <Box key={index} sx={{ width: { xs: 140, sm: 160, md: 200 }, minWidth: { xs: 140, sm: 160, md: 200 }, maxWidth: { xs: 140, sm: 160, md: 200 }, flexShrink: 0 }}>
                 <MediaCard item={item} type="movie" index={index} showReleaseDate />
               </Box>
             ))}

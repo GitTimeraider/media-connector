@@ -19,7 +19,14 @@ import {
   DialogActions,
   Button,
   CardActionArea,
-  Fade
+  Fade,
+  Paper,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Checkbox
 } from '@mui/material';
 import {
   LiveTv,
@@ -31,7 +38,8 @@ import {
   Info,
   PlayArrow,
   Add,
-  Close
+  Close,
+  Search as SearchIcon
 } from '@mui/icons-material';
 import api from '../services/api';
 
@@ -45,6 +53,18 @@ function Dashboard() {
   const [tmdbLoading, setTmdbLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [searching, setSearching] = useState(false);
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [itemToAdd, setItemToAdd] = useState(null);
+  const [qualityProfiles, setQualityProfiles] = useState([]);
+  const [rootFolders, setRootFolders] = useState([]);
+  const [selectedProfile, setSelectedProfile] = useState('');
+  const [selectedFolder, setSelectedFolder] = useState('');
+  const [tags, setTags] = useState('');
+  const [monitored, setMonitored] = useState(true);
+  const [searchOnAdd, setSearchOnAdd] = useState(true);
 
   useEffect(() => {
     loadDashboard();
@@ -96,6 +116,87 @@ function Dashboard() {
     }
   };
 
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) return;
+    
+    try {
+      setSearching(true);
+      const results = await api.searchTMDB(searchQuery);
+      setSearchResults(results || []);
+    } catch (error) {
+      console.error('Error searching TMDB:', error);
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const handleOpenAddDialog = async (item, mediaType) => {
+    setItemToAdd({ ...item, mediaType });
+    setAddDialogOpen(true);
+    
+    // Load profiles and folders from Radarr/Sonarr
+    try {
+      if (mediaType === 'movie' && services.radarr?.length > 0) {
+        const profiles = await api.getRadarrProfiles(services.radarr[0].id);
+        const folders = await api.getRadarrRootFolders(services.radarr[0].id);
+        setQualityProfiles(profiles || []);
+        setRootFolders(folders || []);
+        if (profiles?.length > 0) setSelectedProfile(profiles[0].id);
+        if (folders?.length > 0) setSelectedFolder(folders[0].path);
+      } else if (mediaType === 'tv' && services.sonarr?.length > 0) {
+        const profiles = await api.getSonarrProfiles(services.sonarr[0].id);
+        const folders = await api.getSonarrRootFolders(services.sonarr[0].id);
+        setQualityProfiles(profiles || []);
+        setRootFolders(folders || []);
+        if (profiles?.length > 0) setSelectedProfile(profiles[0].id);
+        if (folders?.length > 0) setSelectedFolder(folders[0].path);
+      }
+    } catch (error) {
+      console.error('Error loading profiles/folders:', error);
+    }
+  };
+
+  const handleAddToLibraryWithOptions = async () => {
+    if (!itemToAdd || !selectedProfile || !selectedFolder) return;
+    
+    try {
+      const tagsArray = tags.split(',').map(t => t.trim()).filter(t => t);
+      const mediaType = itemToAdd.mediaType;
+      
+      if (mediaType === 'movie' && services.radarr?.length > 0) {
+        await api.addRadarrMovie(services.radarr[0].id, {
+          tmdbId: itemToAdd.id,
+          title: itemToAdd.title,
+          year: itemToAdd.release_date ? new Date(itemToAdd.release_date).getFullYear() : null,
+          qualityProfileId: parseInt(selectedProfile),
+          rootFolderPath: selectedFolder,
+          monitored,
+          tags: tagsArray,
+          addOptions: { searchForMovie: searchOnAdd }
+        });
+        alert(`Added "${itemToAdd.title}" to Radarr!`);
+      } else if (mediaType === 'tv' && services.sonarr?.length > 0) {
+        await api.addSonarrSeries(services.sonarr[0].id, {
+          tvdbId: itemToAdd.id,
+          title: itemToAdd.name || itemToAdd.title,
+          qualityProfileId: parseInt(selectedProfile),
+          rootFolderPath: selectedFolder,
+          monitored,
+          tags: tagsArray,
+          addOptions: { searchForMissingEpisodes: searchOnAdd }
+        });
+        alert(`Added "${itemToAdd.name || itemToAdd.title}" to Sonarr!`);
+      }
+      
+      setAddDialogOpen(false);
+      setItemToAdd(null);
+      setTags('');
+    } catch (error) {
+      console.error('Error adding to library:', error);
+      alert(`Failed to add: ${error.response?.data?.message || error.message}`);
+    }
+  };
+
   const handleOpenDialog = (item) => {
     setSelectedItem(item);
     setDialogOpen(true);
@@ -128,7 +229,6 @@ function Dashboard() {
 
   const MediaCard = ({ item, type, index, showReleaseDate }) => {
     const [isHovered, setIsHovered] = useState(false);
-    const [isAdding, setIsAdding] = useState(false);
     
     const imageUrl = item.poster_path || item.posterUrl
       ? `https://image.tmdb.org/t/p/w500${item.poster_path || item.posterUrl}`
@@ -145,43 +245,14 @@ function Dashboard() {
     // Check if item is already in library (has id from Radarr/Sonarr)
     const isInLibrary = Boolean(item.id && !item.tmdbId);
 
-    const handleAddToLibrary = async (e) => {
+    const handleAddToLibrary = (e) => {
       e.stopPropagation();
-      if (isInLibrary || isAdding) return;
+      if (isInLibrary) return;
       
-      setIsAdding(true);
-      try {
-        const mediaType = type || item.media_type;
-        if (mediaType === 'movie' && services.radarr?.length > 0) {
-          await api.addRadarrMovie(services.radarr[0].id, {
+      const mediaType = type || item.media_type;
+      handleOpenAddDialog(item, mediaType);
             tmdbId: item.id,
             title: item.title,
-            year: item.release_date ? new Date(item.release_date).getFullYear() : null,
-            qualityProfileId: 1,
-            rootFolderPath: '/data/movies',
-            monitored: true,
-            addOptions: { searchForMovie: true }
-          });
-          alert(`Added "${item.title}" to Radarr!`);
-        } else if ((mediaType === 'tv' || !mediaType) && services.sonarr?.length > 0) {
-          await api.addSonarrSeries(services.sonarr[0].id, {
-            tvdbId: item.id,
-            title: item.name || item.title,
-            qualityProfileId: 1,
-            rootFolderPath: '/data/tv',
-            monitored: true,
-            addOptions: { searchForMissingEpisodes: true }
-          });
-          alert(`Added "${item.name || item.title}" to Sonarr!`);
-        } else {
-          alert('No Radarr or Sonarr instance configured');
-        }
-      } catch (error) {
-        console.error('Error adding to library:', error);
-        alert(`Failed to add: ${error.response?.data?.message || error.message}`);
-      } finally {
-        setIsAdding(false);
-      }
     };
     
     return (
@@ -361,6 +432,91 @@ function Dashboard() {
           Your media hub at a glance
         </Typography>
       </Box>
+
+      {/* Search Bar */}
+      <Paper 
+        elevation={2}
+        sx={{ 
+          mb: 4, 
+          p: 2, 
+          display: 'flex', 
+          alignItems: 'center',
+          backgroundColor: 'rgba(255, 255, 255, 0.05)'
+        }}
+      >
+        <TextField
+          fullWidth
+          variant="outlined"
+          placeholder="Search for movies and TV shows on TMDB..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          onKeyPress={(e) => {
+            if (e.key === 'Enter') handleSearch();
+          }}
+          sx={{ mr: 2 }}
+          InputProps={{
+            startAdornment: (
+              <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} />
+            ),
+          }}
+        />
+        <Button
+          variant="contained"
+          onClick={handleSearch}
+          disabled={searching || !searchQuery.trim()}
+          startIcon={searching ? <CircularProgress size={20} /> : <SearchIcon />}
+          sx={{ minWidth: 120 }}
+        >
+          {searching ? 'Searching...' : 'Search'}
+        </Button>
+      </Paper>
+
+      {/* Search Results */}
+      {searchResults.length > 0 && (
+        <Box sx={{ mb: 4 }}>
+          <Typography 
+            variant="h5" 
+            sx={{ 
+              mb: 2, 
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1
+            }}
+          >
+            <SearchIcon />
+            Search Results
+          </Typography>
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 2,
+              overflowX: 'auto',
+              pb: 2,
+              '&::-webkit-scrollbar': {
+                height: 8,
+              },
+              '&::-webkit-scrollbar-track': {
+                backgroundColor: 'rgba(255,255,255,0.1)',
+                borderRadius: 4,
+              },
+              '&::-webkit-scrollbar-thumb': {
+                backgroundColor: 'rgba(255,255,255,0.3)',
+                borderRadius: 4,
+                '&:hover': {
+                  backgroundColor: 'rgba(255,255,255,0.4)',
+                },
+              },
+            }}
+          >
+            {searchResults.map((item, index) => (
+              <Box key={`${item.id}-${index}`} sx={{ minWidth: { xs: 150, sm: 180, md: 200 }, flexShrink: 0 }}>
+                <MediaCard item={item} type={item.media_type} index={index} />
+              </Box>
+            ))}
+          </Box>
+        </Box>
+      )}
 
       {/* Detail Dialog */}
       <Dialog 
@@ -733,6 +889,104 @@ function Dashboard() {
           )}
         </Box>
       )}
+
+      {/* Add to Library Dialog */}
+      <Dialog open={addDialogOpen} onClose={() => setAddDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          Add to Library
+          <IconButton
+            onClick={() => setAddDialogOpen(false)}
+            sx={{ position: 'absolute', right: 8, top: 8 }}
+          >
+            <Close />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent>
+          {itemToAdd && (
+            <Box>
+              <Typography variant="h6" gutterBottom>
+                {itemToAdd.title || itemToAdd.name}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                {itemToAdd.mediaType === 'movie' ? 'Movie' : 'TV Series'}
+              </Typography>
+              
+              <Box sx={{ mt: 3 }}>
+                <FormControl fullWidth sx={{ mb: 2 }}>
+                  <InputLabel>Quality Profile</InputLabel>
+                  <Select
+                    value={selectedProfile}
+                    label="Quality Profile"
+                    onChange={(e) => setSelectedProfile(e.target.value)}
+                  >
+                    {qualityProfiles.map((profile) => (
+                      <MenuItem key={profile.id} value={profile.id}>
+                        {profile.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+
+                <FormControl fullWidth sx={{ mb: 2 }}>
+                  <InputLabel>Root Folder</InputLabel>
+                  <Select
+                    value={selectedFolder}
+                    label="Root Folder"
+                    onChange={(e) => setSelectedFolder(e.target.value)}
+                  >
+                    {rootFolders.map((folder) => (
+                      <MenuItem key={folder.path} value={folder.path}>
+                        {folder.path}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+
+                <TextField
+                  fullWidth
+                  label="Tags (comma-separated)"
+                  value={tags}
+                  onChange={(e) => setTags(e.target.value)}
+                  placeholder="e.g. action, comedy, 4k"
+                  sx={{ mb: 2 }}
+                />
+
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                    Options
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <Checkbox
+                        checked={monitored}
+                        onChange={(e) => setMonitored(e.target.checked)}
+                      />
+                      <Typography variant="body2">Monitor for availability</Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <Checkbox
+                        checked={searchOnAdd}
+                        onChange={(e) => setSearchOnAdd(e.target.checked)}
+                      />
+                      <Typography variant="body2">Search on add</Typography>
+                    </Box>
+                  </Box>
+                </Box>
+              </Box>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setAddDialogOpen(false)}>Cancel</Button>
+          <Button 
+            onClick={handleAddToLibraryWithOptions} 
+            variant="contained"
+            disabled={!selectedProfile || !selectedFolder}
+          >
+            Add to Library
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 }

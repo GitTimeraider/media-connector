@@ -142,4 +142,38 @@ router.get('/trending', async (req, res) => {
   }
 });
 
+// Search TMDB
+router.get('/search', async (req, res) => {
+  try {
+    if (!TMDB_API_KEY) {
+      return res.status(400).json({ error: 'TMDB API key not configured' });
+    }
+
+    const { query } = req.query;
+    if (!query) {
+      return res.status(400).json({ error: 'Search query is required' });
+    }
+
+    const response = await axios.get(`${TMDB_BASE_URL}/search/multi`, {
+      params: {
+        api_key: TMDB_API_KEY,
+        language: 'en-US',
+        query: query,
+        page: 1,
+        include_adult: false
+      }
+    });
+
+    // Filter for movies and TV shows only, return first 20 results
+    const filtered = response.data.results
+      .filter(item => item.media_type === 'movie' || item.media_type === 'tv')
+      .slice(0, 20);
+
+    res.json(filtered);
+  } catch (error) {
+    console.error('TMDB search error:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;

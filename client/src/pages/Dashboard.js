@@ -251,8 +251,6 @@ function Dashboard() {
       
       const mediaType = type || item.media_type;
       handleOpenAddDialog(item, mediaType);
-            tmdbId: item.id,
-            title: item.title,
     };
     
     return (

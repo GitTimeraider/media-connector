@@ -128,6 +128,7 @@ function Dashboard() {
 
   const MediaCard = ({ item, type, index, showReleaseDate }) => {
     const [isHovered, setIsHovered] = useState(false);
+    const [isAdding, setIsAdding] = useState(false);
     
     const imageUrl = item.poster_path || item.posterUrl
       ? `https://image.tmdb.org/t/p/w500${item.poster_path || item.posterUrl}`
@@ -140,6 +141,48 @@ function Dashboard() {
     
     const releaseDate = item.release_date ? new Date(item.release_date) : null;
     const formattedDate = releaseDate ? releaseDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : null;
+    
+    // Check if item is already in library (has id from Radarr/Sonarr)
+    const isInLibrary = Boolean(item.id && !item.tmdbId);
+
+    const handleAddToLibrary = async (e) => {
+      e.stopPropagation();
+      if (isInLibrary || isAdding) return;
+      
+      setIsAdding(true);
+      try {
+        const mediaType = type || item.media_type;
+        if (mediaType === 'movie' && services.radarr?.length > 0) {
+          await api.addRadarrMovie(services.radarr[0].id, {
+            tmdbId: item.id,
+            title: item.title,
+            year: item.release_date ? new Date(item.release_date).getFullYear() : null,
+            qualityProfileId: 1,
+            rootFolderPath: '/data/movies',
+            monitored: true,
+            addOptions: { searchForMovie: true }
+          });
+          alert(`Added "${item.title}" to Radarr!`);
+        } else if ((mediaType === 'tv' || !mediaType) && services.sonarr?.length > 0) {
+          await api.addSonarrSeries(services.sonarr[0].id, {
+            tvdbId: item.id,
+            title: item.name || item.title,
+            qualityProfileId: 1,
+            rootFolderPath: '/data/tv',
+            monitored: true,
+            addOptions: { searchForMissingEpisodes: true }
+          });
+          alert(`Added "${item.name || item.title}" to Sonarr!`);
+        } else {
+          alert('No Radarr or Sonarr instance configured');
+        }
+      } catch (error) {
+        console.error('Error adding to library:', error);
+        alert(`Failed to add: ${error.response?.data?.message || error.message}`);
+      } finally {
+        setIsAdding(false);
+      }
+    };
     
     return (
       <Card 
@@ -161,14 +204,16 @@ function Dashboard() {
           onMouseLeave={() => setIsHovered(false)}
         >
           <CardActionArea onClick={() => handleOpenDialog(item)}>
-            <Box sx={{ position: 'relative', overflow: 'hidden' }}>
+            <Box sx={{ position: 'relative', overflow: 'hidden', height: 225 }}>
               <CardMedia
                 component="img"
-                height="300"
                 image={imageUrl}
                 alt={title}
                 sx={{ 
+                  width: '100%',
+                  height: '100%',
                   objectFit: 'cover',
+                  objectPosition: 'center top',
                   transition: 'transform 0.3s ease',
                   transform: isHovered ? 'scale(1.1)' : 'scale(1)'
                 }}
@@ -212,18 +257,23 @@ function Dashboard() {
                         <PlayArrow />
                       </IconButton>
                     </Tooltip>
-                    <Tooltip title="Add to Library">
-                      <IconButton 
-                        size="small" 
-                        sx={{ 
-                          bgcolor: 'secondary.main', 
-                          color: 'white',
-                          '&:hover': { bgcolor: 'secondary.dark' }
-                        }}
-                      >
-                        <Add />
-                      </IconButton>
-                    </Tooltip>
+                    {!isInLibrary && (
+                      <Tooltip title={isAdding ? "Adding..." : "Add to Library"}>
+                        <IconButton 
+                          size="small" 
+                          onClick={handleAddToLibrary}
+                          disabled={isAdding}
+                          sx={{ 
+                            bgcolor: 'secondary.main', 
+                            color: 'white',
+                            '&:hover': { bgcolor: 'secondary.dark' },
+                            '&:disabled': { bgcolor: 'rgba(156,39,176,0.5)' }
+                          }}
+                        >
+                          <Add />
+                        </IconButton>
+                      </Tooltip>
+                    )}
                   </Box>
                 </Box>
               </Fade>

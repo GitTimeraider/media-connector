@@ -59,7 +59,12 @@ router.get('/status/:instanceId', async (req, res) => {
       { headers, timeout: 10000 }
     );
 
-    res.json(response.data);
+    // GraphQL returns data in response.data.data
+    if (response.data && response.data.data) {
+      res.json(response.data.data);
+    } else {
+      res.json(response.data);
+    }
   } catch (error) {
     console.error('Unraid status error:', error.message);
     // Return empty data instead of 500 to prevent UI errors
@@ -106,7 +111,12 @@ router.get('/docker/:instanceId', async (req, res) => {
       { headers, timeout: 10000 }
     );
 
-    res.json(response.data);
+    // GraphQL returns data in response.data.data
+    if (response.data && response.data.data) {
+      res.json(response.data.data);
+    } else {
+      res.json(response.data);
+    }
   } catch (error) {
     console.error('Unraid docker error:', error.message);
     // Return empty data instead of 500 to prevent UI errors
@@ -151,7 +161,12 @@ router.get('/vms/:instanceId', async (req, res) => {
       { headers, timeout: 10000 }
     );
 
-    res.json(response.data);
+    // GraphQL returns data in response.data.data
+    if (response.data && response.data.data) {
+      res.json(response.data.data);
+    } else {
+      res.json(response.data);
+    }
   } catch (error) {
     console.error('Unraid VMs error:', error.message);
     res.status(500).json({ error: error.message, details: error.response?.data });
@@ -204,7 +219,12 @@ router.get('/array/:instanceId', async (req, res) => {
       { headers, timeout: 10000 }
     );
 
-    res.json(response.data);
+    // GraphQL returns data in response.data.data
+    if (response.data && response.data.data) {
+      res.json(response.data.data);
+    } else {
+      res.json(response.data);
+    }
   } catch (error) {
     console.error('Unraid array error:', error.message);
     res.status(500).json({ error: error.message, details: error.response?.data });

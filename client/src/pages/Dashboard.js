@@ -24,8 +24,6 @@ import {
 import {
   LiveTv,
   Movie,
-  MusicNote,
-  Book,
   Warning,
   Download,
   CalendarToday,

@@ -114,11 +114,6 @@ router.get('/docker/:instanceId', async (req, res) => {
             state
             status
             autoStart
-            stats {
-              memoryUsage
-              memoryLimit
-              cpuPercentage
-            }
           }
         }
       }
@@ -131,16 +126,21 @@ router.get('/docker/:instanceId', async (req, res) => {
       { headers, timeout: 10000 }
     );
 
+    console.log('Unraid docker response:', JSON.stringify(response.data, null, 2));
+
     // GraphQL returns data in response.data.data
     if (response.data && response.data.data) {
+      const containers = response.data.data.docker?.containers || [];
+      console.log(`Found ${containers.length} Docker containers`);
       res.json(response.data.data);
     } else {
       res.json(response.data);
     }
   } catch (error) {
     console.error('Unraid docker error:', error.message);
+    console.error('Error details:', error.response?.data);
     // Return empty data instead of 500 to prevent UI errors
-    res.json({ dockerContainers: [] });
+    res.json({ docker: { containers: [] } });
   }
 });
 

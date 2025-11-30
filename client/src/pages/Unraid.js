@@ -388,17 +388,6 @@ function Unraid() {
                 <Typography variant="body2" color="text.secondary">
                   {container.status || container.Status || 'No status'}
                 </Typography>
-                {container.stats?.memoryUsage && container.stats?.memoryLimit && (
-                  <Typography variant="caption" display="block" sx={{ mt: 1 }}>
-                    Memory: {formatBytes(container.stats.memoryUsage)} / {formatBytes(container.stats.memoryLimit)}
-                    {' '}({((container.stats.memoryUsage / container.stats.memoryLimit) * 100).toFixed(1)}%)
-                  </Typography>
-                )}
-                {container.stats?.cpuPercentage !== undefined && (
-                  <Typography variant="caption" display="block">
-                    CPU: {container.stats.cpuPercentage.toFixed(1)}%
-                  </Typography>
-                )}
                 {container.autoStart !== undefined && (
                   <Chip 
                     label={container.autoStart ? 'Auto-start' : 'Manual start'} 

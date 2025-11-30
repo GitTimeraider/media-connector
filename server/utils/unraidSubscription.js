@@ -51,7 +51,10 @@ class UnraidSubscriptionManager extends EventEmitter {
             case 'data':
               // Emit system stats data
               if (message.payload && message.payload.data) {
-                console.log(`Received stats data for instance ${instanceId}:`, JSON.stringify(message.payload.data, null, 2));
+                const data = message.payload.data;
+                console.log(`Received stats data for instance ${instanceId}`);
+                console.log('CPU usage:', data.info?.cpu?.usage);
+                console.log('Memory usage:', data.info?.memory?.used, '/', data.info?.memory?.total);
                 this.emit(`stats:${instanceId}`, message.payload.data);
               } else {
                 console.log(`No data in payload for instance ${instanceId}:`, message);
@@ -99,6 +102,7 @@ class UnraidSubscriptionManager extends EventEmitter {
     const subscriptionId = 'system-stats';
     
     // GraphQL subscription query for real-time system stats
+    // Note: usage and temperature might only be available in subscriptions, not queries
     const query = `
       subscription {
         info {
@@ -109,7 +113,6 @@ class UnraidSubscriptionManager extends EventEmitter {
             threads
             speed
             usage
-            temperature
           }
           memory {
             total
@@ -127,6 +130,8 @@ class UnraidSubscriptionManager extends EventEmitter {
         }
       }
     `;
+    
+    console.log(`Starting subscription for instance ${instanceId} with query:`, query);
 
     const message = {
       id: subscriptionId,

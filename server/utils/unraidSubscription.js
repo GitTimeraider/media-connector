@@ -102,36 +102,26 @@ class UnraidSubscriptionManager extends EventEmitter {
     const subscriptionId = 'system-stats';
     
     // GraphQL subscription query for real-time system stats
-    // Note: usage and temperature might only be available in subscriptions, not queries
+    // Start with basic fields to test if subscription works at all
     const query = `
       subscription {
         info {
           cpu {
-            manufacturer
-            brand
-            cores
-            threads
             speed
             usage
           }
           memory {
             total
-            free
             used
-            active
-            available
           }
           os {
             uptime
-            hostname
-            distro
-            release
           }
         }
       }
     `;
     
-    console.log(`Starting subscription for instance ${instanceId} with query:`, query);
+    console.log(`Starting subscription for instance ${instanceId}`);
 
     const message = {
       id: subscriptionId,

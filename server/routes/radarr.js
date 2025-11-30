@@ -169,6 +169,28 @@ router.post('/movie/:instanceId', async (req, res) => {
   }
 });
 
+// Update movie
+router.put('/movie/:instanceId/:movieId', async (req, res) => {
+  try {
+    const instances = await configManager.getServices('radarr');
+    const instance = instances.find(i => i.id === req.params.instanceId);
+    
+    if (!instance) {
+      return res.status(404).json({ error: 'Instance not found' });
+    }
+
+    const client = new ApiClient(instance.url, instance.apiKey);
+    // Get current movie first
+    const currentMovie = await client.get(`/api/v3/movie/${req.params.movieId}`);
+    // Update with new values
+    const updatedMovie = { ...currentMovie, ...req.body };
+    const result = await client.put(`/api/v3/movie/${req.params.movieId}`, updatedMovie);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Delete movie
 router.delete('/movie/:instanceId/:movieId', async (req, res) => {
   try {

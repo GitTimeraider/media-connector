@@ -45,6 +45,9 @@ function Sonarr() {
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [seriesToView, setSeriesToView] = useState(null);
   const [deleteFiles, setDeleteFiles] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [editQualityProfile, setEditQualityProfile] = useState('');
+  const [editMonitored, setEditMonitored] = useState(false);
 
   useEffect(() => {
     loadInstances();
@@ -104,15 +107,39 @@ function Sonarr() {
 
   const handleOpenDetail = (series) => {
     setSeriesToView(series);
+    setEditQualityProfile(series.qualityProfileId || '');
+    setEditMonitored(series.monitored || false);
     setDetailDialogOpen(true);
   };
 
   const handleCloseDetail = () => {
     setDetailDialogOpen(false);
+    setEditMode(false);
     setTimeout(() => {
       setSeriesToView(null);
       setDeleteFiles(false);
     }, 200);
+  };
+
+  const handleSaveChanges = async () => {
+    if (!seriesToView) return;
+    
+    try {
+      await api.updateSonarrSeries(selectedInstance, seriesToView.id, {
+        qualityProfileId: parseInt(editQualityProfile),
+        monitored: editMonitored
+      });
+      setEditMode(false);
+      loadSeries();
+      setSeriesToView({
+        ...seriesToView,
+        qualityProfileId: parseInt(editQualityProfile),
+        monitored: editMonitored
+      });
+    } catch (error) {
+      console.error('Error updating series:', error);
+      alert(`Failed to update series: ${error.response?.data?.message || error.message}`);
+    }
   };
 
   const handleDeleteSeries = async () => {
@@ -314,23 +341,65 @@ function Sonarr() {
                 <Grid item xs={12} sm={8}>
                   <Box display="flex" gap={1} mb={2} flexWrap="wrap">
                     <Chip label={`${seriesToView.seasonCount} Seasons`} />
-                    {seriesToView.monitored && (
-                      <Chip label="Monitored" color="primary" />
-                    )}
                     {seriesToView.status && (
                       <Chip label={seriesToView.status} />
                     )}
-                    {seriesToView.qualityProfileId && (
-                      <Chip label={`Quality: ${qualityProfiles.find(p => p.id === seriesToView.qualityProfileId)?.name || 'Unknown'}`} />
-                    )}
                   </Box>
+                  
+                  {editMode ? (
+                    <Box sx={{ mb: 2 }}>
+                      <FormControl fullWidth sx={{ mb: 2 }}>
+                        <InputLabel>Quality Profile</InputLabel>
+                        <Select
+                          value={editQualityProfile}
+                          label="Quality Profile"
+                          onChange={(e) => setEditQualityProfile(e.target.value)}
+                        >
+                          {qualityProfiles.map((profile) => (
+                            <MenuItem key={profile.id} value={profile.id}>
+                              {profile.name}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                      <Box display="flex" alignItems="center">
+                        <input
+                          type="checkbox"
+                          checked={editMonitored}
+                          onChange={(e) => setEditMonitored(e.target.checked)}
+                          style={{ marginRight: 8 }}
+                        />
+                        <Typography variant="body2">Monitor this series</Typography>
+                      </Box>
+                    </Box>
+                  ) : (
+                    <Box display="flex" gap={1} mb={2} flexWrap="wrap">
+                      {seriesToView.monitored && (
+                        <Chip label="Monitored" color="primary" />
+                      )}
+                      {seriesToView.qualityProfileId && (
+                        <Chip label={`Quality: ${qualityProfiles.find(p => p.id === seriesToView.qualityProfileId)?.name || 'Unknown'}`} />
+                      )}
+                    </Box>
+                  )}
+                  
                   <Typography variant="h6" gutterBottom>Overview</Typography>
                   <Typography variant="body1" paragraph>
                     {seriesToView.overview || 'No overview available.'}
                   </Typography>
+                  
+                  {seriesToView.episodeFileCount > 0 && (
+                    <>
+                      <Typography variant="h6" gutterBottom>Downloaded Episodes</Typography>
+                      <Typography variant="body2" color="text.secondary" paragraph>
+                        {seriesToView.episodeFileCount} / {seriesToView.episodeCount} episodes
+                      </Typography>
+                    </>
+                  )}
+                  
                   {seriesToView.path && (
                     <>
-                      <Typography variant="h6" gutterBottom>File Path</Typography>
+                      <Typography variant="h6" gutterBottom>Folder Path</Typography>
                       <Typography variant="body2" color="text.secondary" paragraph>
                         {seriesToView.path}
                       </Typography>
@@ -356,14 +425,32 @@ function Sonarr() {
             </DialogContent>
             <DialogActions>
               <Button onClick={handleCloseDetail}>Close</Button>
-              <Button 
-                onClick={handleDeleteSeries}
-                color="error"
-                variant="contained"
-                startIcon={<Delete />}
-              >
-                Delete from Sonarr
-              </Button>
+              {editMode ? (
+                <>
+                  <Button onClick={() => setEditMode(false)}>Cancel</Button>
+                  <Button 
+                    onClick={handleSaveChanges}
+                    color="primary"
+                    variant="contained"
+                  >
+                    Save Changes
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button onClick={() => setEditMode(true)} variant="outlined">
+                    Edit
+                  </Button>
+                  <Button 
+                    onClick={handleDeleteSeries}
+                    color="error"
+                    variant="contained"
+                    startIcon={<Delete />}
+                  >
+                    Delete from Sonarr
+                  </Button>
+                </>
+              )}
             </DialogActions>
           </>
         )}

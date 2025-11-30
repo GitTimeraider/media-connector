@@ -297,18 +297,19 @@ router.post('/docker/action/:instanceId', async (req, res) => {
     console.log('Found container:', { id: container.id, name: containerName, state: container.state });
     
     // Use GraphQL mutation for docker actions
-    // Try using container name as that's what Unraid usually expects
+    // Unraid might expect the mutation differently - try with id instead of name
     const actionName = action.charAt(0).toUpperCase() + action.slice(1);
     
-    // Try simpler mutation format without return fields
+    // Try mutation with container ID
     const mutation = `
       mutation {
-        dockerContainer${actionName}(name: "${containerName}")
+        dockerContainer${actionName}(id: "${containerId}")
       }
     `;
 
     console.log('Sending mutation:', mutation);
-    console.log('Container name for mutation:', containerName);
+    console.log('Container ID for mutation:', containerId);
+    console.log('Container name:', containerName);
 
     const response = await axios.post(`${instance.url}/graphql`,
       { query: mutation },

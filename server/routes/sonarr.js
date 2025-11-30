@@ -177,6 +177,28 @@ router.post('/series/:instanceId', async (req, res) => {
   }
 });
 
+// Update series
+router.put('/series/:instanceId/:seriesId', async (req, res) => {
+  try {
+    const instances = await configManager.getServices('sonarr');
+    const instance = instances.find(i => i.id === req.params.instanceId);
+    
+    if (!instance) {
+      return res.status(404).json({ error: 'Instance not found' });
+    }
+
+    const client = new ApiClient(instance.url, instance.apiKey);
+    // Get current series first
+    const currentSeries = await client.get(`/api/v3/series/${req.params.seriesId}`);
+    // Update with new values
+    const updatedSeries = { ...currentSeries, ...req.body };
+    const result = await client.put(`/api/v3/series/${req.params.seriesId}`, updatedSeries);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Delete series
 router.delete('/series/:instanceId/:seriesId', async (req, res) => {
   try {

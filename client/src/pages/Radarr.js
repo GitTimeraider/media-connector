@@ -46,6 +46,9 @@ function Radarr() {
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [movieToView, setMovieToView] = useState(null);
   const [deleteFiles, setDeleteFiles] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [editQualityProfile, setEditQualityProfile] = useState('');
+  const [editMonitored, setEditMonitored] = useState(false);
 
   useEffect(() => {
     loadInstances();
@@ -105,15 +108,40 @@ function Radarr() {
 
   const handleOpenDetail = (movie) => {
     setMovieToView(movie);
+    setEditQualityProfile(movie.qualityProfileId || '');
+    setEditMonitored(movie.monitored || false);
     setDetailDialogOpen(true);
   };
 
   const handleCloseDetail = () => {
     setDetailDialogOpen(false);
+    setEditMode(false);
     setTimeout(() => {
       setMovieToView(null);
       setDeleteFiles(false);
     }, 200);
+  };
+
+  const handleSaveChanges = async () => {
+    if (!movieToView) return;
+    
+    try {
+      await api.updateRadarrMovie(selectedInstance, movieToView.id, {
+        qualityProfileId: parseInt(editQualityProfile),
+        monitored: editMonitored
+      });
+      setEditMode(false);
+      loadMovies();
+      // Update the movieToView with new values
+      setMovieToView({
+        ...movieToView,
+        qualityProfileId: parseInt(editQualityProfile),
+        monitored: editMonitored
+      });
+    } catch (error) {
+      console.error('Error updating movie:', error);
+      alert(`Failed to update movie: ${error.response?.data?.message || error.message}`);
+    }
   };
 
   const handleDeleteMovie = async () => {
@@ -450,20 +478,62 @@ function Radarr() {
                     {movieToView.hasFile && (
                       <Chip label="Downloaded" color="success" />
                     )}
-                    {movieToView.monitored && (
-                      <Chip label="Monitored" color="primary" />
-                    )}
-                    {movieToView.qualityProfileId && (
-                      <Chip label={`Quality: ${qualityProfiles.find(p => p.id === movieToView.qualityProfileId)?.name || 'Unknown'}`} />
-                    )}
                   </Box>
+                  
+                  {editMode ? (
+                    <Box sx={{ mb: 2 }}>
+                      <FormControl fullWidth sx={{ mb: 2 }}>
+                        <InputLabel>Quality Profile</InputLabel>
+                        <Select
+                          value={editQualityProfile}
+                          label="Quality Profile"
+                          onChange={(e) => setEditQualityProfile(e.target.value)}
+                        >
+                          {qualityProfiles.map((profile) => (
+                            <MenuItem key={profile.id} value={profile.id}>
+                              {profile.name}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                      <Box display="flex" alignItems="center">
+                        <input
+                          type="checkbox"
+                          checked={editMonitored}
+                          onChange={(e) => setEditMonitored(e.target.checked)}
+                          style={{ marginRight: 8 }}
+                        />
+                        <Typography variant="body2">Monitor this movie</Typography>
+                      </Box>
+                    </Box>
+                  ) : (
+                    <Box display="flex" gap={1} mb={2} flexWrap="wrap">
+                      {movieToView.monitored && (
+                        <Chip label="Monitored" color="primary" />
+                      )}
+                      {movieToView.qualityProfileId && (
+                        <Chip label={`Quality: ${qualityProfiles.find(p => p.id === movieToView.qualityProfileId)?.name || 'Unknown'}`} />
+                      )}
+                    </Box>
+                  )}
+                  
                   <Typography variant="h6" gutterBottom>Overview</Typography>
                   <Typography variant="body1" paragraph>
                     {movieToView.overview || 'No overview available.'}
                   </Typography>
+                  
+                  {movieToView.movieFile && (
+                    <>
+                      <Typography variant="h6" gutterBottom>Downloaded File</Typography>
+                      <Typography variant="body2" color="text.secondary" paragraph>
+                        {movieToView.movieFile.relativePath || movieToView.movieFile.path}
+                      </Typography>
+                    </>
+                  )}
+                  
                   {movieToView.path && (
                     <>
-                      <Typography variant="h6" gutterBottom>File Path</Typography>
+                      <Typography variant="h6" gutterBottom>Folder Path</Typography>
                       <Typography variant="body2" color="text.secondary" paragraph>
                         {movieToView.path}
                       </Typography>
@@ -489,14 +559,32 @@ function Radarr() {
             </DialogContent>
             <DialogActions>
               <Button onClick={handleCloseDetail}>Close</Button>
-              <Button 
-                onClick={handleDeleteMovie}
-                color="error"
-                variant="contained"
-                startIcon={<Delete />}
-              >
-                Delete from Radarr
-              </Button>
+              {editMode ? (
+                <>
+                  <Button onClick={() => setEditMode(false)}>Cancel</Button>
+                  <Button 
+                    onClick={handleSaveChanges}
+                    color="primary"
+                    variant="contained"
+                  >
+                    Save Changes
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button onClick={() => setEditMode(true)} variant="outlined">
+                    Edit
+                  </Button>
+                  <Button 
+                    onClick={handleDeleteMovie}
+                    color="error"
+                    variant="contained"
+                    startIcon={<Delete />}
+                  >
+                    Delete from Radarr
+                  </Button>
+                </>
+              )}
             </DialogActions>
           </>
         )}

@@ -70,10 +70,20 @@ function Unraid() {
 
       console.log('Unraid Data Loaded:', { stats, docker, array });
 
-      if (stats.status === 'fulfilled') setSystemStats(stats.value?.info || stats.value);
+      if (stats.status === 'fulfilled') {
+        const statsData = stats.value;
+        // Combine info and system data
+        setSystemStats({
+          cpu: statsData?.info?.cpu,
+          memory: statsData?.system?.memory,
+          os: statsData?.info?.os,
+          cpuUsage: statsData?.system?.cpu?.usage,
+          versions: statsData?.info?.versions
+        });
+      }
       if (docker.status === 'fulfilled') {
-        const containers = docker.value?.dockerContainers || docker.value;
-        console.log('Docker containers:', containers);
+        const containers = docker.value?.docker?.containers || docker.value?.dockerContainers || docker.value;
+        console.log('Docker containers:', { docker: containers });
         setDockerContainers(Array.isArray(containers) ? containers : []);
       }
       if (array.status === 'fulfilled') setArrayStatus(array.value?.array || array.value);
@@ -138,7 +148,8 @@ function Unraid() {
                   <Memory sx={{ mr: 1, color: 'primary.main' }} />
                   <Typography variant="h6">CPU</Typography>
                 </Box>
-                <Typography variant="body2">{systemStats.cpu?.brand || systemStats.cpu?.manufacturer || 'N/A'}</Typography>
+                <Typography variant="h4">{systemStats.cpuUsage ? Math.round(systemStats.cpuUsage) : 0}%</Typography>
+                <Typography variant="body2" sx={{ fontSize: '0.75rem' }}>{systemStats.cpu?.brand || systemStats.cpu?.manufacturer || 'N/A'}</Typography>
                 <Typography variant="caption">{systemStats.cpu?.cores || 0} cores, {systemStats.cpu?.threads || 0} threads</Typography>
               </CardContent>
             </Card>

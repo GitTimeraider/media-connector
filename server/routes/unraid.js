@@ -24,7 +24,7 @@ router.get('/status/:instanceId', async (req, res) => {
       headers['Authorization'] = `Bearer ${instance.apiKey}`;
     }
 
-    // Get system info via GraphQL API
+    // Get system info via GraphQL API - including real-time stats
     const query = `
       query {
         info {
@@ -47,6 +47,22 @@ router.get('/status/:instanceId', async (req, res) => {
               api
               kernel
             }
+          }
+          os {
+            distro
+            release
+            platform
+            uptime
+          }
+        }
+        system {
+          cpu {
+            usage
+          }
+          memory {
+            total
+            free
+            used
           }
         }
       }

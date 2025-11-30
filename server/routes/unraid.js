@@ -34,8 +34,14 @@ router.get('/status/:instanceId', async (req, res) => {
             cores
             threads
             speed
+            usage
+            currentLoad
           }
           memory {
+            total
+            used
+            free
+            available
             layout {
               size
               type

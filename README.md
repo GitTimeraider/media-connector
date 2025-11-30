@@ -294,13 +294,6 @@ Media Connector uses an SQLite database to securely store:
 
 **Database Location**: `server/data/media-connector.db`
 
-### Automatic Migration
-When upgrading from JSON-based storage (v1.x), the application will automatically:
-1. Detect existing `users.json` and `services.json` files
-2. Migrate data to SQLite database
-3. Backup original files with `.backup` extension
-4. Use database for all future operations
-
 ### Security Features
 - ✅ **Password Hashing** - bcrypt with salt rounds for user passwords
 - ✅ **JWT Tokens** - Secure session management with 7-day expiration

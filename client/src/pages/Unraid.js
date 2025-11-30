@@ -251,34 +251,31 @@ function Unraid() {
                     {systemStats.cpu.speed >= 10 ? (systemStats.cpu.speed / 1000).toFixed(2) : systemStats.cpu.speed.toFixed(2)} GHz
                   </Typography>
                 )}
-                {realtimeStats?.info?.cpu?.usage !== undefined && (
+                {(systemStats.cpu?.usage !== undefined || systemStats.cpu?.currentLoad !== undefined || realtimeStats?.info?.cpu?.usage !== undefined) ? (
                   <Box sx={{ mt: 2 }}>
                     <Typography variant="h4" color="primary">
-                      {realtimeStats.info.cpu.usage.toFixed(1)}%
+                      {(
+                        realtimeStats?.info?.cpu?.usage ||
+                        systemStats.cpu?.usage ||
+                        systemStats.cpu?.currentLoad ||
+                        0
+                      ).toFixed(1)}%
                     </Typography>
                     <LinearProgress 
                       variant="determinate" 
-                      value={realtimeStats.info.cpu.usage} 
+                      value={
+                        realtimeStats?.info?.cpu?.usage ||
+                        systemStats.cpu?.usage ||
+                        systemStats.cpu?.currentLoad ||
+                        0
+                      } 
                       sx={{ mt: 1 }}
                     />
                   </Box>
-                )}
-                {!realtimeStats?.info?.cpu?.usage && systemStats.cpu?.usage !== undefined && (
-                  <Box sx={{ mt: 2 }}>
-                    <Typography variant="h4" color="primary">
-                      {systemStats.cpu.usage.toFixed(1)}%
-                    </Typography>
-                    <LinearProgress 
-                      variant="determinate" 
-                      value={systemStats.cpu.usage} 
-                      sx={{ mt: 1 }}
-                    />
-                  </Box>
-                )}
-                {!realtimeStats?.info?.cpu?.usage && !systemStats.cpu?.usage && (
+                ) : (
                   <Box sx={{ mt: 2 }}>
                     <Typography variant="caption" color="text.secondary">
-                      Real-time usage requires WebSocket subscription support
+                      CPU usage data not available
                     </Typography>
                   </Box>
                 )}
@@ -301,22 +298,22 @@ function Unraid() {
                     />
                   )}
                 </Box>
-                {(realtimeStats?.info?.memory?.used && realtimeStats?.info?.memory?.total) || (systemStats.memory?.used && systemStats.memory?.total) ? (
+                {(systemStats.memory?.used && systemStats.memory?.total) || (realtimeStats?.info?.memory?.used && realtimeStats?.info?.memory?.total) ? (
                   <>
                     <Typography variant="h4">
                       {((
-                        (realtimeStats?.info?.memory?.used || systemStats.memory?.used) / 
-                        (realtimeStats?.info?.memory?.total || systemStats.memory?.total)
+                        (systemStats.memory?.used || realtimeStats?.info?.memory?.used) / 
+                        (systemStats.memory?.total || realtimeStats?.info?.memory?.total)
                       ) * 100).toFixed(1)}%
                     </Typography>
                     <Typography variant="caption">
-                      {formatBytes(realtimeStats?.info?.memory?.used || systemStats.memory?.used)} / {formatBytes(realtimeStats?.info?.memory?.total || systemStats.memory?.total)}
+                      {formatBytes(systemStats.memory?.used || realtimeStats?.info?.memory?.used)} / {formatBytes(systemStats.memory?.total || realtimeStats?.info?.memory?.total)}
                     </Typography>
                     <LinearProgress 
                       variant="determinate" 
                       value={(
-                        (realtimeStats?.info?.memory?.used || systemStats.memory?.used) / 
-                        (realtimeStats?.info?.memory?.total || systemStats.memory?.total)
+                        (systemStats.memory?.used || realtimeStats?.info?.memory?.used) / 
+                        (systemStats.memory?.total || realtimeStats?.info?.memory?.total)
                       ) * 100} 
                       sx={{ mt: 1 }}
                     />
@@ -326,7 +323,7 @@ function Unraid() {
                     <Typography variant="h4">{formatBytes(systemStats.memory?.layout?.reduce((sum, m) => sum + (m.size || 0), 0) || 0)}</Typography>
                     <Typography variant="caption" display="block">{systemStats.memory?.layout?.length || 0} modules</Typography>
                     <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
-                      Real-time usage requires WebSocket subscription support
+                      Memory usage data not available
                     </Typography>
                   </>
                 )}

@@ -7,7 +7,6 @@ const http = require('http');
 const WebSocket = require('ws');
 require('dotenv').config();
 
-const { runMigrations } = require('./utils/migrate');
 const UnraidSubscriptionManager = require('./utils/unraidSubscription');
 
 const app = express();
@@ -160,20 +159,13 @@ function listenForInstanceStats(instanceId) {
   });
 }
 
-// Initialize database and run migrations before starting server
-async function startServer() {
-  try {
-    await runMigrations();
-    
-    server.listen(PORT, () => {
-      console.log(`Media Connector server running on port ${PORT}`);
-      console.log(`WebSocket server ready for connections`);
-      console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-    });
-  } catch (error) {
-    console.error('Failed to start server:', error);
-    process.exit(1);
-  }
+// Start the server
+function startServer() {
+  server.listen(PORT, () => {
+    console.log(`Media Connector server running on port ${PORT}`);
+    console.log(`WebSocket server ready for connections`);
+    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  });
 }
 
 // Cleanup on shutdown

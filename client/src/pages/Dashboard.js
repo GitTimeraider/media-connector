@@ -48,6 +48,37 @@ function Dashboard() {
   const [services, setServices] = useState({});
   const [trendingMovies, setTrendingMovies] = useState([]);
   const [trendingTV, setTrendingTV] = useState([]);
+  
+  // Drag-to-scroll functionality
+  const handleMouseDown = (e) => {
+    const slider = e.currentTarget;
+    slider.isDown = true;
+    slider.startX = e.pageX - slider.offsetLeft;
+    slider.scrollLeftStart = slider.scrollLeft;
+    slider.style.cursor = 'grabbing';
+    slider.style.userSelect = 'none';
+  };
+
+  const handleMouseLeave = (e) => {
+    const slider = e.currentTarget;
+    slider.isDown = false;
+    slider.style.cursor = 'grab';
+  };
+
+  const handleMouseUp = (e) => {
+    const slider = e.currentTarget;
+    slider.isDown = false;
+    slider.style.cursor = 'grab';
+  };
+
+  const handleMouseMove = (e) => {
+    const slider = e.currentTarget;
+    if (!slider.isDown) return;
+    e.preventDefault();
+    const x = e.pageX - slider.offsetLeft;
+    const walk = (x - slider.startX) * 2; // Multiply by 2 for faster scrolling
+    slider.scrollLeft = slider.scrollLeftStart - walk;
+  };
   const [upcomingMovies, setUpcomingMovies] = useState([]);
   const [recentDownloads, setRecentDownloads] = useState({ movies: [], series: [] });
   const [tmdbLoading, setTmdbLoading] = useState(true);
@@ -572,11 +603,17 @@ function Dashboard() {
             Search Results
           </Typography>
           <Box
+            onMouseDown={handleMouseDown}
+            onMouseLeave={handleMouseLeave}
+            onMouseUp={handleMouseUp}
+            onMouseMove={handleMouseMove}
             sx={{
               display: 'flex',
               gap: 2,
               overflowX: 'auto',
+              overflowY: 'hidden',
               pb: 2,
+              cursor: 'grab',
               width: '100%',
               maxWidth: '100%',
               '&::-webkit-scrollbar': {
@@ -593,7 +630,7 @@ function Dashboard() {
                   backgroundColor: 'rgba(255,255,255,0.4)',
                 },
               },
-              overscrollBehavior: 'contain',
+              overscrollBehavior: 'contain auto',
               WebkitOverflowScrolling: 'touch'
             }}
           >
@@ -755,11 +792,18 @@ function Dashboard() {
             ))}
           </Box>
         ) : trendingMovies.length > 0 ? (
-          <Box sx={{ 
+          <Box 
+            onMouseDown={handleMouseDown}
+            onMouseLeave={handleMouseLeave}
+            onMouseUp={handleMouseUp}
+            onMouseMove={handleMouseMove}
+            sx={{ 
             display: 'flex', 
             gap: 3, 
-            overflowX: 'auto', 
+            overflowX: 'auto',
+            overflowY: 'hidden',
             pb: 2,
+            cursor: 'grab',
             '&::-webkit-scrollbar': {
               height: 8
             },
@@ -774,7 +818,7 @@ function Dashboard() {
                 background: 'rgba(255,255,255,0.3)'
               }
             },
-            overscrollBehavior: 'contain',
+            overscrollBehavior: 'contain auto',
             WebkitOverflowScrolling: 'touch'
           }}>
             {trendingMovies.map((item, index) => (
@@ -821,11 +865,18 @@ function Dashboard() {
             ))}
           </Box>
         ) : trendingTV.length > 0 ? (
-          <Box sx={{ 
+          <Box 
+            onMouseDown={handleMouseDown}
+            onMouseLeave={handleMouseLeave}
+            onMouseUp={handleMouseUp}
+            onMouseMove={handleMouseMove}
+            sx={{ 
             display: 'flex', 
             gap: 3, 
-            overflowX: 'auto', 
+            overflowX: 'auto',
+            overflowY: 'hidden',
             pb: 2,
+            cursor: 'grab',
             width: '100%',
             maxWidth: '100%',
             '&::-webkit-scrollbar': {
@@ -842,7 +893,7 @@ function Dashboard() {
                 background: 'rgba(255,255,255,0.3)'
               }
             },
-            overscrollBehavior: 'contain',
+            overscrollBehavior: 'contain auto',
             WebkitOverflowScrolling: 'touch'
           }}>
             {trendingTV.map((item, index) => (
@@ -875,7 +926,7 @@ function Dashboard() {
           <CalendarToday sx={{ mr: 1.5, fontSize: 32, color: 'primary.main' }} />
           <Box>
             <Typography variant="h5" sx={{ fontWeight: 600 }}>Upcoming Movies</Typography>
-            <Typography variant="caption" color="text.secondary">Coming soon to theaters</Typography>
+            <Typography variant="caption" color="text.secondary">Popular movies coming to theaters</Typography>
           </Box>
         </Box>
         {tmdbLoading ? (
@@ -889,11 +940,18 @@ function Dashboard() {
             ))}
           </Box>
         ) : upcomingMovies.length > 0 ? (
-          <Box sx={{ 
+          <Box 
+            onMouseDown={handleMouseDown}
+            onMouseLeave={handleMouseLeave}
+            onMouseUp={handleMouseUp}
+            onMouseMove={handleMouseMove}
+            sx={{ 
             display: 'flex', 
             gap: 3, 
-            overflowX: 'auto', 
+            overflowX: 'auto',
+            overflowY: 'hidden',
             pb: 2,
+            cursor: 'grab',
             width: '100%',
             maxWidth: '100%',
             '&::-webkit-scrollbar': {
@@ -910,7 +968,7 @@ function Dashboard() {
                 background: 'rgba(255,255,255,0.3)'
               }
             },
-            overscrollBehavior: 'contain',
+            overscrollBehavior: 'contain auto',
             WebkitOverflowScrolling: 'touch'
           }}>
             {upcomingMovies.map((item, index) => (
@@ -952,11 +1010,18 @@ function Dashboard() {
                 <Movie sx={{ mr: 1, fontSize: { xs: 20, sm: 24 }, color: 'error.main' }} />
                 <Typography variant="h6" sx={{ fontWeight: 600, fontSize: { xs: '1rem', sm: '1.25rem' } }}>Movies from Radarr</Typography>
               </Box>
-              <Box sx={{
+              <Box 
+                onMouseDown={handleMouseDown}
+                onMouseLeave={handleMouseLeave}
+                onMouseUp={handleMouseUp}
+                onMouseMove={handleMouseMove}
+                sx={{
                 display: 'flex',
                 gap: 2,
                 overflowX: 'auto',
+                overflowY: 'hidden',
                 pb: 2,
+                cursor: 'grab',
                 width: '100%',
                 maxWidth: '100%',
                 '&::-webkit-scrollbar': {
@@ -973,7 +1038,7 @@ function Dashboard() {
                     background: 'rgba(255,255,255,0.3)'
                   }
                 },
-                overscrollBehavior: 'contain',
+                overscrollBehavior: 'contain auto',
                 WebkitOverflowScrolling: 'touch'
               }}>
                 {recentDownloads.movies.slice(0, 10).map((movie, index) => (
@@ -991,11 +1056,18 @@ function Dashboard() {
                 <LiveTv sx={{ mr: 1, fontSize: { xs: 20, sm: 24 }, color: 'primary.main' }} />
                 <Typography variant="h6" sx={{ fontWeight: 600, fontSize: { xs: '1rem', sm: '1.25rem' } }}>TV Shows from Sonarr</Typography>
               </Box>
-              <Box sx={{
+              <Box 
+                onMouseDown={handleMouseDown}
+                onMouseLeave={handleMouseLeave}
+                onMouseUp={handleMouseUp}
+                onMouseMove={handleMouseMove}
+                sx={{
                 display: 'flex',
                 gap: 2,
                 overflowX: 'auto',
+                overflowY: 'hidden',
                 pb: 2,
+                cursor: 'grab',
                 width: '100%',
                 maxWidth: '100%',
                 '&::-webkit-scrollbar': {
@@ -1012,7 +1084,7 @@ function Dashboard() {
                     background: 'rgba(255,255,255,0.3)'
                   }
                 },
-                overscrollBehavior: 'contain',
+                overscrollBehavior: 'contain auto',
                 WebkitOverflowScrolling: 'touch'
               }}>
                 {recentDownloads.series.slice(0, 10).map((series, index) => (

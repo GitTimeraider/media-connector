@@ -41,12 +41,21 @@ router.get('/movies/upcoming', async (req, res) => {
       params: {
         api_key: TMDB_API_KEY,
         language: 'en-US',
-        page: 1
+        page: 1,
+        region: 'US'
       }
     });
 
-    // Return first 20 results with release dates
-    res.json(response.data.results.slice(0, 20));
+    // Filter to only include movies that haven't been released yet
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const unreleased = response.data.results.filter(movie => {
+      const releaseDate = new Date(movie.release_date);
+      return releaseDate > today;
+    });
+
+    // Return first 20 unreleased movies
+    res.json(unreleased.slice(0, 20));
   } catch (error) {
     console.error('TMDB upcoming movies error:', error.message);
     res.status(500).json({ error: error.message });

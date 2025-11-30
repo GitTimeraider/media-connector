@@ -22,8 +22,6 @@ import {
   Dashboard as DashboardIcon,
   LiveTv as TvIcon,
   Movie as MovieIcon,
-  MusicNote as MusicIcon,
-  Book as BookIcon,
   CloudDownload as DownloadIcon,
   Search as SearchIcon,
   Settings as SettingsIcon,
@@ -40,8 +38,6 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Sonarr from './pages/Sonarr';
 import Radarr from './pages/Radarr';
-import Lidarr from './pages/Lidarr';
-import Readarr from './pages/Readarr';
 import Downloads from './pages/Downloads';
 import Search from './pages/Search';
 import Settings from './pages/Settings';
@@ -107,8 +103,6 @@ function AppLayout() {
     { divider: true },
     { text: 'TV Shows', icon: <TvIcon />, path: '/sonarr' },
     { text: 'Movies', icon: <MovieIcon />, path: '/radarr' },
-    { text: 'Music', icon: <MusicIcon />, path: '/lidarr' },
-    { text: 'Books', icon: <BookIcon />, path: '/readarr' },
     { divider: true },
     { text: 'Downloads', icon: <DownloadIcon />, path: '/downloads' },
     { text: 'Search', icon: <SearchIcon />, path: '/search' },
@@ -249,8 +243,6 @@ function AppLayout() {
           <Route path="/overview" element={<Overview />} />
           <Route path="/sonarr" element={<Sonarr />} />
           <Route path="/radarr" element={<Radarr />} />
-          <Route path="/lidarr" element={<Lidarr />} />
-          <Route path="/readarr" element={<Readarr />} />
           <Route path="/downloads" element={<Downloads />} />
           <Route path="/search" element={<Search />} />
           <Route path="/unraid" element={<Unraid />} />

@@ -235,28 +235,6 @@ class ApiService {
     return response.data;
   }
 
-  // Lidarr endpoints
-  async getLidarrStatus(instanceId) {
-    const response = await this.client.get(`/lidarr/status/${instanceId}`);
-    return response.data;
-  }
-
-  async getLidarrArtists(instanceId) {
-    const response = await this.client.get(`/lidarr/artist/${instanceId}`);
-    return response.data;
-  }
-
-  // Readarr endpoints
-  async getReadarrStatus(instanceId) {
-    const response = await this.client.get(`/readarr/status/${instanceId}`);
-    return response.data;
-  }
-
-  async getReadarrAuthors(instanceId) {
-    const response = await this.client.get(`/readarr/author/${instanceId}`);
-    return response.data;
-  }
-
   // SABnzbd endpoints
   async getSabnzbdStatus(instanceId) {
     const response = await this.client.get(`/sabnzbd/status/${instanceId}`);
@@ -288,38 +266,6 @@ class ApiService {
     return response.data;
   }
 
-  // NZBGet endpoints
-  async getNzbgetStatus(instanceId) {
-    const response = await this.client.get(`/nzbget/status/${instanceId}`);
-    return response.data;
-  }
-
-  // qBittorrent endpoints
-  async getQbittorrentStatus(instanceId) {
-    const response = await this.client.get(`/qbittorrent/status/${instanceId}`);
-    return response.data;
-  }
-
-  async getQbittorrentTorrents(instanceId) {
-    const response = await this.client.get(`/qbittorrent/torrents/${instanceId}`);
-    return response.data;
-  }
-
-  async addToQbittorrent(instanceId, url) {
-    const response = await this.client.post(`/qbittorrent/add/${instanceId}`, { url });
-    return response.data;
-  }
-
-  async pauseQbittorrent(instanceId, hash) {
-    const response = await this.client.post(`/qbittorrent/pause/${instanceId}`, { hash });
-    return response.data;
-  }
-
-  async deleteQbittorrent(instanceId, hash) {
-    const response = await this.client.delete(`/qbittorrent/torrents/${instanceId}/${hash}`);
-    return response.data;
-  }
-
   // Deluge endpoints
   async getDelugeStatus(instanceId) {
     const response = await this.client.get(`/deluge/status/${instanceId}`);
@@ -328,34 +274,6 @@ class ApiService {
 
   async addToDeluge(instanceId, url) {
     const response = await this.client.post(`/deluge/add/${instanceId}`, { url });
-    return response.data;
-  }
-
-  // Transmission endpoints
-  async getTransmissionStatus(instanceId) {
-    const response = await this.client.get(`/transmission/status/${instanceId}`);
-    return response.data;
-  }
-
-  // Overseerr endpoints
-  async getOverseerrRequests(instanceId) {
-    const response = await this.client.get(`/overseerr/requests/${instanceId}`);
-    return response.data;
-  }
-
-  async searchOverseerr(instanceId, query) {
-    const response = await this.client.get(`/overseerr/search/${instanceId}`, { params: { query } });
-    return response.data;
-  }
-
-  // Tautulli endpoints
-  async getTautulliStatus(instanceId) {
-    const response = await this.client.get(`/tautulli/status/${instanceId}`);
-    return response.data;
-  }
-
-  async getTautulliActivity(instanceId) {
-    const response = await this.client.get(`/tautulli/activity/${instanceId}`);
     return response.data;
   }
 

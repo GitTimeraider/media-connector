@@ -51,24 +51,6 @@ function Downloads() {
         }
       }
 
-      // Load qBittorrent torrents
-      if (servicesData.qbittorrent?.length > 0) {
-        for (const instance of servicesData.qbittorrent) {
-          try {
-            const torrents = await api.getQbittorrentTorrents(instance.id);
-            allDownloads.push(...torrents.map(item => ({
-              ...item,
-              service: 'qBittorrent',
-              instanceId: instance.id,
-              instanceName: instance.name,
-              id: item.hash
-            })));
-          } catch (error) {
-            console.error(`Error loading qBittorrent torrents:`, error);
-          }
-        }
-      }
-
       setDownloads(allDownloads);
     } catch (error) {
       console.error('Error loading downloads:', error);
@@ -81,8 +63,6 @@ function Downloads() {
     try {
       if (item.service === 'SABnzbd') {
         await api.pauseSabnzbd(item.instanceId, item.id);
-      } else if (item.service === 'qBittorrent') {
-        await api.pauseQbittorrent(item.instanceId, item.id);
       }
       loadDownloads();
     } catch (error) {
@@ -97,8 +77,6 @@ function Downloads() {
     try {
       if (item.service === 'SABnzbd') {
         await api.deleteSabnzbd(item.instanceId, item.id);
-      } else if (item.service === 'qBittorrent') {
-        await api.deleteQbittorrent(item.instanceId, item.id);
       }
       loadDownloads();
     } catch (error) {

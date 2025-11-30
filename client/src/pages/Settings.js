@@ -35,8 +35,6 @@ import {
   Search,
   Tv,
   Movie as MovieIcon,
-  MusicNote,
-  Book,
   Visibility,
   VisibilityOff,
   Link as LinkIcon,
@@ -70,17 +68,9 @@ function Settings() {
   const serviceTypes = [
     { type: 'sonarr', label: 'Sonarr', requiresApiKey: true },
     { type: 'radarr', label: 'Radarr', requiresApiKey: true },
-    { type: 'lidarr', label: 'Lidarr', requiresApiKey: true },
-    { type: 'readarr', label: 'Readarr', requiresApiKey: true },
     { type: 'sabnzbd', label: 'SABnzbd', requiresApiKey: true },
-    { type: 'nzbget', label: 'NZBGet', requiresAuth: true },
-    { type: 'qbittorrent', label: 'qBittorrent', requiresAuth: true },
-    { type: 'transmission', label: 'Transmission', requiresAuth: true },
     { type: 'deluge', label: 'Deluge', requiresAuth: true, passwordOnly: true },
-    { type: 'overseerr', label: 'Overseerr', requiresApiKey: true },
-    { type: 'tautulli', label: 'Tautulli', requiresApiKey: true },
     { type: 'prowlarr', label: 'Prowlarr', requiresApiKey: true },
-    { type: 'jackett', label: 'Jackett', requiresApiKey: true },
     { type: 'unraid', label: 'Unraid', requiresApiKey: true }
   ];
 
@@ -160,17 +150,9 @@ function Settings() {
     const icons = {
       sonarr: <Tv />,
       radarr: <MovieIcon />,
-      lidarr: <MusicNote />,
-      readarr: <Book />,
       sabnzbd: <Download />,
-      nzbget: <Download />,
-      qbittorrent: <Download />,
-      transmission: <Download />,
       deluge: <Download />,
       prowlarr: <Search />,
-      jackett: <Search />,
-      overseerr: <Cloud />,
-      tautulli: <Tv />,
       unraid: <SettingsIcon />
     };
     return icons[type] || <SettingsIcon />;
@@ -429,26 +411,18 @@ function Settings() {
       <TabPanel value={tabValue} index={0}>
         <ServiceList serviceType="sonarr" label="Sonarr" />
         <ServiceList serviceType="radarr" label="Radarr" />
-        <ServiceList serviceType="lidarr" label="Lidarr" />
-        <ServiceList serviceType="readarr" label="Readarr" />
       </TabPanel>
 
       <TabPanel value={tabValue} index={1}>
         <ServiceList serviceType="sabnzbd" label="SABnzbd" />
-        <ServiceList serviceType="nzbget" label="NZBGet" />
-        <ServiceList serviceType="qbittorrent" label="qBittorrent" />
-        <ServiceList serviceType="transmission" label="Transmission" />
         <ServiceList serviceType="deluge" label="Deluge" />
       </TabPanel>
 
       <TabPanel value={tabValue} index={2}>
         <ServiceList serviceType="prowlarr" label="Prowlarr" />
-        <ServiceList serviceType="jackett" label="Jackett" />
       </TabPanel>
 
       <TabPanel value={tabValue} index={3}>
-        <ServiceList serviceType="overseerr" label="Overseerr" />
-        <ServiceList serviceType="tautulli" label="Tautulli" />
         <ServiceList serviceType="unraid" label="Unraid" />
       </TabPanel>
 

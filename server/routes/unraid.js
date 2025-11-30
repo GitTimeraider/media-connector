@@ -242,6 +242,37 @@ router.post('/docker/action/:instanceId', async (req, res) => {
 
     const { containerId, action } = req.body;
     
+    // Handle restart as stop + start
+    if (action === 'restart') {
+      try {
+        // Stop the container first
+        const stopResult = await axios.post(
+          `${req.baseUrl}/docker/action/${req.params.instanceId}`,
+          { containerId, action: 'stop' },
+          { baseURL: `http://localhost:${process.env.PORT || 3001}/api` }
+        );
+        
+        // Wait a moment
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Start the container
+        const startResult = await axios.post(
+          `${req.baseUrl}/docker/action/${req.params.instanceId}`,
+          { containerId, action: 'start' },
+          { baseURL: `http://localhost:${process.env.PORT || 3001}/api` }
+        );
+        
+        console.log(`[Unraid Docker] Successfully restarted container`);
+        return res.json({ success: true, message: 'Container restarted' });
+      } catch (error) {
+        console.error(`[Unraid Docker] Failed to restart:`, error.message);
+        return res.status(500).json({ 
+          error: 'Failed to restart container',
+          message: error.message
+        });
+      }
+    }
+    
     // First get the container to find its actual name
     const containerQuery = `
       query {

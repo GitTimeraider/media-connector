@@ -1,5 +1,4 @@
 # Media Connector
-# NOT READY FOR USE! Do not download!
 
 <div align="center">
 
@@ -7,9 +6,9 @@
 ![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/GitTimeraider/media-connector/docker-publish.yml)
 ![License](https://img.shields.io/github/license/GitTimeraider/media-connector)
 
-**A comprehensive web-based media server manager inspired by nzb360**
+**A comprehensive web-based media server manager**
 
-Manage your entire media stack from one beautiful web interface. Control Sonarr, Radarr, Lidarr, Readarr, download clients, and more.
+Manage your entire media stack from one beautiful web interface. Control Sonarr, Radarr, download clients, and more with real-time monitoring and an intuitive interface.
 
 [Features](#features) • [Installation](#installation) • [Configuration](#configuration) • [Screenshots](#screenshots) • [Contributing](#contributing)
 
@@ -21,31 +20,40 @@ Manage your entire media stack from one beautiful web interface. Control Sonarr,
 
 ### Media Management
 - **Sonarr** - TV show management and monitoring
+  - Browse your TV library with detailed information
+  - Search and add new TV shows
+  - Edit quality profiles and monitor settings
+  - Delete series with optional file cleanup
 - **Radarr** - Movie collection management
-- **Lidarr** - Music library management
-- **Readarr** - Book and ebook management
-- **Bazarr** - Subtitle management (coming soon)
+  - Browse your movie library with cast and genres
+  - Search and add new movies
+  - Edit quality profiles and monitor settings
+  - Delete movies with optional file cleanup
 
 ### Download Clients
 - **SABnzbd** - Usenet binary downloader
-- **NZBGet** - Efficient usenet downloader
-- **qBittorrent** - BitTorrent client
-- **Transmission** - Lightweight torrent client
-- **Deluge** - Feature-rich BitTorrent client
-- **rTorrent/ruTorrent** - Advanced torrent management
+  - Real-time queue monitoring
+  - Pause/resume downloads
+  - Delete downloads from queue
+- **Deluge** - BitTorrent client
+  - Add torrents by URL
+  - Monitor torrent status
 
 ### Search & Discovery
-- **Overseerr** - Media request and discovery
 - **Prowlarr** - Indexer manager and proxy
-- **Jackett** - Torznab/Newznab proxy
-- **NZBHydra2** - Meta search for indexers
+  - Search across all configured indexers
+  - Seamless integration with Sonarr/Radarr
+- **TMDB Integration** - The Movie Database
+  - Browse trending movies and TV shows
+  - View cast, genres, and ratings
+  - Add content directly to your library
 
-### Monitoring & Statistics
-- **Tautulli** - Plex media server monitoring
-- **Unraid** - Server management and Docker container control
-- Real-time download progress
-- Queue management
-- Calendar view for upcoming releases
+### Server Management
+- **Unraid** - Server management and Docker control
+  - Real-time system monitoring (CPU, Memory, Uptime)
+  - Docker container management
+  - Start/Stop/Restart containers
+  - View array and disk information
 
 ### Authentication & Security
 - **User Management** - Create and manage multiple users
@@ -349,31 +357,35 @@ Then use those values in your docker run command or docker-compose.yml:
 
 ### Supported Services Configuration
 
-#### Sonarr / Radarr / Lidarr / Readarr
+#### Sonarr / Radarr
 - **URL**: `http://your-server:port`
 - **API Key**: Found in Settings → General → Security
+- Full CRUD operations: Create, Read, Update, Delete
+- Quality profile management
+- Monitor status control
 
 #### SABnzbd
 - **URL**: `http://your-server:port`
 - **API Key**: Found in Config → General → API Key
+- Queue monitoring and management
+- Pause/resume/delete operations
 
-#### qBittorrent
+#### Deluge
 - **URL**: `http://your-server:port`
-- **Username**: Your qBittorrent username
-- **Password**: Your qBittorrent password
+- **Password**: Your Deluge web UI password
+- Add torrents by URL
+- Monitor torrent status
 
-#### Overseerr
+#### Prowlarr
 - **URL**: `http://your-server:port`
-- **API Key**: Found in Settings → General → API Key
-
-#### Tautulli
-- **URL**: `http://your-server:port`
-- **API Key**: Found in Settings → Web Interface → API Key
+- **API Key**: Found in Settings → General → Security
+- Multi-indexer search capability
 
 #### Unraid
-- **URL**: `http://your-server:port` (typically port 80 or 443)
-- **Username**: Your Unraid web interface username
-- **Password**: Your Unraid web interface password
+- **URL**: `http://your-server` (typically port 80 or 443)
+- **API Key**: Your Unraid API key for GraphQL
+- Real-time system monitoring
+- Docker container control
 
 ---
 
@@ -479,21 +491,6 @@ Images are built for both `linux/amd64` and `linux/arm64` platforms.
 - Enable authentication in your reverse proxy
 - Keep services on internal network when possible
 - Regular backups of configuration files
-
----
-
-## Roadmap
-
-- [ ] Push notifications support
-- [ ] Mobile app (React Native)
-- [ ] Bazarr integration
-- [ ] NZBHydra2 integration
-- [ ] Advanced search across all indexers
-- [ ] Custom dashboards and widgets
-- [ ] Multi-user support with permissions
-- [ ] Dark/Light theme toggle
-- [ ] WebSocket for real-time updates
-- [ ] Calendar sync (Google Calendar, iCal)
 
 ---
 

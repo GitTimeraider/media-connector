@@ -150,8 +150,7 @@ function Search() {
     try {
       const services = await api.getServices();
       const hasProwlarr = services.prowlarr && services.prowlarr.length > 0;
-      const hasJackett = services.jackett && services.jackett.length > 0;
-      setHasIndexers(hasProwlarr || hasJackett);
+      setHasIndexers(hasProwlarr);
       
       if (hasProwlarr) {
         setProwlarrInstance(services.prowlarr[0].id);
@@ -268,11 +267,8 @@ function Search() {
         await api.addToSabnzbd(services.sabnzbd[0].id, result.downloadUrl);
         alert('Added to SABnzbd!');
       } else if (protocol === 'torrent') {
-        // Try qBittorrent first, then Deluge
-        if (services.qbittorrent?.length > 0) {
-          await api.addToQbittorrent(services.qbittorrent[0].id, result.downloadUrl);
-          alert('Added to qBittorrent!');
-        } else if (services.deluge?.length > 0) {
+        // Download via Deluge
+        if (services.deluge?.length > 0) {
           await api.addToDeluge(services.deluge[0].id, result.downloadUrl);
           alert('Added to Deluge!');
         } else {
@@ -309,7 +305,7 @@ function Search() {
       <Container>
         <Typography variant="h4" gutterBottom>Search</Typography>
         <Alert severity="info">
-          Configure Prowlarr or Jackett in Settings to search across indexers.
+          Configure Prowlarr in Settings to search across indexers.
         </Alert>
       </Container>
     );

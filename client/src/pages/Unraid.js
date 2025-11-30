@@ -275,6 +275,13 @@ function Unraid() {
                     />
                   </Box>
                 )}
+                {!realtimeStats?.info?.cpu?.usage && !systemStats.cpu?.usage && (
+                  <Box sx={{ mt: 2 }}>
+                    <Typography variant="caption" color="text.secondary">
+                      Real-time usage requires WebSocket subscription support
+                    </Typography>
+                  </Box>
+                )}
               </CardContent>
             </Card>
           </Grid>
@@ -317,7 +324,10 @@ function Unraid() {
                 ) : (
                   <>
                     <Typography variant="h4">{formatBytes(systemStats.memory?.layout?.reduce((sum, m) => sum + (m.size || 0), 0) || 0)}</Typography>
-                    <Typography variant="caption">{systemStats.memory?.layout?.length || 0} modules</Typography>
+                    <Typography variant="caption" display="block">{systemStats.memory?.layout?.length || 0} modules</Typography>
+                    <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
+                      Real-time usage requires WebSocket subscription support
+                    </Typography>
                   </>
                 )}
               </CardContent>

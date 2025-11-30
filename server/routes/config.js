@@ -72,10 +72,8 @@ router.post('/test/:type', async (req, res) => {
     let endpoint = '/api/v3/system/status'; // Default for *arr apps
     
     // Adjust endpoint based on service type
-    if (req.params.type === 'lidarr' || req.params.type === 'readarr' || req.params.type === 'prowlarr') {
+    if (req.params.type === 'prowlarr') {
       endpoint = '/api/v1/system/status';
-    } else if (req.params.type === 'overseerr') {
-      endpoint = '/api/v1/status';
     } else if (req.params.type === 'sabnzbd') {
       const axios = require('axios');
       const response = await axios.get(`${url}/api`, {

@@ -176,4 +176,31 @@ router.get('/search', async (req, res) => {
   }
 });
 
+// Get details for a movie or TV show (includes cast)
+router.get('/:mediaType/:id', async (req, res) => {
+  try {
+    if (!TMDB_API_KEY) {
+      return res.status(400).json({ error: 'TMDB API key not configured' });
+    }
+
+    const { mediaType, id } = req.params;
+    if (mediaType !== 'movie' && mediaType !== 'tv') {
+      return res.status(400).json({ error: 'Invalid media type. Must be "movie" or "tv"' });
+    }
+
+    const response = await axios.get(`${TMDB_BASE_URL}/${mediaType}/${id}`, {
+      params: {
+        api_key: TMDB_API_KEY,
+        language: 'en-US',
+        append_to_response: 'credits'
+      }
+    });
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('TMDB details error:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;

@@ -25,43 +25,25 @@ router.get('/status/:instanceId', async (req, res) => {
     }
 
     // Get system info via GraphQL API
-    // Try to get usage stats in query (may not work, originally said subscription-only)
     const query = `
       query {
         info {
           cpu {
-            id
             manufacturer
             brand
             cores
             threads
             speed
-            speedmax
-            speedmin
-            usage
           }
           memory {
-            total
-            used
-            free
-            active
-            available
             layout {
               size
               type
-              bank
               clockSpeed
-              manufacturer
-            }
-          }
-          versions {
-            core {
-              unraid
-              api
-              kernel
             }
           }
           os {
+            hostname
             distro
             release
             platform
@@ -307,16 +289,18 @@ router.post('/docker/action/:instanceId', async (req, res) => {
     const actionCap = action.charAt(0).toUpperCase() + action.slice(1);
     
     const mutationFormats = [
-      // Format 1: Nested under docker with capitalized action
+      // Format 1: Nested under docker with action as method
+      `mutation { docker { ${action}(name: "${containerName}") } }`,
+      // Format 2: Nested with capitalized action
+      `mutation { docker { ${actionCap}(name: "${containerName}") } }`,
+      // Format 3: Direct mutation lowercase
+      `mutation { ${action}(name: "${containerName}") }`,
+      // Format 4: Direct mutation capitalized
+      `mutation { ${actionCap}(name: "${containerName}") }`,
+      // Format 5: With container prefix
       `mutation { docker { container${actionCap}(name: "${containerName}") } }`,
-      // Format 2: Direct mutation with capitalized action
-      `mutation { dockerContainer${actionCap}(name: "${containerName}") }`,
-      // Format 3: Lowercase action
-      `mutation { dockerContainer${action}(name: "${containerName}") }`,
-      // Format 4: Use container ID instead of name
-      `mutation { dockerContainer${actionCap}(id: "${containerId}") }`,
-      // Format 5: Nested with lowercase
-      `mutation { docker { container${action}(name: "${containerName}") } }`,
+      // Format 6: Try with ID instead of name
+      `mutation { docker { ${action}(id: "${containerId}") } }`,
     ];
 
     console.log('[Unraid Docker] Attempting action:', action);

@@ -405,6 +405,11 @@ class ApiService {
     return response.data;
   }
 
+  async getTMDBDetails(id, mediaType) {
+    const response = await this.client.get(`/tmdb/${mediaType}/${id}`);
+    return response.data;
+  }
+
   // Recent downloads
   async getRecentRadarrDownloads(instanceId) {
     const response = await this.client.get(`/radarr/recent/${instanceId}`);

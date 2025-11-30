@@ -108,15 +108,19 @@ function Dashboard() {
       
       // Fetch cast for each item
       const enrichWithCast = async (items, mediaType) => {
-        if (!items) return [];
-        return Promise.all(items.map(async (item) => {
+        if (!items || items.length === 0) return [];
+        const enriched = await Promise.all(items.map(async (item) => {
           try {
             const details = await api.getTMDBDetails(item.id, mediaType);
-            return { ...item, cast: details.credits?.cast || [] };
-          } catch {
+            console.log(`Cast for ${item.title || item.name}:`, details.credits?.cast?.slice(0, 3));
+            return { ...item, cast: details.credits?.cast || [], genres: details.genres || [] };
+          } catch (error) {
+            console.error(`Error fetching cast for ${item.title || item.name}:`, error);
             return item;
           }
         }));
+        console.log('Enriched items:', enriched.filter(i => i.cast?.length > 0).length, 'items with cast');
+        return enriched;
       };
       
       if (trendingMoviesRes.status === 'fulfilled') {
@@ -482,10 +486,12 @@ function Dashboard() {
                     display: 'block',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap'
+                    whiteSpace: 'nowrap',
+                    fontSize: '0.7rem'
                   }}
+                  title={item.cast.slice(0, 5).map(actor => actor.name).join(', ')}
                 >
-                  {item.cast.slice(0, 3).map(actor => actor.name).join(', ')}
+                  ⭐ {item.cast.slice(0, 3).map(actor => actor.name).join(', ')}
                 </Typography>
               )}
             </CardContent>

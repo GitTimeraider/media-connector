@@ -40,48 +40,36 @@ class UnraidSubscriptionManager extends EventEmitter {
       ws.on('message', (data) => {
         try {
           const message = JSON.parse(data.toString());
-          console.log(`[Unraid WS ${instanceId}] Received message type: ${message.type}`);
-          
           switch (message.type) {
             case 'connection_ack':
-              console.log(`[Unraid WS ${instanceId}] Connection acknowledged`);
               // Start subscription after connection is acknowledged
               this.startSystemStatsSubscription(ws, instanceId);
               break;
               
             case 'data':
               // Emit system stats data
-              console.log(`[Unraid WS ${instanceId}] Data message received:`, JSON.stringify(message, null, 2));
               if (message.payload && message.payload.data) {
-                const data = message.payload.data;
-                console.log(`[Unraid WS ${instanceId}] Stats data:`, JSON.stringify(data, null, 2));
                 this.emit(`stats:${instanceId}`, message.payload.data);
-              } else {
-                console.log(`[Unraid WS ${instanceId}] No data in payload:`, JSON.stringify(message, null, 2));
               }
               break;
               
             case 'next':
               // Some GraphQL implementations use 'next' instead of 'data'
-              console.log(`[Unraid WS ${instanceId}] Next message received:`, JSON.stringify(message, null, 2));
               if (message.payload && message.payload.data) {
-                const data = message.payload.data;
-                console.log(`[Unraid WS ${instanceId}] Stats data from 'next':`, JSON.stringify(data, null, 2));
                 this.emit(`stats:${instanceId}`, message.payload.data);
               }
               break;
               
             case 'error':
-              console.error(`[Unraid WS ${instanceId}] Error message:`, JSON.stringify(message.payload, null, 2));
+              console.error(`[Unraid WS ${instanceId}] Error:`, message.payload?.message || message.payload);
               this.emit(`error:${instanceId}`, message.payload);
               break;
               
             case 'complete':
-              console.log(`[Unraid WS ${instanceId}] Subscription complete`);
               break;
               
             default:
-              console.log(`[Unraid WS ${instanceId}] Unknown message type '${message.type}':`, JSON.stringify(message, null, 2));
+              console.log(`[Unraid WS ${instanceId}] Unknown message type: ${message.type}`);
           }
         } catch (error) {
           console.error(`[Unraid WS ${instanceId}] Error parsing message:`, error);

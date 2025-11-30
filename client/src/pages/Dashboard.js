@@ -112,14 +112,11 @@ function Dashboard() {
         const enriched = await Promise.all(items.map(async (item) => {
           try {
             const details = await api.getTMDBDetails(item.id, mediaType);
-            console.log(`Cast for ${item.title || item.name}:`, details.credits?.cast?.slice(0, 3));
             return { ...item, cast: details.credits?.cast || [], genres: details.genres || [] };
           } catch (error) {
-            console.error(`Error fetching cast for ${item.title || item.name}:`, error);
             return item;
           }
         }));
-        console.log('Enriched items:', enriched.filter(i => i.cast?.length > 0).length, 'items with cast');
         return enriched;
       };
       
@@ -237,8 +234,18 @@ function Dashboard() {
   };
 
   const handleOpenDialog = (item) => {
-    setSelectedItem(item);
-    setDialogOpen(true);
+    try {
+      // Ensure cast and genres are arrays
+      const sanitizedItem = {
+        ...item,
+        cast: Array.isArray(item.cast) ? item.cast : [],
+        genres: Array.isArray(item.genres) ? item.genres : []
+      };
+      setSelectedItem(sanitizedItem);
+      setDialogOpen(true);
+    } catch (error) {
+      console.error('Error opening dialog:', error);
+    }
   };
 
   const handleCloseDialog = () => {
@@ -449,7 +456,7 @@ function Dashboard() {
                     variant="outlined"
                   />
                 )}
-                {item.genre_ids && item.genre_ids.length > 0 && (
+                {item.genre_ids && Array.isArray(item.genre_ids) && item.genre_ids.length > 0 && (
                   <Chip 
                     label={getGenreName(item.genre_ids[0], type || item.media_type)} 
                     size="small"
@@ -457,9 +464,9 @@ function Dashboard() {
                     sx={{ fontSize: '0.7rem' }}
                   />
                 )}
-                {item.genres && item.genres.length > 0 && (
+                {item.genres && Array.isArray(item.genres) && item.genres.length > 0 && typeof item.genres[0] === 'object' && (
                   <Chip 
-                    label={item.genres[0].name} 
+                    label={item.genres[0].name || ''} 
                     size="small"
                     variant="outlined"
                     sx={{ fontSize: '0.7rem' }}
@@ -477,7 +484,7 @@ function Dashboard() {
                   />
                 )}
               </Box>
-              {item.cast && item.cast.length > 0 && (
+              {item.cast && Array.isArray(item.cast) && item.cast.length > 0 && (
                 <Typography 
                   variant="caption" 
                   color="text.secondary" 
@@ -489,9 +496,9 @@ function Dashboard() {
                     whiteSpace: 'nowrap',
                     fontSize: '0.7rem'
                   }}
-                  title={item.cast.slice(0, 5).map(actor => actor.name).join(', ')}
+                  title={item.cast.slice(0, 5).map(actor => typeof actor === 'string' ? actor : actor?.name || '').filter(n => n).join(', ')}
                 >
-                  ⭐ {item.cast.slice(0, 3).map(actor => actor.name).join(', ')}
+                  ⭐ {item.cast.slice(0, 3).map(actor => typeof actor === 'string' ? actor : actor?.name || '').filter(n => n).join(', ')}
                 </Typography>
               )}
             </CardContent>
@@ -660,14 +667,36 @@ function Dashboard() {
                   <Typography variant="body1" color="text.secondary" paragraph>
                     {selectedItem.overview || 'No overview available.'}
                   </Typography>
-                  {selectedItem.genres && (
+                  {selectedItem.genres && Array.isArray(selectedItem.genres) && selectedItem.genres.length > 0 && (
                     <>
                       <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mt: 2 }}>
                         Genres
                       </Typography>
                       <Box display="flex" gap={1} flexWrap="wrap">
                         {selectedItem.genres.map((genre, index) => (
-                          <Chip key={index} label={genre} variant="outlined" size="small" />
+                          <Chip 
+                            key={index} 
+                            label={typeof genre === 'string' ? genre : genre?.name || ''} 
+                            variant="outlined" 
+                            size="small" 
+                          />
+                        ))}
+                      </Box>
+                    </>
+                  )}
+                  {selectedItem.cast && Array.isArray(selectedItem.cast) && selectedItem.cast.length > 0 && (
+                    <>
+                      <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mt: 2 }}>
+                        Cast
+                      </Typography>
+                      <Box display="flex" gap={1} flexWrap="wrap">
+                        {selectedItem.cast.slice(0, 5).map((actor, index) => (
+                          <Chip 
+                            key={index} 
+                            label={typeof actor === 'string' ? actor : actor?.name || ''} 
+                            variant="outlined" 
+                            size="small" 
+                          />
                         ))}
                       </Box>
                     </>

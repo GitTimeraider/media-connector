@@ -53,14 +53,10 @@ router.get('/status/:instanceId', async (req, res) => {
       }
     `;
 
-    console.log(`Attempting Unraid status request to: ${instance.url}/graphql`);
-    
     const response = await axios.post(`${instance.url}/graphql`, 
       { query },
       { headers, timeout: 10000 }
     );
-
-    console.log('Unraid status response:', JSON.stringify(response.data, null, 2));
 
     // GraphQL returns data in response.data.data
     if (response.data && response.data.data) {
@@ -107,19 +103,13 @@ router.get('/docker/:instanceId', async (req, res) => {
       }
     `;
 
-    console.log(`Attempting Unraid docker request to: ${instance.url}/graphql`);
-
     const response = await axios.post(`${instance.url}/graphql`,
       { query },
       { headers, timeout: 10000 }
     );
 
-    console.log('Unraid docker response:', JSON.stringify(response.data, null, 2));
-
     // GraphQL returns data in response.data.data
     if (response.data && response.data.data) {
-      const containers = response.data.data.docker?.containers || [];
-      console.log(`Found ${containers.length} Docker containers`);
       res.json(response.data.data);
     } else {
       res.json(response.data);
@@ -252,8 +242,6 @@ router.post('/docker/action/:instanceId', async (req, res) => {
 
     const { containerId, action } = req.body;
     
-    console.log('Docker action request:', { containerId, action, instanceId: req.params.instanceId });
-    
     // First get the container to find its actual name
     const containerQuery = `
       query {
@@ -276,36 +264,35 @@ router.post('/docker/action/:instanceId', async (req, res) => {
     const container = containers.find(c => c.id === containerId);
     
     if (!container) {
-      console.error('Container not found:', containerId);
+      console.error(`[Unraid Docker] Container not found: ${containerId}`);
       return res.status(404).json({ error: 'Container not found', containerId });
     }
     
     // Get the container name (first name without leading slash)
     const containerName = (container.names[0] || '').replace(/^\//, '');
-    console.log('Found container:', { id: container.id, name: containerName, state: container.state });
     
     // Use GraphQL mutation for docker actions
     // Try multiple mutation formats to find the one Unraid accepts
     const actionCap = action.charAt(0).toUpperCase() + action.slice(1);
     
+    // Based on error messages:
+    // - Field "stop" must have a selection of subfields
+    // - Argument "id" of type "PrefixedID!" is required
+    // - Unknown argument "name"
     const mutationFormats = [
-      // Format 1: Nested under docker with action as method
-      `mutation { docker { ${action}(name: "${containerName}") } }`,
-      // Format 2: Nested with capitalized action
-      `mutation { docker { ${actionCap}(name: "${containerName}") } }`,
-      // Format 3: Direct mutation lowercase
-      `mutation { ${action}(name: "${containerName}") }`,
-      // Format 4: Direct mutation capitalized
-      `mutation { ${actionCap}(name: "${containerName}") }`,
-      // Format 5: With container prefix
-      `mutation { docker { container${actionCap}(name: "${containerName}") } }`,
-      // Format 6: Try with ID instead of name
-      `mutation { docker { ${action}(id: "${containerId}") } }`,
+      // Format 1: With ID and subfields (what the API wants)
+      `mutation { docker { ${action}(id: "${containerId}") { id name state } } }`,
+      // Format 2: Try with just id and name as subfields
+      `mutation { docker { ${action}(id: "${containerId}") { id name } } }`,
+      // Format 3: Try with all possible subfields
+      `mutation { docker { ${action}(id: "${containerId}") { id names image state status autoStart } } }`,
+      // Format 4: Try capitalized action
+      `mutation { docker { ${actionCap}(id: "${containerId}") { id name state } } }`,
+      // Format 5: Try different subfield selection
+      `mutation { docker { ${action}(id: "${containerId}") { id } } }`,
     ];
 
-    console.log('[Unraid Docker] Attempting action:', action);
-    console.log('[Unraid Docker] Container ID:', containerId);
-    console.log('[Unraid Docker] Container name:', containerName);
+    console.log(`[Unraid Docker] ${action} container: ${containerName}`);
 
     let response;
     let lastError;
@@ -313,7 +300,6 @@ router.post('/docker/action/:instanceId', async (req, res) => {
     try {
       for (let i = 0; i < mutationFormats.length; i++) {
         const mutation = mutationFormats[i];
-        console.log(`[Unraid Docker] Attempt ${i + 1}/${mutationFormats.length}:`, mutation);
         
         try {
           response = await axios.post(`${instance.url}/graphql`,
@@ -323,19 +309,16 @@ router.post('/docker/action/:instanceId', async (req, res) => {
           
           // Check if response has errors
           if (response.data && response.data.errors) {
-            console.error(`[Unraid Docker] Attempt ${i + 1} - GraphQL errors:`, JSON.stringify(response.data.errors, null, 2));
             lastError = response.data.errors[0];
             continue; // Try next format
           }
           
           // Success!
-          console.log(`[Unraid Docker] Attempt ${i + 1} succeeded!`, JSON.stringify(response.data, null, 2));
+          console.log(`[Unraid Docker] Successfully ${action}ed ${containerName}`);
           break;
           
         } catch (axiosError) {
-          console.error(`[Unraid Docker] Attempt ${i + 1} failed:`, axiosError.message);
           if (axiosError.response?.data) {
-            console.error(`[Unraid Docker] Error data:`, JSON.stringify(axiosError.response.data, null, 2));
             lastError = axiosError.response.data;
           } else {
             lastError = axiosError.message;
@@ -356,13 +339,12 @@ router.post('/docker/action/:instanceId', async (req, res) => {
     
     // If all attempts failed
     if (!response || (response.data && response.data.errors)) {
-      console.error('[Unraid Docker] All mutation formats failed');
+      console.error(`[Unraid Docker] Failed to ${action} ${containerName}:`, lastError?.message || lastError);
       return res.status(500).json({ 
-        error: 'Docker action failed - all mutation formats rejected',
+        error: `Docker action failed - unable to ${action} container`,
         lastError: lastError,
-        container: { id: containerId, name: containerName },
-        action: action,
-        triedFormats: mutationFormats
+        container: { name: containerName },
+        action: action
       });
     }
     

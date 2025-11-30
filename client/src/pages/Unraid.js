@@ -77,14 +77,8 @@ function Unraid() {
       
       wsRef.current.onmessage = (event) => {
         const message = JSON.parse(event.data);
-        console.log('WebSocket message received:', message);
         if (message.type === 'stats' && message.instanceId === selectedInstance) {
-          console.log('Received real-time stats:', message.data);
-          console.log('CPU usage:', message.data?.info?.cpu?.usage);
-          console.log('Memory:', message.data?.info?.memory);
           setRealtimeStats(message.data);
-        } else if (message.type === 'subscribed') {
-          console.log('Subscribed to instance:', message.instanceId);
         }
       };
       

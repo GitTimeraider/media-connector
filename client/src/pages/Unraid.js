@@ -77,9 +77,14 @@ function Unraid() {
       
       wsRef.current.onmessage = (event) => {
         const message = JSON.parse(event.data);
+        console.log('WebSocket message received:', message);
         if (message.type === 'stats' && message.instanceId === selectedInstance) {
           console.log('Received real-time stats:', message.data);
+          console.log('CPU usage:', message.data?.info?.cpu?.usage);
+          console.log('Memory:', message.data?.info?.memory);
           setRealtimeStats(message.data);
+        } else if (message.type === 'subscribed') {
+          console.log('Subscribed to instance:', message.instanceId);
         }
       };
       
@@ -249,7 +254,7 @@ function Unraid() {
                 </Typography>
                 {systemStats.cpu?.speed && (
                   <Typography variant="caption" display="block">
-                    {(systemStats.cpu.speed / 1000).toFixed(2)} GHz
+                    {systemStats.cpu.speed >= 10 ? (systemStats.cpu.speed / 1000).toFixed(2) : systemStats.cpu.speed.toFixed(2)} GHz
                   </Typography>
                 )}
                 {realtimeStats?.info?.cpu?.usage !== undefined && (
@@ -326,14 +331,15 @@ function Unraid() {
                 <Typography variant="caption">
                   Uptime: {(() => {
                     const uptimeData = realtimeStats?.info?.os?.uptime || systemStats.os?.uptime;
-                    if (!uptimeData) return '0h 0m';
+                    if (!uptimeData) return '0d 0h 0m';
                     // Unraid returns ISO date string of boot time, calculate uptime
                     const bootTime = new Date(uptimeData);
                     const now = new Date();
                     const uptimeSeconds = Math.floor((now - bootTime) / 1000);
-                    const hours = Math.floor(uptimeSeconds / 3600);
+                    const days = Math.floor(uptimeSeconds / 86400);
+                    const hours = Math.floor((uptimeSeconds % 86400) / 3600);
                     const minutes = Math.floor((uptimeSeconds % 3600) / 60);
-                    return `${hours}h ${minutes}m`;
+                    return `${days}d ${hours}h ${minutes}m`;
                   })()}
                 </Typography>
               </CardContent>

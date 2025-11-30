@@ -588,7 +588,15 @@ function Dashboard() {
             </DialogContent>
             <DialogActions sx={{ p: 2 }}>
               <Button onClick={handleCloseDialog}>Close</Button>
-              <Button variant="contained" startIcon={<Add />}>
+              <Button 
+                variant="contained" 
+                startIcon={<Add />}
+                onClick={() => {
+                  const mediaType = selectedItem.media_type || (selectedItem.title ? 'movie' : 'tv');
+                  handleCloseDialog();
+                  handleOpenAddDialog(selectedItem, mediaType);
+                }}
+              >
                 Add to Library
               </Button>
             </DialogActions>

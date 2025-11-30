@@ -261,13 +261,42 @@ router.post('/docker/action/:instanceId', async (req, res) => {
     
     console.log('Docker action request:', { containerId, action, instanceId: req.params.instanceId });
     
+    // First get the container to find its actual name
+    const containerQuery = `
+      query {
+        docker {
+          containers {
+            id
+            names
+            state
+          }
+        }
+      }
+    `;
+    
+    const containerResponse = await axios.post(`${instance.url}/graphql`,
+      { query: containerQuery },
+      { headers, timeout: 10000 }
+    );
+    
+    const containers = containerResponse.data?.data?.docker?.containers || [];
+    const container = containers.find(c => c.id === containerId);
+    
+    if (!container) {
+      console.error('Container not found:', containerId);
+      return res.status(404).json({ error: 'Container not found', containerId });
+    }
+    
+    // Get the container name (first name without leading slash)
+    const containerName = (container.names[0] || '').replace(/^\//, '');
+    console.log('Found container:', { id: container.id, name: containerName, state: container.state });
+    
     // Use GraphQL mutation for docker actions
-    // Unraid GraphQL API expects the container ID (hash), not the name
-    // The containerId passed should be the actual container.id from the query
+    // Try using container name as that's what Unraid usually expects
     const actionName = action.charAt(0).toUpperCase() + action.slice(1);
     const mutation = `
       mutation {
-        dockerContainer${actionName}(id: "${containerId}") {
+        dockerContainer${actionName}(name: "${containerName}") {
           id
           names
           state
@@ -276,18 +305,27 @@ router.post('/docker/action/:instanceId', async (req, res) => {
     `;
 
     console.log('Sending mutation:', mutation);
-    console.log('Container ID:', containerId);
 
     const response = await axios.post(`${instance.url}/graphql`,
       { query: mutation },
       { headers, timeout: 10000 }
     );
 
-    console.log('Docker action response:', response.data);
+    console.log('Docker action response:', JSON.stringify(response.data, null, 2));
+    
+    // Check for GraphQL errors in response
+    if (response.data.errors) {
+      console.error('GraphQL errors:', JSON.stringify(response.data.errors, null, 2));
+      return res.status(400).json({
+        error: 'GraphQL mutation failed',
+        graphqlErrors: response.data.errors
+      });
+    }
+    
     res.json(response.data.data || response.data);
   } catch (error) {
     console.error('Unraid docker action error:', error.message);
-    console.error('Error response:', error.response?.data);
+    console.error('Error response:', JSON.stringify(error.response?.data, null, 2));
     res.status(500).json({ 
       error: error.message, 
       details: error.response?.data,

@@ -51,7 +51,10 @@ class UnraidSubscriptionManager extends EventEmitter {
             case 'data':
               // Emit system stats data
               if (message.payload && message.payload.data) {
+                console.log(`Received stats data for instance ${instanceId}:`, JSON.stringify(message.payload.data, null, 2));
                 this.emit(`stats:${instanceId}`, message.payload.data);
+              } else {
+                console.log(`No data in payload for instance ${instanceId}:`, message);
               }
               break;
               

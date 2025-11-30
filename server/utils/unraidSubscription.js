@@ -173,4 +173,4 @@ class UnraidSubscriptionManager extends EventEmitter {
   }
 }
 
-module.exports = new UnraidSubscriptionManager();
+module.exports = UnraidSubscriptionManager;

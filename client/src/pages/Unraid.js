@@ -324,7 +324,17 @@ function Unraid() {
                 </Box>
                 <Typography variant="body2">{systemStats.os?.distro || 'Unraid'} {systemStats.os?.release || ''}</Typography>
                 <Typography variant="caption">
-                  Uptime: {Math.floor(((realtimeStats?.info?.os?.uptime || systemStats.os?.uptime || 0)) / 3600)}h {Math.floor((((realtimeStats?.info?.os?.uptime || systemStats.os?.uptime || 0)) % 3600) / 60)}m
+                  Uptime: {(() => {
+                    const uptimeData = realtimeStats?.info?.os?.uptime || systemStats.os?.uptime;
+                    if (!uptimeData) return '0h 0m';
+                    // Unraid returns ISO date string of boot time, calculate uptime
+                    const bootTime = new Date(uptimeData);
+                    const now = new Date();
+                    const uptimeSeconds = Math.floor((now - bootTime) / 1000);
+                    const hours = Math.floor(uptimeSeconds / 3600);
+                    const minutes = Math.floor((uptimeSeconds % 3600) / 60);
+                    return `${hours}h ${minutes}m`;
+                  })()}
                 </Typography>
               </CardContent>
             </Card>
@@ -387,7 +397,10 @@ function Unraid() {
                         <IconButton 
                           size="small" 
                           color="error"
-                          onClick={() => handleDockerAction(container.id || container.Id || container.name, 'stop')}
+                          onClick={() => {
+                            console.log('Stop clicked, container:', container);
+                            handleDockerAction(container.id || container.Id || container.name, 'stop');
+                          }}
                         >
                           <Stop />
                         </IconButton>
@@ -395,7 +408,10 @@ function Unraid() {
                       <Tooltip title="Restart">
                         <IconButton 
                           size="small"
-                          onClick={() => handleDockerAction(container.id || container.Id || container.name, 'restart')}
+                          onClick={() => {
+                            console.log('Restart clicked, container:', container);
+                            handleDockerAction(container.id || container.Id || container.name, 'restart');
+                          }}
                         >
                           <Refresh />
                         </IconButton>
@@ -406,7 +422,10 @@ function Unraid() {
                       <IconButton 
                         size="small" 
                         color="success"
-                        onClick={() => handleDockerAction(container.id || container.Id || container.name, 'start')}
+                        onClick={() => {
+                          console.log('Start clicked, container:', container);
+                          handleDockerAction(container.id || container.Id || container.name, 'start');
+                        }}
                       >
                         <PlayArrow />
                       </IconButton>

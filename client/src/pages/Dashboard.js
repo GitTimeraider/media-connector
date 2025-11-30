@@ -328,7 +328,9 @@ function Dashboard() {
                           onClick={(e) => {
                             e.stopPropagation();
                             e.preventDefault();
+                            console.log('Add button clicked on MediaCard');
                             const mediaType = type || item.media_type;
+                            console.log('Calling handleOpenAddDialog with:', { item, mediaType });
                             handleOpenAddDialog(item, mediaType);
                           }}
                           sx={{ 

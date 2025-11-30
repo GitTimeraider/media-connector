@@ -105,6 +105,8 @@ class UnraidSubscriptionManager extends EventEmitter {
             cores
             threads
             speed
+            usage
+            temperature
           }
           memory {
             total

@@ -176,10 +176,13 @@ function Unraid() {
 
   const handleDockerAction = async (container, action) => {
     try {
+      console.log('Docker action:', { container, action, instanceId: selectedInstance });
       await api.unraidDockerAction(selectedInstance, container, action);
       loadUnraidData();
     } catch (error) {
       console.error('Error performing action:', error);
+      console.error('Error details:', error.response?.data);
+      alert(`Failed to ${action} container: ${error.response?.data?.error || error.message}`);
     }
   };
 
@@ -310,9 +313,19 @@ function Unraid() {
                 <Box display="flex" alignItems="center" mb={1}>
                   <Computer sx={{ mr: 1, color: 'info.main' }} />
                   <Typography variant="h6">System</Typography>
+                  {wsConnected && (
+                    <Chip 
+                      label="Live" 
+                      color="success" 
+                      size="small" 
+                      sx={{ ml: 'auto', height: 20 }}
+                    />
+                  )}
                 </Box>
                 <Typography variant="body2">{systemStats.os?.distro || 'Unraid'} {systemStats.os?.release || ''}</Typography>
-                <Typography variant="caption">Uptime: {Math.floor((systemStats.os?.uptime || 0) / 3600)}h {Math.floor(((systemStats.os?.uptime || 0) % 3600) / 60)}m</Typography>
+                <Typography variant="caption">
+                  Uptime: {Math.floor(((realtimeStats?.info?.os?.uptime || systemStats.os?.uptime || 0)) / 3600)}h {Math.floor((((realtimeStats?.info?.os?.uptime || systemStats.os?.uptime || 0)) % 3600) / 60)}m
+                </Typography>
               </CardContent>
             </Card>
           </Grid>

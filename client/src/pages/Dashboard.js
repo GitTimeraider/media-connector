@@ -131,6 +131,7 @@ function Dashboard() {
   };
 
   const handleOpenAddDialog = async (item, mediaType) => {
+    console.log('Opening add dialog:', { item, mediaType, services });
     setItemToAdd({ ...item, mediaType });
     setAddDialogOpen(true);
     

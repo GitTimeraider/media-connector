@@ -269,6 +269,18 @@ function Unraid() {
                     />
                   </Box>
                 )}
+                {!realtimeStats?.info?.cpu?.usage && systemStats.cpu?.usage !== undefined && (
+                  <Box sx={{ mt: 2 }}>
+                    <Typography variant="h4" color="primary">
+                      {systemStats.cpu.usage.toFixed(1)}%
+                    </Typography>
+                    <LinearProgress 
+                      variant="determinate" 
+                      value={systemStats.cpu.usage} 
+                      sx={{ mt: 1 }}
+                    />
+                  </Box>
+                )}
               </CardContent>
             </Card>
           </Grid>
@@ -288,23 +300,29 @@ function Unraid() {
                     />
                   )}
                 </Box>
-                {realtimeStats?.info?.memory ? (
+                {(realtimeStats?.info?.memory?.used && realtimeStats?.info?.memory?.total) || (systemStats.memory?.used && systemStats.memory?.total) ? (
                   <>
                     <Typography variant="h4">
-                      {((realtimeStats.info.memory.used / realtimeStats.info.memory.total) * 100).toFixed(1)}%
+                      {((
+                        (realtimeStats?.info?.memory?.used || systemStats.memory?.used) / 
+                        (realtimeStats?.info?.memory?.total || systemStats.memory?.total)
+                      ) * 100).toFixed(1)}%
                     </Typography>
                     <Typography variant="caption">
-                      {formatBytes(realtimeStats.info.memory.used)} / {formatBytes(realtimeStats.info.memory.total)}
+                      {formatBytes(realtimeStats?.info?.memory?.used || systemStats.memory?.used)} / {formatBytes(realtimeStats?.info?.memory?.total || systemStats.memory?.total)}
                     </Typography>
                     <LinearProgress 
                       variant="determinate" 
-                      value={(realtimeStats.info.memory.used / realtimeStats.info.memory.total) * 100} 
+                      value={(
+                        (realtimeStats?.info?.memory?.used || systemStats.memory?.used) / 
+                        (realtimeStats?.info?.memory?.total || systemStats.memory?.total)
+                      ) * 100} 
                       sx={{ mt: 1 }}
                     />
                   </>
                 ) : (
                   <>
-                    <Typography variant="h4">{formatBytes(systemStats.memory?.total || 0)}</Typography>
+                    <Typography variant="h4">{formatBytes(systemStats.memory?.layout?.reduce((sum, m) => sum + (m.size || 0), 0) || 0)}</Typography>
                     <Typography variant="caption">{systemStats.memory?.layout?.length || 0} modules</Typography>
                   </>
                 )}

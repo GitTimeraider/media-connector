@@ -25,7 +25,7 @@ router.get('/status/:instanceId', async (req, res) => {
     }
 
     // Get system info via GraphQL API
-    // Note: CPU usage and memory usage are NOT available in queries, only in subscriptions
+    // Try to get usage stats in query (may not work, originally said subscription-only)
     const query = `
       query {
         info {
@@ -38,8 +38,14 @@ router.get('/status/:instanceId', async (req, res) => {
             speed
             speedmax
             speedmin
+            usage
           }
           memory {
+            total
+            used
+            free
+            active
+            available
             layout {
               size
               type
@@ -297,72 +303,116 @@ router.post('/docker/action/:instanceId', async (req, res) => {
     console.log('Found container:', { id: container.id, name: containerName, state: container.state });
     
     // Use GraphQL mutation for docker actions
-    const actionName = action.charAt(0).toUpperCase() + action.slice(1);
+    // Try multiple mutation formats to find the one Unraid accepts
+    const actionCap = action.charAt(0).toUpperCase() + action.slice(1);
     
-    // Try mutation with container name (Unraid API might expect name instead of id)
-    const mutation = `
-      mutation {
-        dockerContainer${actionName}(name: "${containerName}")
-      }
-    `;
+    const mutationFormats = [
+      // Format 1: Nested under docker with capitalized action
+      `mutation { docker { container${actionCap}(name: "${containerName}") } }`,
+      // Format 2: Direct mutation with capitalized action
+      `mutation { dockerContainer${actionCap}(name: "${containerName}") }`,
+      // Format 3: Lowercase action
+      `mutation { dockerContainer${action}(name: "${containerName}") }`,
+      // Format 4: Use container ID instead of name
+      `mutation { dockerContainer${actionCap}(id: "${containerId}") }`,
+      // Format 5: Nested with lowercase
+      `mutation { docker { container${action}(name: "${containerName}") } }`,
+    ];
 
-    console.log('[Unraid Docker] Sending mutation:', mutation);
+    console.log('[Unraid Docker] Attempting action:', action);
     console.log('[Unraid Docker] Container ID:', containerId);
     console.log('[Unraid Docker] Container name:', containerName);
-    console.log('[Unraid Docker] Action:', action, '-> mutation name:', actionName);
 
     let response;
+    let lastError;
+    
     try {
-      response = await axios.post(`${instance.url}/graphql`,
-        { query: mutation },
-        { headers, timeout: 10000 }
-      );
-    } catch (axiosError) {
-      console.error('[Unraid Docker] Axios error:', axiosError.message);
-      console.error('[Unraid Docker] Error response:', JSON.stringify(axiosError.response?.data, null, 2));
-      
-      // If the mutation with 'name' failed, try with lowercase action
-      const lowerMutation = `
-        mutation {
-          dockerContainer${action}(name: "${containerName}")
+      for (let i = 0; i < mutationFormats.length; i++) {
+        const mutation = mutationFormats[i];
+        console.log(`[Unraid Docker] Attempt ${i + 1}/${mutationFormats.length}:`, mutation);
+        
+        try {
+          response = await axios.post(`${instance.url}/graphql`,
+            { query: mutation },
+            { headers, timeout: 10000 }
+          );
+          
+          // Check if response has errors
+          if (response.data && response.data.errors) {
+            console.error(`[Unraid Docker] Attempt ${i + 1} - GraphQL errors:`, JSON.stringify(response.data.errors, null, 2));
+            lastError = response.data.errors[0];
+            continue; // Try next format
+          }
+          
+          // Success!
+          console.log(`[Unraid Docker] Attempt ${i + 1} succeeded!`, JSON.stringify(response.data, null, 2));
+          break;
+          
+        } catch (axiosError) {
+          console.error(`[Unraid Docker] Attempt ${i + 1} failed:`, axiosError.message);
+          if (axiosError.response?.data) {
+            console.error(`[Unraid Docker] Error data:`, JSON.stringify(axiosError.response.data, null, 2));
+            lastError = axiosError.response.data;
+          } else {
+            lastError = axiosError.message;
+          }
+          // Try next format
+          continue;
         }
-      `;
-      console.log('[Unraid Docker] Retrying with lowercase action:', lowerMutation);
-      
-      try {
-        response = await axios.post(`${instance.url}/graphql`,
-          { query: lowerMutation },
-          { headers, timeout: 10000 }
-        );
-      } catch (retryError) {
-        console.error('[Unraid Docker] Retry also failed:', retryError.message);
-        throw axiosError; // Throw original error
       }
+    } catch (loopError) {
+      console.error('[Unraid Docker] Unexpected error in mutation loop:', loopError);
+      return res.status(500).json({ 
+        error: 'Unexpected error during Docker action',
+        message: loopError.message,
+        container: { id: containerId, name: containerName },
+        action: action
+      });
     }
-
-    console.log('[Unraid Docker] Response:', JSON.stringify(response.data, null, 2));
+    
+    // If all attempts failed
+    if (!response || (response.data && response.data.errors)) {
+      console.error('[Unraid Docker] All mutation formats failed');
+      return res.status(500).json({ 
+        error: 'Docker action failed - all mutation formats rejected',
+        lastError: lastError,
+        container: { id: containerId, name: containerName },
+        action: action,
+        triedFormats: mutationFormats
+      });
+    }
     
     // Check for GraphQL errors in response
-    if (response.data.errors) {
+    if (response && response.data && response.data.errors) {
       console.error('[Unraid Docker] GraphQL errors:', JSON.stringify(response.data.errors, null, 2));
       return res.status(400).json({
         error: 'GraphQL mutation failed',
         graphqlErrors: response.data.errors,
-        mutation: mutation
+        container: { id: containerId, name: containerName },
+        action: action
       });
     }
     
-    res.json(response.data.data || response.data);
-  } catch (error) {
-    console.error('[Unraid Docker] Action error:', error.message);
-    if (error.response) {
-      console.error('[Unraid Docker] Response status:', error.response.status);
-      console.error('[Unraid Docker] Response data:', JSON.stringify(error.response.data, null, 2));
+    if (response && response.data) {
+      console.log('[Unraid Docker] Action successful');
+      return res.json(response.data.data || response.data);
     }
-    res.status(500).json({ 
-      error: error.message, 
-      details: error.response?.data,
-      graphqlErrors: error.response?.data?.errors,
+    
+    // Should not reach here, but just in case
+    console.error('[Unraid Docker] No response received');
+    return res.status(500).json({ 
+      error: 'No response from Unraid server',
+      container: { id: containerId, name: containerName },
+      action: action
+    });
+    
+  } catch (error) {
+    // This is the outer catch for any unexpected errors
+    console.error('[Unraid Docker] Unexpected error:', error.message);
+    console.error('[Unraid Docker] Stack trace:', error.stack);
+    return res.status(500).json({ 
+      error: 'Unexpected server error',
+      message: error.message,
       container: { id: containerId, name: containerName },
       action: action
     });

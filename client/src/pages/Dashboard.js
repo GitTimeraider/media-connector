@@ -106,9 +106,31 @@ function Dashboard() {
         api.getUpcomingMovies()
       ]);
       
-      if (trendingMoviesRes.status === 'fulfilled') setTrendingMovies(trendingMoviesRes.value || []);
-      if (trendingTVRes.status === 'fulfilled') setTrendingTV(trendingTVRes.value || []);
-      if (upcomingRes.status === 'fulfilled') setUpcomingMovies(upcomingRes.value || []);
+      // Fetch cast for each item
+      const enrichWithCast = async (items, mediaType) => {
+        if (!items) return [];
+        return Promise.all(items.map(async (item) => {
+          try {
+            const details = await api.getTMDBDetails(item.id, mediaType);
+            return { ...item, cast: details.credits?.cast || [] };
+          } catch {
+            return item;
+          }
+        }));
+      };
+      
+      if (trendingMoviesRes.status === 'fulfilled') {
+        const moviesWithCast = await enrichWithCast(trendingMoviesRes.value, 'movie');
+        setTrendingMovies(moviesWithCast || []);
+      }
+      if (trendingTVRes.status === 'fulfilled') {
+        const tvWithCast = await enrichWithCast(trendingTVRes.value, 'tv');
+        setTrendingTV(tvWithCast || []);
+      }
+      if (upcomingRes.status === 'fulfilled') {
+        const upcomingWithCast = await enrichWithCast(upcomingRes.value, 'movie');
+        setUpcomingMovies(upcomingWithCast || []);
+      }
     } catch (error) {
       console.error('Error loading TMDB content:', error);
     } finally {
@@ -122,7 +144,19 @@ function Dashboard() {
     try {
       setSearching(true);
       const results = await api.searchTMDB(searchQuery);
-      setSearchResults(results || []);
+      
+      // Enrich results with cast information
+      const enrichedResults = await Promise.all((results || []).map(async (item) => {
+        try {
+          const mediaType = item.media_type || 'movie';
+          const details = await api.getTMDBDetails(item.id, mediaType);
+          return { ...item, cast: details.credits?.cast || [] };
+        } catch {
+          return item;
+        }
+      }));
+      
+      setSearchResults(enrichedResults);
     } catch (error) {
       console.error('Error searching TMDB:', error);
     } finally {
@@ -227,6 +261,24 @@ function Dashboard() {
       </Container>
     );
   }
+
+  // Genre ID to name mapping
+  const getGenreName = (genreId, mediaType) => {
+    const movieGenres = {
+      28: 'Action', 12: 'Adventure', 16: 'Animation', 35: 'Comedy', 80: 'Crime',
+      99: 'Documentary', 18: 'Drama', 10751: 'Family', 14: 'Fantasy', 36: 'History',
+      27: 'Horror', 10402: 'Music', 9648: 'Mystery', 10749: 'Romance', 878: 'Sci-Fi',
+      10770: 'TV Movie', 53: 'Thriller', 10752: 'War', 37: 'Western'
+    };
+    const tvGenres = {
+      10759: 'Action & Adventure', 16: 'Animation', 35: 'Comedy', 80: 'Crime',
+      99: 'Documentary', 18: 'Drama', 10751: 'Family', 10762: 'Kids', 9648: 'Mystery',
+      10763: 'News', 10764: 'Reality', 10765: 'Sci-Fi & Fantasy', 10766: 'Soap',
+      10767: 'Talk', 10768: 'War & Politics', 37: 'Western'
+    };
+    const genres = mediaType === 'tv' ? tvGenres : movieGenres;
+    return genres[genreId] || 'Other';
+  };
 
   const MediaCard = ({ item, type, index, showReleaseDate }) => {
     const [isHovered, setIsHovered] = useState(false);
@@ -393,6 +445,22 @@ function Dashboard() {
                     variant="outlined"
                   />
                 )}
+                {item.genre_ids && item.genre_ids.length > 0 && (
+                  <Chip 
+                    label={getGenreName(item.genre_ids[0], type || item.media_type)} 
+                    size="small"
+                    variant="outlined"
+                    sx={{ fontSize: '0.7rem' }}
+                  />
+                )}
+                {item.genres && item.genres.length > 0 && (
+                  <Chip 
+                    label={item.genres[0].name} 
+                    size="small"
+                    variant="outlined"
+                    sx={{ fontSize: '0.7rem' }}
+                  />
+                )}
                 {showReleaseDate && formattedDate && (
                   <Chip 
                     icon={<CalendarToday sx={{ fontSize: 16 }} />}
@@ -405,13 +473,44 @@ function Dashboard() {
                   />
                 )}
               </Box>
+              {item.cast && item.cast.length > 0 && (
+                <Typography 
+                  variant="caption" 
+                  color="text.secondary" 
+                  sx={{ 
+                    mt: 1,
+                    display: 'block',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  {item.cast.slice(0, 3).map(actor => actor.name).join(', ')}
+                </Typography>
+              )}
             </CardContent>
-          </CardActionArea>
-        </Card>
+        </CardActionArea>
+      </Card>
     );
   };
-
-  return (
+  
+  // Genre ID to name mapping
+  const getGenreName = (genreId, mediaType) => {
+    const movieGenres = {
+      28: 'Action', 12: 'Adventure', 16: 'Animation', 35: 'Comedy', 80: 'Crime',
+      99: 'Documentary', 18: 'Drama', 10751: 'Family', 14: 'Fantasy', 36: 'History',
+      27: 'Horror', 10402: 'Music', 9648: 'Mystery', 10749: 'Romance', 878: 'Sci-Fi',
+      10770: 'TV Movie', 53: 'Thriller', 10752: 'War', 37: 'Western'
+    };
+    const tvGenres = {
+      10759: 'Action & Adventure', 16: 'Animation', 35: 'Comedy', 80: 'Crime',
+      99: 'Documentary', 18: 'Drama', 10751: 'Family', 10762: 'Kids', 9648: 'Mystery',
+      10763: 'News', 10764: 'Reality', 10765: 'Sci-Fi & Fantasy', 10766: 'Soap',
+      10767: 'Talk', 10768: 'War & Politics', 37: 'Western'
+    };
+    const genres = mediaType === 'tv' ? tvGenres : movieGenres;
+    return genres[genreId] || 'Other';
+  };  return (
     <Container maxWidth="xl" sx={{ pb: 4, overflowX: 'hidden', width: '100%' }}>
       {/* Search Bar */}
       <Paper 

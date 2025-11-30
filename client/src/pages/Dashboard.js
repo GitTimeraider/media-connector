@@ -415,15 +415,17 @@ function Dashboard() {
   };
 
   return (
-    <Container maxWidth="xl" sx={{ pb: 4, touchAction: 'pan-y' }}>
+    <Container maxWidth="xl" sx={{ pb: 4, overflowX: 'hidden', width: '100%' }}>
       {/* Search Bar */}
       <Paper 
         elevation={2}
         sx={{ 
           mb: 4, 
-          p: 2, 
+          p: { xs: 1.5, sm: 2 }, 
           display: 'flex', 
+          flexDirection: { xs: 'column', sm: 'row' },
           alignItems: 'center',
+          gap: { xs: 1.5, sm: 0 },
           backgroundColor: 'rgba(255, 255, 255, 0.05)'
         }}
       >
@@ -436,7 +438,7 @@ function Dashboard() {
           onKeyPress={(e) => {
             if (e.key === 'Enter') handleSearch();
           }}
-          sx={{ mr: 2 }}
+          sx={{ mr: { xs: 0, sm: 2 } }}
           InputProps={{
             startAdornment: (
               <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} />
@@ -444,11 +446,12 @@ function Dashboard() {
           }}
         />
         <Button
+          fullWidth={{ xs: true, sm: false }}
           variant="contained"
           onClick={handleSearch}
           disabled={searching || !searchQuery.trim()}
           startIcon={searching ? <CircularProgress size={20} /> : <SearchIcon />}
-          sx={{ minWidth: 120 }}
+          sx={{ minWidth: { sm: 120 } }}
         >
           {searching ? 'Searching...' : 'Search'}
         </Button>
@@ -833,11 +836,12 @@ function Dashboard() {
                   '&:hover': {
                     background: 'rgba(255,255,255,0.3)'
                   }
-                }
-              }}>
+                },
+                overscrollBehavior: 'contain',
+                WebkitOverflowScrolling: 'touch'
               }}>
                 {recentDownloads.movies.slice(0, 10).map((movie, index) => (
-                  <Box key={index} sx={{ width: { xs: 150, sm: 180, md: 200 }, minWidth: { xs: 150, sm: 180, md: 200 }, maxWidth: { xs: 150, sm: 180, md: 200 }, flexShrink: 0 }}>
+                  <Box key={index} sx={{ width: { xs: 140, sm: 160, md: 200 }, minWidth: { xs: 140, sm: 160, md: 200 }, maxWidth: { xs: 140, sm: 160, md: 200 }, flexShrink: 0 }}>
                     <MediaCard item={movie} type="movie" index={index} />
                   </Box>
                 ))}
@@ -869,11 +873,12 @@ function Dashboard() {
                   '&:hover': {
                     background: 'rgba(255,255,255,0.3)'
                   }
-                }
-              }}>
+                },
+                overscrollBehavior: 'contain',
+                WebkitOverflowScrolling: 'touch'
               }}>
                 {recentDownloads.series.slice(0, 10).map((series, index) => (
-                  <Box key={index} sx={{ width: { xs: 150, sm: 180, md: 200 }, minWidth: { xs: 150, sm: 180, md: 200 }, maxWidth: { xs: 150, sm: 180, md: 200 }, flexShrink: 0 }}>
+                  <Box key={index} sx={{ width: { xs: 140, sm: 160, md: 200 }, minWidth: { xs: 140, sm: 160, md: 200 }, maxWidth: { xs: 140, sm: 160, md: 200 }, flexShrink: 0 }}>
                     <MediaCard item={series} type="tv" index={index} />
                   </Box>
                 ))}

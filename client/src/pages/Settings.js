@@ -351,7 +351,7 @@ function Settings() {
   const currentServiceConfig = serviceTypes.find(s => s.type === currentServiceType);
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
+    <Container maxWidth="xl" sx={{ py: 4, overflowX: 'hidden', width: '100%' }}>
       <Box mb={4}>
           <Box display="flex" alignItems="center" gap={2} mb={1}>
             <Box

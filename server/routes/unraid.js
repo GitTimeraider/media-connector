@@ -29,11 +29,11 @@ router.get('/status/:instanceId', async (req, res) => {
       query {
         info {
           cpu {
+            id
             manufacturer
             brand
             cores
             threads
-            clockSpeed
           }
           memory {
             layout {

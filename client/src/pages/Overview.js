@@ -278,7 +278,7 @@ function Overview() {
   );
 
   return (
-    <Container maxWidth="xl">
+    <Container maxWidth="xl" sx={{ overflowX: 'hidden', width: '100%' }}>
       <Typography variant="h4" gutterBottom>
         Services Overview
       </Typography>

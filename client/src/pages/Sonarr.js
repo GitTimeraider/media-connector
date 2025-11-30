@@ -166,7 +166,7 @@ function Sonarr() {
   }
 
   return (
-    <Container maxWidth="xl">
+    <Container maxWidth="xl" sx={{ overflowX: 'hidden', width: '100%' }}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Typography variant="h4">
           TV Shows
@@ -208,10 +208,9 @@ function Sonarr() {
                 {show.images?.find(img => img.coverType === 'poster') && (
                   <CardMedia
                     component="img"
-                    height="300"
                     image={show.images.find(img => img.coverType === 'poster').remoteUrl}
                     alt={show.title}
-                    sx={{ objectFit: 'cover' }}
+                    sx={{ objectFit: 'cover', height: { xs: 250, sm: 300, md: 350 }, width: '100%' }}
                   />
                 )}
                 <CardContent sx={{ flexGrow: 1 }}>

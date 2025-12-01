@@ -378,6 +378,27 @@ class ApiService {
     return response.data;
   }
 
+  // Portainer endpoints
+  async getPortainerStatus(instanceId) {
+    const response = await this.client.get(`/portainer/status/${instanceId}`);
+    return response.data;
+  }
+
+  async getPortainerSystemInfo(instanceId, endpointId) {
+    const response = await this.client.get(`/portainer/system/${instanceId}/${endpointId}`);
+    return response.data;
+  }
+
+  async getPortainerContainers(instanceId, endpointId) {
+    const response = await this.client.get(`/portainer/containers/${instanceId}/${endpointId}`);
+    return response.data;
+  }
+
+  async portainerContainerAction(instanceId, endpointId, containerId, action) {
+    const response = await this.client.post(`/portainer/container/action/${instanceId}/${endpointId}`, { containerId, action });
+    return response.data;
+  }
+
   // System endpoints
   async getSystemInfo() {
     const response = await this.client.get('/system/info');

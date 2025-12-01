@@ -166,6 +166,10 @@ function Overview() {
         const unraidStatus = await api.getUnraidStatus(instanceId);
         // If we get info back (even if null), the server responded so it's reachable
         return { status: 'online', info: unraidStatus?.info };
+      case 'portainer':
+        // For Portainer, check if we can get the status
+        const portainerStatus = await api.getPortainerStatus(instanceId);
+        return { status: 'online', version: portainerStatus?.status?.Version };
       default:
         throw new Error('Unknown service type');
     }

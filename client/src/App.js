@@ -43,6 +43,7 @@ import Search from './pages/Search';
 import Settings from './pages/Settings';
 import Overview from './pages/Overview';
 import Unraid from './pages/Unraid';
+import Portainer from './pages/Portainer';
 import Users from './pages/Users';
 import Profile from './pages/Profile';
 
@@ -108,6 +109,7 @@ function AppLayout() {
     { text: 'Search', icon: <SearchIcon />, path: '/search' },
     { divider: true },
     { text: 'Unraid', icon: <DnsIcon />, path: '/unraid' },
+    { text: 'Portainer', icon: <DnsIcon />, path: '/portainer' },
     { divider: true },
     ...(isAdmin() ? [{ text: 'Users', icon: <PeopleAlt />, path: '/users' }] : []),
     { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
@@ -246,6 +248,7 @@ function AppLayout() {
           <Route path="/downloads" element={<Downloads />} />
           <Route path="/search" element={<Search />} />
           <Route path="/unraid" element={<Unraid />} />
+          <Route path="/portainer" element={<Portainer />} />
           <Route path="/users" element={<Users />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/settings" element={<Settings />} />

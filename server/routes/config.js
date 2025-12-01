@@ -110,6 +110,33 @@ router.post('/test/:type', async (req, res) => {
         timeout: 10000
       });
       return res.json({ success: true, data: response.data });
+    } else if (req.params.type === 'unraid') {
+      const axios = require('axios');
+      // Unraid uses GraphQL API with API key in headers
+      const safeUrl = new URL('/graphql', validation.url);
+      const response = await axios.post(safeUrl.toString(), {
+        query: '{ info { os { hostname } } }'
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'Authorization': `Bearer ${apiKey}`
+        },
+        timeout: 10000
+      });
+      return res.json({ success: true, data: response.data });
+    } else if (req.params.type === 'portainer') {
+      const axios = require('axios');
+      // Portainer uses REST API with X-API-Key header
+      const safeUrl = new URL('/api/status', validation.url);
+      const response = await axios.get(safeUrl.toString(), {
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': apiKey
+        },
+        timeout: 10000
+      });
+      return res.json({ success: true, data: response.data });
     }
     
     // Default for Radarr/Sonarr

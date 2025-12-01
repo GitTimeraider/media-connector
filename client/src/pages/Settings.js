@@ -71,7 +71,8 @@ function Settings() {
     { type: 'sabnzbd', label: 'SABnzbd', requiresApiKey: true },
     { type: 'deluge', label: 'Deluge', requiresAuth: true, passwordOnly: true },
     { type: 'prowlarr', label: 'Prowlarr', requiresApiKey: true },
-    { type: 'unraid', label: 'Unraid', requiresApiKey: true }
+    { type: 'unraid', label: 'Unraid', requiresApiKey: true },
+    { type: 'portainer', label: 'Portainer', requiresApiKey: true }
   ];
 
   useEffect(() => {
@@ -153,7 +154,8 @@ function Settings() {
       sabnzbd: <Download />,
       deluge: <Download />,
       prowlarr: <Search />,
-      unraid: <SettingsIcon />
+      unraid: <SettingsIcon />,
+      portainer: <SettingsIcon />
     };
     return icons[type] || <SettingsIcon />;
   };
@@ -424,6 +426,7 @@ function Settings() {
 
       <TabPanel value={tabValue} index={3}>
         <ServiceList serviceType="unraid" label="Unraid" />
+        <ServiceList serviceType="portainer" label="Portainer" />
       </TabPanel>
 
       <Dialog 

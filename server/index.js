@@ -53,20 +53,22 @@ const { apiLimiter, healthLimiter } = require('./middleware/rateLimiter');
 // Public API Routes (no auth required, but rate limited)
 app.use('/api/auth', authRoutes); // Has its own specific rate limiting
 
-// Protected API Routes (authentication required + rate limiting)
-// All routes below are protected with both authenticateToken AND apiLimiter middleware
-app.use('/api/sonarr', authenticateToken, apiLimiter, sonarrRoutes); // Rate limited
-app.use('/api/radarr', authenticateToken, apiLimiter, radarrRoutes); // Rate limited
-app.use('/api/sabnzbd', authenticateToken, apiLimiter, sabnzbdRoutes); // Rate limited
-app.use('/api/deluge', authenticateToken, apiLimiter, delugeRoutes); // Rate limited
-app.use('/api/prowlarr', authenticateToken, apiLimiter, prowlarrRoutes); // Rate limited
-app.use('/api/unraid', authenticateToken, apiLimiter, unraidRoutes); // Rate limited
-app.use('/api/config', authenticateToken, apiLimiter, configRoutes); // Rate limited
-app.use('/api/system', authenticateToken, apiLimiter, systemRoutes); // Rate limited
-app.use('/api/tmdb', authenticateToken, apiLimiter, tmdbRoutes); // Rate limited
+// Protected API Routes (rate limiting + authentication required)
+// Rate limiting is applied FIRST to prevent DoS attacks before authentication
+// All routes below are protected with both apiLimiter AND authenticateToken middleware
+app.use('/api/sonarr', apiLimiter, authenticateToken, sonarrRoutes);
+app.use('/api/radarr', apiLimiter, authenticateToken, radarrRoutes);
+app.use('/api/sabnzbd', apiLimiter, authenticateToken, sabnzbdRoutes);
+app.use('/api/deluge', apiLimiter, authenticateToken, delugeRoutes);
+app.use('/api/prowlarr', apiLimiter, authenticateToken, prowlarrRoutes);
+app.use('/api/unraid', apiLimiter, authenticateToken, unraidRoutes);
+app.use('/api/config', apiLimiter, authenticateToken, configRoutes);
+app.use('/api/system', apiLimiter, authenticateToken, systemRoutes);
+app.use('/api/tmdb', apiLimiter, authenticateToken, tmdbRoutes);
 
 // Health check endpoint (rate limited, no auth required)
-app.get('/health', healthLimiter, (req, res) => { // Rate limited: 60 req/min
+// Rate limiter prevents DoS attacks on health endpoint
+app.get('/health', healthLimiter, (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 

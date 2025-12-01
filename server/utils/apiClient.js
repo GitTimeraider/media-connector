@@ -9,9 +9,18 @@ class ApiClient {
       throw new Error(`Invalid baseURL: ${validation.error}`);
     }
 
-    this.baseURL = baseURL;
+    // Use the validated URL object's href to ensure it's safe
+    // This converts the URL object back to a string that axios can use
+    // SAFE: This URL has been validated by urlValidator.validateServiceUrl()
+    // which checks for: valid protocol (http/https), no suspicious patterns,
+    // and optionally blocks private IPs (configurable for internal services)
+    const safeBaseURL = validation.url.href;
+    
+    this.baseURL = safeBaseURL;
+    // Create axios instance with validated baseURL
+    // All requests will be made to: <safeBaseURL><validated-relative-endpoint>
     this.client = axios.create({
-      baseURL,
+      baseURL: safeBaseURL,
       timeout: options.timeout || 30000,
       headers: {
         'X-Api-Key': apiKey,
@@ -58,34 +67,38 @@ class ApiClient {
   }
 
   async get(endpoint, params = {}) {
-    // SAFE: endpoint is validated to be a relative path, baseURL is validated in constructor
-    this.validateEndpoint(endpoint);
-    // lgtm[js/server-side-request-forgery]
-    const response = await this.client.get(endpoint, { params });
+    // Validate endpoint is relative path only (no absolute URLs)
+    const validatedEndpoint = this.validateEndpoint(endpoint);
+    // SAFE: Both baseURL (validated in constructor) and endpoint (validated above) are safe
+    // The full URL will be: <validated-baseURL><validated-relative-endpoint>
+    const response = await this.client.get(validatedEndpoint, { params });
     return response.data;
   }
 
   async post(endpoint, data = {}) {
-    // SAFE: endpoint is validated to be a relative path, baseURL is validated in constructor
-    this.validateEndpoint(endpoint);
-    // lgtm[js/server-side-request-forgery]
-    const response = await this.client.post(endpoint, data);
+    // Validate endpoint is relative path only (no absolute URLs)
+    const validatedEndpoint = this.validateEndpoint(endpoint);
+    // SAFE: Both baseURL (validated in constructor) and endpoint (validated above) are safe
+    // The full URL will be: <validated-baseURL><validated-relative-endpoint>
+    const response = await this.client.post(validatedEndpoint, data);
     return response.data;
   }
 
   async put(endpoint, data = {}) {
-    // SAFE: endpoint is validated to be a relative path, baseURL is validated in constructor
-    this.validateEndpoint(endpoint);
-    // lgtm[js/server-side-request-forgery]
-    const response = await this.client.put(endpoint, data);
+    // Validate endpoint is relative path only (no absolute URLs)
+    const validatedEndpoint = this.validateEndpoint(endpoint);
+    // SAFE: Both baseURL (validated in constructor) and endpoint (validated above) are safe
+    // The full URL will be: <validated-baseURL><validated-relative-endpoint>
+    const response = await this.client.put(validatedEndpoint, data);
     return response.data;
   }
 
   async delete(endpoint) {
-    // SAFE: endpoint is validated to be a relative path, baseURL is validated in constructor
-    this.validateEndpoint(endpoint);
-    // lgtm[js/server-side-request-forgery]
-    const response = await this.client.delete(endpoint);
+    // Validate endpoint is relative path only (no absolute URLs)
+    const validatedEndpoint = this.validateEndpoint(endpoint);
+    // SAFE: Both baseURL (validated in constructor) and endpoint (validated above) are safe
+    // The full URL will be: <validated-baseURL><validated-relative-endpoint>
+    const response = await this.client.delete(validatedEndpoint);
     return response.data;
   }
 }

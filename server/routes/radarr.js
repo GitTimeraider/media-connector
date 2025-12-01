@@ -86,7 +86,7 @@ router.get('/movie/:instanceId/:movieId', async (req, res) => {
     }
 
     const client = new ApiClient(instance.url, instance.apiKey);
-    const movie = await client.get(`/api/v3/movie/${req.params.movieId}`);
+    const movie = await client.getById('/api/v3/movie', req.params.movieId);
     res.json(movie);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -181,10 +181,10 @@ router.put('/movie/:instanceId/:movieId', async (req, res) => {
 
     const client = new ApiClient(instance.url, instance.apiKey);
     // Get current movie first
-    const currentMovie = await client.get(`/api/v3/movie/${req.params.movieId}`);
+    const currentMovie = await client.getById('/api/v3/movie', req.params.movieId);
     // Update with new values
     const updatedMovie = { ...currentMovie, ...req.body };
-    const result = await client.put(`/api/v3/movie/${req.params.movieId}`, updatedMovie);
+    const result = await client.putById('/api/v3/movie', req.params.movieId, updatedMovie);
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -203,7 +203,7 @@ router.delete('/movie/:instanceId/:movieId', async (req, res) => {
 
     const { deleteFiles } = req.query;
     const client = new ApiClient(instance.url, instance.apiKey);
-    const result = await client.delete(`/api/v3/movie/${req.params.movieId}?deleteFiles=${deleteFiles === 'true'}`);
+    const result = await client.deleteById('/api/v3/movie', req.params.movieId, { deleteFiles: deleteFiles === 'true' });
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });

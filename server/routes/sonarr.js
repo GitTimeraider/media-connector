@@ -73,7 +73,7 @@ router.get('/recent/:instanceId', async (req, res) => {
     // Get unique series from recent downloads
     const seriesIds = [...new Set(history.records.map(h => h.seriesId))].slice(0, 10);
     const seriesPromises = seriesIds.map(id => 
-      client.get(`/api/v3/series/${id}`).catch(() => null)
+      client.getById('/api/v3/series', id).catch(() => null)
     );
     const recentSeries = (await Promise.all(seriesPromises)).filter(s => s !== null);
     
@@ -94,7 +94,7 @@ router.get('/series/:instanceId/:seriesId', async (req, res) => {
     }
 
     const client = new ApiClient(instance.url, instance.apiKey);
-    const series = await client.get(`/api/v3/series/${req.params.seriesId}`);
+    const series = await client.getById('/api/v3/series', req.params.seriesId);
     res.json(series);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -189,10 +189,10 @@ router.put('/series/:instanceId/:seriesId', async (req, res) => {
 
     const client = new ApiClient(instance.url, instance.apiKey);
     // Get current series first
-    const currentSeries = await client.get(`/api/v3/series/${req.params.seriesId}`);
+    const currentSeries = await client.getById('/api/v3/series', req.params.seriesId);
     // Update with new values
     const updatedSeries = { ...currentSeries, ...req.body };
-    const result = await client.put(`/api/v3/series/${req.params.seriesId}`, updatedSeries);
+    const result = await client.putById('/api/v3/series', req.params.seriesId, updatedSeries);
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -211,7 +211,7 @@ router.delete('/series/:instanceId/:seriesId', async (req, res) => {
 
     const { deleteFiles } = req.query;
     const client = new ApiClient(instance.url, instance.apiKey);
-    const result = await client.delete(`/api/v3/series/${req.params.seriesId}?deleteFiles=${deleteFiles === 'true'}`);
+    const result = await client.deleteById('/api/v3/series', req.params.seriesId, { deleteFiles: deleteFiles === 'true' });
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });

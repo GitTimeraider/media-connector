@@ -9,49 +9,11 @@ class ApiClient {
       throw new Error(`Invalid baseURL: ${validation.error}`);
     }
 
-    // Use the validated URL object's href to ensure it's safe
-    // This converts the URL object back to a string that axios can use
-    // SAFE: This URL has been validated by urlValidator.validateServiceUrl()
-    // which checks for: valid protocol (http/https), no suspicious patterns,
-    // and optionally blocks private IPs (configurable for internal services)
-    const safeBaseURL = validation.url.href;
-    
-    this.baseURL = safeBaseURL;
-    // Create axios instance with validated baseURL
-    // All requests will be made to: <safeBaseURL><validated-relative-endpoint>
-    this.client = axios.create({
-      baseURL: safeBaseURL,
-      timeout: options.timeout || 30000,
-      headers: {
-        'X-Api-Key': apiKey,
-        'Content-Type': 'application/json',
-        ...options.headers
-      }
-    });
-
-    // Add request interceptor for logging
-    this.client.interceptors.request.use(
-      config => {
-        console.log(`API Request: ${config.method.toUpperCase()} ${config.url}`);
-        return config;
-      },
-      error => Promise.reject(error)
-    );
-
-    // Add response interceptor for error handling
-    this.client.interceptors.response.use(
-      response => response,
-      error => {
-        if (error.response) {
-          console.error(`API Error: ${error.response.status} - ${error.response.statusText}`);
-        } else if (error.request) {
-          console.error('API Error: No response received');
-        } else {
-          console.error('API Error:', error.message);
-        }
-        return Promise.reject(error);
-      }
-    );
+    // Store validated URL object (not string) to prevent tampering
+    this.validatedBaseUrl = validation.url;
+    this.apiKey = apiKey;
+    this.timeout = options.timeout || 30000;
+    this.customHeaders = options.headers || {};
   }
 
   // Validate endpoint to prevent SSRF - must be relative path
@@ -66,41 +28,99 @@ class ApiClient {
     return endpoint;
   }
 
+  // Build request config with all necessary options
+  buildRequestConfig(params = {}) {
+    return {
+      timeout: this.timeout,
+      headers: {
+        'X-Api-Key': this.apiKey,
+        'Content-Type': 'application/json',
+        ...this.customHeaders
+      },
+      params
+    };
+  }
+
   // Build safe URL by combining validated base and validated endpoint
   buildSafeUrl(endpoint) {
     const validatedEndpoint = this.validateEndpoint(endpoint);
-    // Use URL constructor to safely combine base and endpoint
-    // This prevents SSRF by ensuring the endpoint can't override the base
-    const safeUrl = new URL(validatedEndpoint, this.baseURL);
+    // Use URL constructor with the stored validated URL object
+    // This is safe because validatedBaseUrl is a URL object created from validated input
+    const safeUrl = new URL(validatedEndpoint, this.validatedBaseUrl);
+    console.log(`API Request: ${safeUrl.toString()}`);
     return safeUrl.toString();
   }
 
   async get(endpoint, params = {}) {
-    // Build complete URL using URL constructor for safety
-    const fullUrl = this.buildSafeUrl(endpoint);
-    const response = await this.client.get(fullUrl, { params });
-    return response.data;
+    const url = this.buildSafeUrl(endpoint);
+    const config = this.buildRequestConfig(params);
+    try {
+      const response = await axios.get(url, config);
+      return response.data;
+    } catch (error) {
+      if (error.response) {
+        console.error(`API Error: ${error.response.status} - ${error.response.statusText}`);
+      } else if (error.request) {
+        console.error('API Error: No response received');
+      } else {
+        console.error('API Error:', error.message);
+      }
+      throw error;
+    }
   }
 
   async post(endpoint, data = {}) {
-    // Build complete URL using URL constructor for safety
-    const fullUrl = this.buildSafeUrl(endpoint);
-    const response = await this.client.post(fullUrl, data);
-    return response.data;
+    const url = this.buildSafeUrl(endpoint);
+    const config = this.buildRequestConfig();
+    try {
+      const response = await axios.post(url, data, config);
+      return response.data;
+    } catch (error) {
+      if (error.response) {
+        console.error(`API Error: ${error.response.status} - ${error.response.statusText}`);
+      } else if (error.request) {
+        console.error('API Error: No response received');
+      } else {
+        console.error('API Error:', error.message);
+      }
+      throw error;
+    }
   }
 
   async put(endpoint, data = {}) {
-    // Build complete URL using URL constructor for safety
-    const fullUrl = this.buildSafeUrl(endpoint);
-    const response = await this.client.put(fullUrl, data);
-    return response.data;
+    const url = this.buildSafeUrl(endpoint);
+    const config = this.buildRequestConfig();
+    try {
+      const response = await axios.put(url, data, config);
+      return response.data;
+    } catch (error) {
+      if (error.response) {
+        console.error(`API Error: ${error.response.status} - ${error.response.statusText}`);
+      } else if (error.request) {
+        console.error('API Error: No response received');
+      } else {
+        console.error('API Error:', error.message);
+      }
+      throw error;
+    }
   }
 
   async delete(endpoint) {
-    // Build complete URL using URL constructor for safety
-    const fullUrl = this.buildSafeUrl(endpoint);
-    const response = await this.client.delete(fullUrl);
-    return response.data;
+    const url = this.buildSafeUrl(endpoint);
+    const config = this.buildRequestConfig();
+    try {
+      const response = await axios.delete(url, config);
+      return response.data;
+    } catch (error) {
+      if (error.response) {
+        console.error(`API Error: ${error.response.status} - ${error.response.statusText}`);
+      } else if (error.request) {
+        console.error('API Error: No response received');
+      } else {
+        console.error('API Error:', error.message);
+      }
+      throw error;
+    }
   }
 }
 

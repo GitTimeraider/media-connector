@@ -45,22 +45,38 @@ class ApiClient {
     );
   }
 
+  // Validate endpoint to prevent SSRF - must be relative path
+  validateEndpoint(endpoint) {
+    if (!endpoint.startsWith('/')) {
+      throw new Error('Endpoint must be a relative path starting with /');
+    }
+    // Prevent absolute URLs or protocol-relative URLs
+    if (endpoint.includes('://') || endpoint.startsWith('//')) {
+      throw new Error('Endpoint cannot contain absolute URLs');
+    }
+    return endpoint;
+  }
+
   async get(endpoint, params = {}) {
+    this.validateEndpoint(endpoint);
     const response = await this.client.get(endpoint, { params });
     return response.data;
   }
 
   async post(endpoint, data = {}) {
+    this.validateEndpoint(endpoint);
     const response = await this.client.post(endpoint, data);
     return response.data;
   }
 
   async put(endpoint, data = {}) {
+    this.validateEndpoint(endpoint);
     const response = await this.client.put(endpoint, data);
     return response.data;
   }
 
   async delete(endpoint) {
+    this.validateEndpoint(endpoint);
     const response = await this.client.delete(endpoint);
     return response.data;
   }

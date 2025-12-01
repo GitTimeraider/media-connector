@@ -270,35 +270,15 @@ router.post('/docker/action/:instanceId', async (req, res) => {
 
     const { containerId, action } = req.body;
     
-    // Handle restart as stop + start
-    if (action === 'restart') {
-      try {
-        // Stop the container first
-        const stopResult = await axios.post(
-          `${req.baseUrl}/docker/action/${req.params.instanceId}`,
-          { containerId, action: 'stop' },
-          { baseURL: `http://localhost:${process.env.PORT || 3001}/api` }
-        );
-        
-        // Wait a moment
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // Start the container
-        const startResult = await axios.post(
-          `${req.baseUrl}/docker/action/${req.params.instanceId}`,
-          { containerId, action: 'start' },
-          { baseURL: `http://localhost:${process.env.PORT || 3001}/api` }
-        );
-        
-        console.log(`[Unraid Docker] Successfully restarted container`);
-        return res.json({ success: true, message: 'Container restarted' });
-      } catch (error) {
-        console.error(`[Unraid Docker] Failed to restart:`, error.message);
-        return res.status(500).json({ 
-          error: 'Failed to restart container',
-          message: error.message
-        });
-      }
+    // Validate action to prevent GraphQL injection
+    const validActions = ['start', 'stop'];
+    if (!validActions.includes(action)) {
+      return res.status(400).json({ error: 'Invalid action. Must be start or stop' });
+    }
+    
+    // Validate containerId format (should be alphanumeric with possible special chars)
+    if (!/^[a-zA-Z0-9_\-\.]+$/.test(containerId)) {
+      return res.status(400).json({ error: 'Invalid container ID format' });
     }
     
     // First get the container to find its actual name

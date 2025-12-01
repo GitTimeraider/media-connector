@@ -9,6 +9,15 @@ const apiLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Health check rate limiter - 60 requests per minute
+const healthLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 60,
+  message: 'Too many health check requests.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // Strict rate limiter for auth endpoints - 5 requests per 15 minutes
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -31,5 +40,6 @@ const registrationLimiter = rateLimit({
 module.exports = {
   apiLimiter,
   authLimiter,
-  registrationLimiter
+  registrationLimiter,
+  healthLimiter
 };

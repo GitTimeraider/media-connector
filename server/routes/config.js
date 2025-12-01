@@ -83,15 +83,20 @@ router.post('/test/:type', async (req, res) => {
       endpoint = '/api/v1/system/status';
     } else if (req.params.type === 'sabnzbd') {
       const axios = require('axios');
-      const response = await axios.get(`${url}/api`, {
-        params: { mode: 'version', output: 'json', apikey: apiKey }
+      // Use validated URL from validation.url
+      const validatedUrl = validation.url.href.replace(/\/$/, ''); // Remove trailing slash
+      const response = await axios.get(`${validatedUrl}/api`, {
+        params: { mode: 'version', output: 'json', apikey: apiKey },
+        timeout: 10000
       });
       return res.json({ success: true, data: response.data });
     } else if (req.params.type === 'deluge') {
       const axios = require('axios');
       // Deluge uses password field for authentication
       const { password } = req.body;
-      const response = await axios.post(`${url}/json`, {
+      // Use validated URL from validation.url
+      const validatedUrl = validation.url.href.replace(/\/$/, ''); // Remove trailing slash
+      const response = await axios.post(`${validatedUrl}/json`, {
         method: 'web.connected',
         params: [],
         id: 1
@@ -99,7 +104,8 @@ router.post('/test/:type', async (req, res) => {
         headers: {
           'Content-Type': 'application/json',
           'Cookie': password ? `_session_id=${password}` : ''
-        }
+        },
+        timeout: 10000
       });
       return res.json({ success: true, data: response.data });
     }

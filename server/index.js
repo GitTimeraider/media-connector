@@ -48,7 +48,7 @@ const systemRoutes = require('./routes/system');
 const tmdbRoutes = require('./routes/tmdb');
 const authRoutes = require('./routes/auth');
 const { authenticateToken, requireAdmin } = require('./middleware/auth');
-const { apiLimiter } = require('./middleware/rateLimiter');
+const { apiLimiter, healthLimiter } = require('./middleware/rateLimiter');
 
 // Public API Routes (no auth required, but rate limited)
 app.use('/api/auth', authRoutes); // Has its own specific rate limiting
@@ -65,7 +65,7 @@ app.use('/api/system', authenticateToken, apiLimiter, systemRoutes);
 app.use('/api/tmdb', authenticateToken, apiLimiter, tmdbRoutes);
 
 // Health check endpoint (before wildcard route)
-app.get('/health', (req, res) => {
+app.get('/health', healthLimiter, (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 

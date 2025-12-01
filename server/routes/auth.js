@@ -63,7 +63,7 @@ router.post('/login', authLimiter, async (req, res) => {
 });
 
 // Verify token
-router.get('/verify', async (req, res) => {
+router.get('/verify', authLimiter, async (req, res) => {
   try {
     const token = req.headers.authorization?.replace('Bearer ', '');
     if (!token) {
@@ -134,7 +134,7 @@ router.post('/users', registrationLimiter, async (req, res) => {
 });
 
 // Update user
-router.put('/users/:id', async (req, res) => {
+router.put('/users/:id', authLimiter, async (req, res) => {
   try {
     const { id } = req.params;
     const updates = req.body;
@@ -148,7 +148,7 @@ router.put('/users/:id', async (req, res) => {
 });
 
 // Delete user (admin only)
-router.delete('/users/:id', async (req, res) => {
+router.delete('/users/:id', authLimiter, async (req, res) => {
   try {
     const { id } = req.params;
     
@@ -194,8 +194,8 @@ router.post('/users/:id/reset-password', authLimiter, async (req, res) => {
   }
 });
 
-// Get current user profile
-router.get('/profile', async (req, res) => {
+// Get current user profile  
+router.get('/profile', authLimiter, async (req, res) => {
   try {
     const token = req.headers.authorization?.replace('Bearer ', '');
     if (!token) {
@@ -217,7 +217,7 @@ router.get('/profile', async (req, res) => {
 });
 
 // Update current user profile
-router.put('/profile', async (req, res) => {
+router.put('/profile', authLimiter, async (req, res) => {
   try {
     const token = req.headers.authorization?.replace('Bearer ', '');
     if (!token) {

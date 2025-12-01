@@ -37,24 +37,18 @@ router.get('/status/:instanceId', async (req, res) => {
       headers['Authorization'] = `Bearer ${instance.apiKey}`;
     }
 
-    // Get system info via GraphQL API
+    // Get system info and metrics via GraphQL API
+    // Note: info contains hardware specs, metrics contains live utilization data
     const query = `
       query {
         info {
           cpu {
-            manufacturer
             brand
             cores
             threads
             speed
-            usage
-            currentLoad
           }
           memory {
-            total
-            used
-            free
-            available
             layout {
               size
               type
@@ -67,6 +61,22 @@ router.get('/status/:instanceId', async (req, res) => {
             release
             platform
             uptime
+          }
+          system {
+            manufacturer
+            model
+          }
+        }
+        metrics {
+          cpu {
+            percentTotal
+          }
+          memory {
+            total
+            used
+            free
+            available
+            percentTotal
           }
         }
       }
@@ -91,7 +101,7 @@ router.get('/status/:instanceId', async (req, res) => {
     console.error('Unraid status error:', error.message);
     console.error('Full error:', error.response?.data || error);
     // Return empty data instead of 500 to prevent UI errors
-    res.json({ info: null });
+    res.json({ info: null, metrics: null });
   }
 });
 

@@ -101,21 +101,24 @@ class UnraidSubscriptionManager extends EventEmitter {
     const subscriptionId = 'system-stats';
     
     // GraphQL subscription query for real-time system stats
-    // Start with basic fields to test if subscription works at all
+    // Unraid API uses specific subscription types for CPU and Memory metrics
     const query = `
       subscription {
-        info {
-          cpu {
-            speed
-            usage
+        systemMetricsCpu {
+          percentTotal
+          cpus {
+            percentTotal
+            percentUser
+            percentSystem
+            percentIdle
           }
-          memory {
-            total
-            used
-          }
-          os {
-            uptime
-          }
+        }
+        systemMetricsMemory {
+          total
+          used
+          free
+          available
+          percentTotal
         }
       }
     `;

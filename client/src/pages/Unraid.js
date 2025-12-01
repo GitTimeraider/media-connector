@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Component } from 'react';
 import {
   Container,
   Grid,
@@ -11,7 +11,8 @@ import {
   Alert,
   LinearProgress,
   IconButton,
-  Tooltip
+  Tooltip,
+  Button
 } from '@mui/material';
 import {
   PlayArrow,
@@ -25,7 +26,56 @@ import {
 } from '@mui/icons-material';
 import api from '../services/api';
 
-function Unraid() {
+// Error Boundary to catch rendering errors and prevent app crash
+class UnraidErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('Unraid page error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <Container>
+          <Alert 
+            severity="error" 
+            sx={{ mt: 2 }}
+            action={
+              <Button 
+                color="inherit" 
+                size="small" 
+                onClick={() => this.setState({ hasError: false, error: null })}
+              >
+                Retry
+              </Button>
+            }
+          >
+            Something went wrong loading the Unraid page. 
+            {this.state.error?.message && ` Error: ${this.state.error.message}`}
+          </Alert>
+        </Container>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+// Safe number parser that handles BigInt strings and null/undefined
+const safeNumber = (value, defaultValue = 0) => {
+  if (value === null || value === undefined) return defaultValue;
+  const num = Number(value);
+  return isNaN(num) ? defaultValue : num;
+};
+
+function UnraidContent() {
   const [loading, setLoading] = useState(true);
   const [instances, setInstances] = useState([]);
   const [selectedInstance, setSelectedInstance] = useState(null);
@@ -69,16 +119,24 @@ function Unraid() {
         console.log('WebSocket connected');
         setWsConnected(true);
         // Subscribe to instance updates
-        wsRef.current.send(JSON.stringify({
-          type: 'subscribe',
-          instanceId: selectedInstance
-        }));
+        try {
+          wsRef.current.send(JSON.stringify({
+            type: 'subscribe',
+            instanceId: selectedInstance
+          }));
+        } catch (e) {
+          console.error('Error sending WebSocket message:', e);
+        }
       };
       
       wsRef.current.onmessage = (event) => {
-        const message = JSON.parse(event.data);
-        if (message.type === 'stats' && message.instanceId === selectedInstance) {
-          setRealtimeStats(message.data);
+        try {
+          const message = JSON.parse(event.data);
+          if (message.type === 'stats' && message.instanceId === selectedInstance) {
+            setRealtimeStats(message.data);
+          }
+        } catch (e) {
+          console.error('Error parsing WebSocket message:', e);
         }
       };
       
@@ -138,24 +196,34 @@ function Unraid() {
         const statsData = stats.value;
         console.log('Stats value structure:', JSON.stringify(statsData, null, 2));
         
-        // GraphQL response structure: { info: { cpu, memory, os } }
-        const info = statsData?.info || statsData;
+        // GraphQL response structure: { info: { cpu, memory, os, system }, metrics: { cpu, memory } }
+        const info = statsData?.info || {};
+        const metrics = statsData?.metrics || {};
         console.log('Info object:', JSON.stringify(info, null, 2));
+        console.log('Metrics object:', JSON.stringify(metrics, null, 2));
         
-        // Use memory data from GraphQL response
-        const memory = info?.memory || {};
-        const memoryLayout = memory?.layout || [];
+        // Hardware info from info.memory.layout
+        const memoryLayout = info?.memory?.layout || [];
+        // Usage data from metrics.memory
+        const memoryMetrics = metrics?.memory || {};
         
         const combinedStats = {
-          cpu: info?.cpu || {},
+          cpu: {
+            ...info?.cpu,
+            // Add usage percentage from metrics
+            usage: metrics?.cpu?.percentTotal
+          },
           memory: {
-            total: memory.total || memoryLayout.reduce((sum, module) => sum + (module.size || 0), 0),
-            used: memory.used,
-            free: memory.free,
-            available: memory.available,
+            // Total from metrics, or calculate from layout
+            total: memoryMetrics.total || memoryLayout.reduce((sum, module) => sum + (Number(module.size) || 0), 0),
+            used: memoryMetrics.used,
+            free: memoryMetrics.free,
+            available: memoryMetrics.available,
+            percentTotal: memoryMetrics.percentTotal,
             layout: memoryLayout
           },
           os: info?.os || {},
+          system: info?.system || {},
           versions: info?.versions || {}
         };
         console.log('Combined stats:', JSON.stringify(combinedStats, null, 2));
@@ -195,11 +263,18 @@ function Unraid() {
   };
 
   const formatBytes = (bytes) => {
-    if (!bytes) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+    try {
+      const numBytes = safeNumber(bytes);
+      if (numBytes <= 0) return '0 B';
+      const k = 1024;
+      const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+      const i = Math.floor(Math.log(numBytes) / Math.log(k));
+      if (i < 0 || i >= sizes.length) return '0 B';
+      return Math.round(numBytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+    } catch (e) {
+      console.error('formatBytes error:', e);
+      return '0 B';
+    }
   };
 
   if (loading && instances.length === 0) {
@@ -253,31 +328,29 @@ function Unraid() {
                   {systemStats.cpu?.brand || systemStats.cpu?.manufacturer || 'N/A'}
                 </Typography>
                 <Typography variant="caption">
-                  {systemStats.cpu?.cores || 0} cores, {systemStats.cpu?.threads || 0} threads
+                  {safeNumber(systemStats.cpu?.cores)} cores, {safeNumber(systemStats.cpu?.threads)} threads
                 </Typography>
                 {systemStats.cpu?.speed && (
                   <Typography variant="caption" display="block">
-                    {systemStats.cpu.speed >= 10 ? (systemStats.cpu.speed / 1000).toFixed(2) : systemStats.cpu.speed.toFixed(2)} GHz
+                    {safeNumber(systemStats.cpu.speed) >= 10 ? (safeNumber(systemStats.cpu.speed) / 1000).toFixed(2) : safeNumber(systemStats.cpu.speed).toFixed(2)} GHz
                   </Typography>
                 )}
-                {(systemStats.cpu?.usage !== undefined || systemStats.cpu?.currentLoad !== undefined || realtimeStats?.info?.cpu?.usage !== undefined) ? (
+                {(systemStats.cpu?.usage !== undefined || systemStats.cpu?.currentLoad !== undefined || realtimeStats?.systemMetricsCpu?.percentTotal !== undefined) ? (
                   <Box sx={{ mt: 2 }}>
                     <Typography variant="h4" color="primary">
-                      {(
-                        realtimeStats?.info?.cpu?.usage ||
-                        systemStats.cpu?.usage ||
-                        systemStats.cpu?.currentLoad ||
-                        0
+                      {safeNumber(
+                        realtimeStats?.systemMetricsCpu?.percentTotal ??
+                        systemStats.cpu?.usage ??
+                        systemStats.cpu?.currentLoad
                       ).toFixed(1)}%
                     </Typography>
                     <LinearProgress 
                       variant="determinate" 
-                      value={
-                        realtimeStats?.info?.cpu?.usage ||
-                        systemStats.cpu?.usage ||
-                        systemStats.cpu?.currentLoad ||
-                        0
-                      } 
+                      value={Math.min(safeNumber(
+                        realtimeStats?.systemMetricsCpu?.percentTotal ??
+                        systemStats.cpu?.usage ??
+                        systemStats.cpu?.currentLoad
+                      ), 100)} 
                       sx={{ mt: 1 }}
                     />
                   </Box>
@@ -307,30 +380,32 @@ function Unraid() {
                     />
                   )}
                 </Box>
-                {(systemStats.memory?.used && systemStats.memory?.total) || (realtimeStats?.info?.memory?.used && realtimeStats?.info?.memory?.total) ? (
+                {(systemStats.memory?.used && systemStats.memory?.total) || (realtimeStats?.systemMetricsMemory?.used && realtimeStats?.systemMetricsMemory?.total) ? (
                   <>
                     <Typography variant="h4">
-                      {((
-                        (systemStats.memory?.used || realtimeStats?.info?.memory?.used) / 
-                        (systemStats.memory?.total || realtimeStats?.info?.memory?.total)
-                      ) * 100).toFixed(1)}%
+                      {(() => {
+                        const used = safeNumber(systemStats.memory?.used) || safeNumber(realtimeStats?.systemMetricsMemory?.used);
+                        const total = safeNumber(systemStats.memory?.total) || safeNumber(realtimeStats?.systemMetricsMemory?.total) || 1;
+                        return ((used / total) * 100).toFixed(1);
+                      })()}%
                     </Typography>
                     <Typography variant="caption">
-                      {formatBytes(systemStats.memory?.used || realtimeStats?.info?.memory?.used)} / {formatBytes(systemStats.memory?.total || realtimeStats?.info?.memory?.total)}
+                      {formatBytes(safeNumber(systemStats.memory?.used) || safeNumber(realtimeStats?.systemMetricsMemory?.used))} / {formatBytes(safeNumber(systemStats.memory?.total) || safeNumber(realtimeStats?.systemMetricsMemory?.total))}
                     </Typography>
                     <LinearProgress 
                       variant="determinate" 
-                      value={(
-                        (systemStats.memory?.used || realtimeStats?.info?.memory?.used) / 
-                        (systemStats.memory?.total || realtimeStats?.info?.memory?.total)
-                      ) * 100} 
+                      value={(() => {
+                        const used = safeNumber(systemStats.memory?.used) || safeNumber(realtimeStats?.systemMetricsMemory?.used);
+                        const total = safeNumber(systemStats.memory?.total) || safeNumber(realtimeStats?.systemMetricsMemory?.total) || 1;
+                        return Math.min((used / total) * 100, 100);
+                      })()} 
                       sx={{ mt: 1 }}
                     />
                   </>
                 ) : (
                   <>
-                    <Typography variant="h4">{formatBytes(systemStats.memory?.layout?.reduce((sum, m) => sum + (m.size || 0), 0) || 0)}</Typography>
-                    <Typography variant="caption" display="block">{systemStats.memory?.layout?.length || 0} modules</Typography>
+                    <Typography variant="h4">{formatBytes(Array.isArray(systemStats.memory?.layout) ? systemStats.memory.layout.reduce((sum, m) => sum + safeNumber(m?.size), 0) : 0)}</Typography>
+                    <Typography variant="caption" display="block">{Array.isArray(systemStats.memory?.layout) ? systemStats.memory.layout.length : 0} modules</Typography>
                     <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
                       Memory usage data not available
                     </Typography>
@@ -358,15 +433,33 @@ function Unraid() {
                 <Typography variant="body2" fontWeight={500}>
                   {systemStats.os?.hostname || 'Unknown'}
                 </Typography>
+                {(systemStats.system?.manufacturer || systemStats.system?.model) && (
+                  <Typography variant="body2" color="text.secondary">
+                    {[systemStats.system?.manufacturer, systemStats.system?.model].filter(Boolean).join(' ')}
+                  </Typography>
+                )}
                 <Typography variant="body2" color="text.secondary">
                   {systemStats.os?.distro || 'Unraid'} {systemStats.os?.release || ''}
                 </Typography>
                 <Typography variant="caption" display="block" sx={{ mt: 1 }}>
                   Uptime: {(() => {
-                    const uptimeData = realtimeStats?.info?.os?.uptime || systemStats.os?.uptime;
+                    const uptimeData = systemStats.os?.uptime;
                     if (!uptimeData) return 'N/A';
-                    // Unraid returns uptime in seconds
-                    const uptimeSeconds = typeof uptimeData === 'number' ? uptimeData : 0;
+                    // Unraid returns uptime as an ISO datetime string (boot time)
+                    let uptimeSeconds;
+                    if (typeof uptimeData === 'string') {
+                      // Parse ISO datetime and calculate seconds since boot
+                      const bootTime = new Date(uptimeData);
+                      if (!isNaN(bootTime.getTime())) {
+                        uptimeSeconds = Math.floor((Date.now() - bootTime.getTime()) / 1000);
+                      } else {
+                        return uptimeData; // Return as-is if not valid date
+                      }
+                    } else if (typeof uptimeData === 'number') {
+                      uptimeSeconds = uptimeData;
+                    } else {
+                      return 'N/A';
+                    }
                     const days = Math.floor(uptimeSeconds / 86400);
                     const hours = Math.floor((uptimeSeconds % 86400) / 3600);
                     const minutes = Math.floor((uptimeSeconds % 3600) / 60);
@@ -483,6 +576,15 @@ function Unraid() {
         ))}
       </Grid>
     </Container>
+  );
+}
+
+// Wrap the component with Error Boundary to prevent crashes from affecting rest of app
+function Unraid() {
+  return (
+    <UnraidErrorBoundary>
+      <UnraidContent />
+    </UnraidErrorBoundary>
   );
 }
 

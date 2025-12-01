@@ -308,16 +308,31 @@ function Dashboard() {
         });
         alert(`Added "${itemToAdd.title}" to Radarr!`);
       } else if (mediaType === 'tv' && services.sonarr?.length > 0) {
+        // First lookup the series in Sonarr to get the correct TVDB ID
+        const seriesTitle = itemToAdd.name || itemToAdd.title;
+        const lookupResults = await api.searchSonarr(services.sonarr[0].id, seriesTitle);
+        
+        // Find the best match from lookup results
+        const matchedSeries = lookupResults.find(s => 
+          s.title?.toLowerCase() === seriesTitle.toLowerCase() ||
+          s.tvdbId === itemToAdd.tvdbId
+        ) || lookupResults[0];
+        
+        if (!matchedSeries) {
+          throw new Error('Could not find series in Sonarr lookup');
+        }
+        
         await api.addSonarrSeries(services.sonarr[0].id, {
-          tvdbId: itemToAdd.id,
-          title: itemToAdd.name || itemToAdd.title,
+          tvdbId: matchedSeries.tvdbId,
+          title: matchedSeries.title,
           qualityProfileId: parseInt(selectedProfile),
           rootFolderPath: selectedFolder,
           monitored,
           tags: tagsArray,
+          seasonFolder: true,
           addOptions: { searchForMissingEpisodes: searchOnAdd }
         });
-        alert(`Added "${itemToAdd.name || itemToAdd.title}" to Sonarr!`);
+        alert(`Added "${matchedSeries.title}" to Sonarr!`);
       }
       
       setAddDialogOpen(false);

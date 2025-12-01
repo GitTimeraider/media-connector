@@ -138,19 +138,24 @@ function Unraid() {
         const statsData = stats.value;
         console.log('Stats value structure:', statsData);
         
-        // Calculate total memory from layout (Unraid API doesn't provide real-time usage in queries)
-        const memoryLayout = statsData?.info?.memory?.layout || [];
-        const totalMemory = memoryLayout.reduce((sum, module) => sum + (module.size || 0), 0);
+        // GraphQL response structure: { info: { cpu, memory, os } }
+        const info = statsData?.info || statsData;
         
-        // Data is directly in the response from GraphQL
+        // Use memory data from GraphQL response
+        const memory = info?.memory || {};
+        const memoryLayout = memory?.layout || [];
+        
         const combinedStats = {
-          cpu: statsData?.info?.cpu || statsData?.cpu,
+          cpu: info?.cpu || {},
           memory: {
-            total: totalMemory,
+            total: memory.total || memoryLayout.reduce((sum, module) => sum + (module.size || 0), 0),
+            used: memory.used,
+            free: memory.free,
+            available: memory.available,
             layout: memoryLayout
           },
-          os: statsData?.info?.os || statsData?.os,
-          versions: statsData?.info?.versions || statsData?.versions
+          os: info?.os || {},
+          versions: info?.versions || {}
         };
         console.log('Combined stats:', combinedStats);
         setSystemStats(combinedStats);
@@ -346,20 +351,26 @@ function Unraid() {
                     />
                   )}
                 </Box>
-                <Typography variant="body2">{systemStats.os?.distro || 'Unraid'} {systemStats.os?.release || ''}</Typography>
-                <Typography variant="caption">
+                <Typography variant="body2" fontWeight={500}>
+                  {systemStats.os?.hostname || 'Unknown'}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {systemStats.os?.distro || 'Unraid'} {systemStats.os?.release || ''}
+                </Typography>
+                <Typography variant="caption" display="block" sx={{ mt: 1 }}>
                   Uptime: {(() => {
                     const uptimeData = realtimeStats?.info?.os?.uptime || systemStats.os?.uptime;
-                    if (!uptimeData) return '0d 0h 0m';
-                    // Unraid returns ISO date string of boot time, calculate uptime
-                    const bootTime = new Date(uptimeData);
-                    const now = new Date();
-                    const uptimeSeconds = Math.floor((now - bootTime) / 1000);
+                    if (!uptimeData) return 'N/A';
+                    // Unraid returns uptime in seconds
+                    const uptimeSeconds = typeof uptimeData === 'number' ? uptimeData : 0;
                     const days = Math.floor(uptimeSeconds / 86400);
                     const hours = Math.floor((uptimeSeconds % 86400) / 3600);
                     const minutes = Math.floor((uptimeSeconds % 3600) / 60);
                     return `${days}d ${hours}h ${minutes}m`;
                   })()}
+                </Typography>
+                <Typography variant="caption" display="block">
+                  Platform: {systemStats.os?.platform || 'N/A'}
                 </Typography>
               </CardContent>
             </Card>
@@ -407,6 +418,24 @@ function Unraid() {
                 <Typography variant="body2" color="text.secondary">
                   {container.status || container.Status || 'No status'}
                 </Typography>
+                
+                {/* Memory usage */}
+                {container.stats?.memory && (
+                  <Box sx={{ mt: 1 }}>
+                    <Typography variant="caption" color="text.secondary">
+                      Memory: {formatBytes(container.stats.memory.usage)} / {formatBytes(container.stats.memory.limit)}
+                      {container.stats.memory.percent !== undefined && ` (${container.stats.memory.percent.toFixed(1)}%)`}
+                    </Typography>
+                    {container.stats.memory.percent !== undefined && (
+                      <LinearProgress 
+                        variant="determinate" 
+                        value={container.stats.memory.percent} 
+                        sx={{ mt: 0.5, height: 4 }}
+                      />
+                    )}
+                  </Box>
+                )}
+                
                 {container.autoStart !== undefined && (
                   <Chip 
                     label={container.autoStart ? 'Auto-start' : 'Manual start'} 

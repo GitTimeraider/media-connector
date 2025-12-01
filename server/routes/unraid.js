@@ -104,6 +104,17 @@ router.get('/docker/:instanceId', async (req, res) => {
             state
             status
             autoStart
+            stats {
+              memory {
+                usage
+                limit
+                percent
+              }
+              cpu {
+                usage
+                percent
+              }
+            }
           }
         }
       }

@@ -322,7 +322,7 @@ function Dashboard() {
     return genres[genreId] || 'Other';
   };
 
-  const MediaCard = ({ item, type, index, showReleaseDate }) => {
+  const MediaCard = ({ item, type, index, showReleaseDate, isDownloaded }) => {
     const [isHovered, setIsHovered] = useState(false);
     
     const imageUrl = item.poster_path || item.posterUrl
@@ -337,8 +337,14 @@ function Dashboard() {
     const releaseDate = item.release_date ? new Date(item.release_date) : null;
     const formattedDate = releaseDate ? releaseDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : null;
     
-    // Check if item is already in library (has id from Radarr/Sonarr)
-    const isInLibrary = Boolean(item.id && !item.tmdbId);
+    // Check if item is already in library (from Radarr/Sonarr) - these will have tmdbId or tvdbId but also have Radarr/Sonarr id
+    // Or if it's from the recentDownloads sections (these are already in library)
+    const isInLibrary = Boolean(
+      isDownloaded || // Explicitly marked as downloaded
+      item.hasFile || // Radarr/Sonarr item with file
+      (item.id && item.monitored !== undefined) || // Has Radarr/Sonarr ID and monitored property
+      item.downloaded // From recent downloads
+    );
     
     return (
       <Card 
@@ -1043,7 +1049,7 @@ function Dashboard() {
               }}>
                 {recentDownloads.movies.slice(0, 10).map((movie, index) => (
                   <Box key={index} sx={{ width: { xs: 140, sm: 160, md: 200 }, minWidth: { xs: 140, sm: 160, md: 200 }, maxWidth: { xs: 140, sm: 160, md: 200 }, flexShrink: 0 }}>
-                    <MediaCard item={movie} type="movie" index={index} />
+                    <MediaCard item={movie} type="movie" index={index} isDownloaded={true} />
                   </Box>
                 ))}
               </Box>
@@ -1089,7 +1095,7 @@ function Dashboard() {
               }}>
                 {recentDownloads.series.slice(0, 10).map((series, index) => (
                   <Box key={index} sx={{ width: { xs: 140, sm: 160, md: 200 }, minWidth: { xs: 140, sm: 160, md: 200 }, maxWidth: { xs: 140, sm: 160, md: 200 }, flexShrink: 0 }}>
-                    <MediaCard item={series} type="tv" index={index} />
+                    <MediaCard item={series} type="tv" index={index} isDownloaded={true} />
                   </Box>
                 ))}
               </Box>

@@ -37,6 +37,7 @@ const registrationLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Export all rate limiters
 module.exports = {
   apiLimiter,
   authLimiter,

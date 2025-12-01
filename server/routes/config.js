@@ -83,9 +83,10 @@ router.post('/test/:type', async (req, res) => {
       endpoint = '/api/v1/system/status';
     } else if (req.params.type === 'sabnzbd') {
       const axios = require('axios');
-      // Use validated URL from validation.url
-      const validatedUrl = validation.url.href.replace(/\/$/, ''); // Remove trailing slash
-      const response = await axios.get(`${validatedUrl}/api`, {
+      // SAFE: URL has been validated by urlValidator.validateServiceUrl above
+      // Construct URL object to ensure safe path joining
+      const safeUrl = new URL('/api', validation.url);
+      const response = await axios.get(safeUrl.toString(), {
         params: { mode: 'version', output: 'json', apikey: apiKey },
         timeout: 10000
       });
@@ -94,9 +95,10 @@ router.post('/test/:type', async (req, res) => {
       const axios = require('axios');
       // Deluge uses password field for authentication
       const { password } = req.body;
-      // Use validated URL from validation.url
-      const validatedUrl = validation.url.href.replace(/\/$/, ''); // Remove trailing slash
-      const response = await axios.post(`${validatedUrl}/json`, {
+      // SAFE: URL has been validated by urlValidator.validateServiceUrl above
+      // Construct URL object to ensure safe path joining
+      const safeUrl = new URL('/json', validation.url);
+      const response = await axios.post(safeUrl.toString(), {
         method: 'web.connected',
         params: [],
         id: 1

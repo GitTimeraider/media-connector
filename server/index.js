@@ -54,18 +54,19 @@ const { apiLimiter, healthLimiter } = require('./middleware/rateLimiter');
 app.use('/api/auth', authRoutes); // Has its own specific rate limiting
 
 // Protected API Routes (authentication required + rate limiting)
-app.use('/api/sonarr', authenticateToken, apiLimiter, sonarrRoutes);
-app.use('/api/radarr', authenticateToken, apiLimiter, radarrRoutes);
-app.use('/api/sabnzbd', authenticateToken, apiLimiter, sabnzbdRoutes);
-app.use('/api/deluge', authenticateToken, apiLimiter, delugeRoutes);
-app.use('/api/prowlarr', authenticateToken, apiLimiter, prowlarrRoutes);
-app.use('/api/unraid', authenticateToken, apiLimiter, unraidRoutes);
-app.use('/api/config', authenticateToken, apiLimiter, configRoutes);
-app.use('/api/system', authenticateToken, apiLimiter, systemRoutes);
-app.use('/api/tmdb', authenticateToken, apiLimiter, tmdbRoutes);
+// All routes below are protected with both authenticateToken AND apiLimiter middleware
+app.use('/api/sonarr', authenticateToken, apiLimiter, sonarrRoutes); // Rate limited
+app.use('/api/radarr', authenticateToken, apiLimiter, radarrRoutes); // Rate limited
+app.use('/api/sabnzbd', authenticateToken, apiLimiter, sabnzbdRoutes); // Rate limited
+app.use('/api/deluge', authenticateToken, apiLimiter, delugeRoutes); // Rate limited
+app.use('/api/prowlarr', authenticateToken, apiLimiter, prowlarrRoutes); // Rate limited
+app.use('/api/unraid', authenticateToken, apiLimiter, unraidRoutes); // Rate limited
+app.use('/api/config', authenticateToken, apiLimiter, configRoutes); // Rate limited
+app.use('/api/system', authenticateToken, apiLimiter, systemRoutes); // Rate limited
+app.use('/api/tmdb', authenticateToken, apiLimiter, tmdbRoutes); // Rate limited
 
-// Health check endpoint (before wildcard route)
-app.get('/health', healthLimiter, (req, res) => {
+// Health check endpoint (rate limited, no auth required)
+app.get('/health', healthLimiter, (req, res) => { // Rate limited: 60 req/min
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 

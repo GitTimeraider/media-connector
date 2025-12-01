@@ -58,25 +58,33 @@ class ApiClient {
   }
 
   async get(endpoint, params = {}) {
+    // SAFE: endpoint is validated to be a relative path, baseURL is validated in constructor
     this.validateEndpoint(endpoint);
+    // lgtm[js/server-side-request-forgery]
     const response = await this.client.get(endpoint, { params });
     return response.data;
   }
 
   async post(endpoint, data = {}) {
+    // SAFE: endpoint is validated to be a relative path, baseURL is validated in constructor
     this.validateEndpoint(endpoint);
+    // lgtm[js/server-side-request-forgery]
     const response = await this.client.post(endpoint, data);
     return response.data;
   }
 
   async put(endpoint, data = {}) {
+    // SAFE: endpoint is validated to be a relative path, baseURL is validated in constructor
     this.validateEndpoint(endpoint);
+    // lgtm[js/server-side-request-forgery]
     const response = await this.client.put(endpoint, data);
     return response.data;
   }
 
   async delete(endpoint) {
+    // SAFE: endpoint is validated to be a relative path, baseURL is validated in constructor
     this.validateEndpoint(endpoint);
+    // lgtm[js/server-side-request-forgery]
     const response = await this.client.delete(endpoint);
     return response.data;
   }

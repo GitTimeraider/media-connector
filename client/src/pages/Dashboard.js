@@ -337,12 +337,13 @@ function Dashboard() {
     const releaseDate = item.release_date ? new Date(item.release_date) : null;
     const formattedDate = releaseDate ? releaseDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : null;
     
-    // Check if item is already in library (from Radarr/Sonarr) - these will have tmdbId or tvdbId but also have Radarr/Sonarr id
-    // Or if it's from the recentDownloads sections (these are already in library)
+    // Check if item is already in library (from Radarr/Sonarr)
+    // Items from Radarr/Sonarr will have BOTH a tmdbId/tvdbId AND an internal id property
+    // TMDB items only have tmdbId but no internal id
     const isInLibrary = Boolean(
       isDownloaded || // Explicitly marked as downloaded
       item.hasFile || // Radarr/Sonarr item with file
-      (item.id && item.monitored !== undefined) || // Has Radarr/Sonarr ID and monitored property
+      (item.id && (item.monitored !== undefined || item.tvdbId !== undefined || item.imdbId !== undefined)) || // Has Radarr/Sonarr ID and is managed
       item.downloaded // From recent downloads
     );
     

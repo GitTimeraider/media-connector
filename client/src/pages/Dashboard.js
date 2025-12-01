@@ -445,10 +445,10 @@ function Dashboard() {
           borderRadius: 3,
           '&:hover': {
             transform: 'translateY(-16px) scale(1.05)',
-            boxShadow: '0 25px 50px rgba(0,0,0,0.5), 0 0 30px rgba(156,39,176,0.3)',
+            boxShadow: '0 25px 50px rgba(0,0,0,0.5)',
             zIndex: 10,
-            border: '1px solid rgba(156,39,176,0.5)',
-            background: 'linear-gradient(135deg, rgba(156,39,176,0.15) 0%, rgba(255,255,255,0.05) 100%)',
+            border: '1px solid rgba(255,255,255,0.3)',
+            background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)',
           },
           '&::before': {
             content: '""',
@@ -478,15 +478,14 @@ function Dashboard() {
             '&::after': {
               content: '""',
               position: 'absolute',
-              top: '-50%',
-              left: '-50%',
-              width: '200%',
-              height: '200%',
-              background: 'radial-gradient(circle, rgba(156,39,176,0.4) 0%, transparent 70%)',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              background: 'rgba(0,0,0,0.2)',
               opacity: isHovered ? 1 : 0,
               transition: 'opacity 0.4s',
-              pointerEvents: 'none',
-              animation: isHovered ? 'pulse 2s ease-in-out infinite' : 'none'
+              pointerEvents: 'none'
             },
             '@keyframes pulse': {
               '0%, 100%': { transform: 'scale(1)', opacity: 0.6 },
@@ -516,11 +515,9 @@ function Dashboard() {
                     left: 0,
                     right: 0,
                     bottom: 0,
-                    background: 'linear-gradient(to top, rgba(156,39,176,0.95) 0%, rgba(0,0,0,0.7) 50%, transparent 100%)',
                     display: 'flex',
                     alignItems: 'flex-end',
-                    p: 2,
-                    backdropFilter: 'blur(5px)'
+                    p: 2
                   }}
                 >
                   <Box display="flex" gap={1}>

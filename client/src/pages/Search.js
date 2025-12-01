@@ -16,9 +16,10 @@ import {
   FormControl,
   InputLabel,
   Select,
-  MenuItem
+  MenuItem,
+  CardMedia
 } from '@mui/material';
-import { Search as SearchIcon, Download } from '@mui/icons-material';
+import { Search as SearchIcon, Download, Category as CategoryIcon } from '@mui/icons-material';
 import api from '../services/api';
 
 function Search() {
@@ -391,63 +392,89 @@ function Search() {
               <Card sx={{ 
                 border: result.relevanceScore >= 100 ? '2px solid #4caf50' : 
                         result.relevanceScore >= 50 ? '2px solid #2196f3' : 
-                        '1px solid rgba(255,255,255,0.1)'
+                        '1px solid rgba(255,255,255,0.1)',
+                display: 'flex',
+                flexDirection: { xs: 'column', sm: 'row' }
               }}>
-                <CardContent>
-                  <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
-                    <Typography variant="h6" sx={{ flex: 1, pr: 2 }}>
-                      {result.title}
-                    </Typography>
-                    {result.relevanceScore >= 100 && (
-                      <Chip label="Exact Match" size="small" color="success" />
+                {result.coverUrl && (
+                  <CardMedia
+                    component="img"
+                    sx={{ 
+                      width: { xs: '100%', sm: 140 },
+                      height: { xs: 200, sm: 'auto' },
+                      objectFit: 'cover'
+                    }}
+                    image={result.coverUrl}
+                    alt={result.title}
+                    onError={(e) => { e.target.style.display = 'none'; }}
+                  />
+                )}
+                <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+                  <CardContent sx={{ flex: '1 0 auto' }}>
+                    <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
+                      <Typography variant="h6" sx={{ flex: 1, pr: 2 }}>
+                        {result.title}
+                      </Typography>
+                      {result.relevanceScore >= 100 && (
+                        <Chip label="Exact Match" size="small" color="success" />
+                      )}
+                      {result.relevanceScore >= 50 && result.relevanceScore < 100 && (
+                        <Chip label="High Match" size="small" color="primary" />
+                      )}
+                    </Box>
+                    <Box display="flex" gap={1} flexWrap="wrap" mb={2}>
+                      {result.categoryDisplay && (
+                        <Chip 
+                          icon={<CategoryIcon />}
+                          label={result.categoryDisplay} 
+                          size="small" 
+                          color="secondary"
+                          sx={{ fontWeight: 600 }}
+                        />
+                      )}
+                      <Chip label={result.indexer} size="small" color="primary" />
+                      <Chip 
+                        label={result.protocol === 'torrent' ? 'Torrent' : 'Usenet'} 
+                        size="small" 
+                        color={result.protocol === 'torrent' ? 'success' : 'info'}
+                      />
+                      <Chip label={formatBytes(result.size)} size="small" />
+                      {result.seeders !== undefined && result.seeders > 0 && (
+                        <Chip label={`↑ ${result.seeders}`} size="small" color="success" />
+                      )}
+                      {result.leechers !== undefined && (
+                        <Chip label={`↓ ${result.leechers}`} size="small" />
+                      )}
+                      {result.publishDate && (
+                        <Chip label={new Date(result.publishDate).toLocaleDateString()} size="small" />
+                      )}
+                    </Box>
+                    {result.infoUrl && (
+                      <Typography variant="body2" color="text.secondary" noWrap>
+                        Source: {result.infoUrl}
+                      </Typography>
                     )}
-                    {result.relevanceScore >= 50 && result.relevanceScore < 100 && (
-                      <Chip label="High Match" size="small" color="primary" />
-                    )}
-                  </Box>
-                  <Box display="flex" gap={1} flexWrap="wrap" mb={2}>
-                    <Chip label={result.indexer} size="small" color="primary" />
-                    <Chip 
-                      label={result.protocol === 'torrent' ? 'Torrent' : 'Usenet'} 
-                      size="small" 
-                      color={result.protocol === 'torrent' ? 'success' : 'info'}
-                    />
-                    <Chip label={formatBytes(result.size)} size="small" />
-                    {result.seeders !== undefined && result.seeders > 0 && (
-                      <Chip label={`↑ ${result.seeders}`} size="small" color="success" />
-                    )}
-                    {result.leechers !== undefined && (
-                      <Chip label={`↓ ${result.leechers}`} size="small" />
-                    )}
-                    {result.publishDate && (
-                      <Chip label={new Date(result.publishDate).toLocaleDateString()} size="small" />
-                    )}
-                  </Box>
-                  {result.infoUrl && (
-                    <Typography variant="body2" color="text.secondary" noWrap>
-                      Source: {result.infoUrl}
-                    </Typography>
-                  )}
-                </CardContent>
-                <CardActions>
-                  <Button
-                    size="small"
-                    variant="contained"
-                    startIcon={<Download />}
-                    onClick={() => handleDownload(result)}
-                    disabled={!result.downloadUrl}
-                  >
-                    Add to Client
-                  </Button>
-                  <Button
-                    size="small"
-                    href={result.downloadUrl}
-                    target="_blank"
-                    disabled={!result.downloadUrl}
-                  >
-                    Manual Download
-                  </Button>
-                </CardActions>
+                  </CardContent>
+                  <CardActions>
+                    <Button
+                      size="small"
+                      variant="contained"
+                      startIcon={<Download />}
+                      onClick={() => handleDownload(result)}
+                      disabled={!result.downloadUrl}
+                    >
+                      Add to Client
+                    </Button>
+                    <Button
+                      size="small"
+                      href={result.downloadUrl}
+                      target="_blank"
+                      disabled={!result.downloadUrl}
+                    >
+                      Manual Download
+                    </Button>
+                  </CardActions>
+                </Box>
               </Card>
             </Grid>
           ))}

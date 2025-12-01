@@ -4,13 +4,20 @@ const axios = require('axios');
 const configManager = require('../config/services');
 const urlValidator = require('../utils/urlValidator');
 
-// Helper function to validate instance URL
-function validateInstanceUrl(instance) {
+// Helper function to validate instance URL and return safe URL
+function getValidatedUrl(instance) {
   const validation = urlValidator.validateServiceUrl(instance.url);
   if (!validation.valid) {
     throw new Error(`Invalid instance URL: ${validation.error}`);
   }
   return validation.url;
+}
+
+// Helper function to build safe URL path
+function buildSafeUrl(baseUrl, path) {
+  // Use URL constructor to safely join paths
+  const url = new URL(path, baseUrl);
+  return url.toString();
 }
 
 // Helper function to get Portainer headers
@@ -40,11 +47,13 @@ router.get('/test/:instanceId', async (req, res) => {
     const instance = instances.find(i => i.id === req.params.instanceId);
     if (!instance) return res.status(404).json({ error: 'Instance not found' });
 
-    validateInstanceUrl(instance);
+    // SSRF Protection: Validate and use the sanitized URL
+    const validatedUrl = getValidatedUrl(instance);
     const headers = getHeaders(instance);
 
     // Get Portainer status/info
-    const response = await axios.get(`${instance.url}/api/status`, {
+    const safeUrl = buildSafeUrl(validatedUrl, '/api/status');
+    const response = await axios.get(safeUrl, {
       headers,
       timeout: 10000
     });
@@ -67,17 +76,20 @@ router.get('/status/:instanceId', async (req, res) => {
     const instance = instances.find(i => i.id === req.params.instanceId);
     if (!instance) return res.status(404).json({ error: 'Instance not found' });
 
-    validateInstanceUrl(instance);
+    // SSRF Protection: Validate and use the sanitized URL
+    const validatedUrl = getValidatedUrl(instance);
     const headers = getHeaders(instance);
 
     // Get Portainer status
-    const statusResponse = await axios.get(`${instance.url}/api/status`, {
+    const statusUrl = buildSafeUrl(validatedUrl, '/api/status');
+    const statusResponse = await axios.get(statusUrl, {
       headers,
       timeout: 10000
     });
 
     // Get endpoints (environments) to find Docker hosts
-    const endpointsResponse = await axios.get(`${instance.url}/api/endpoints`, {
+    const endpointsUrl = buildSafeUrl(validatedUrl, '/api/endpoints');
+    const endpointsResponse = await axios.get(endpointsUrl, {
       headers,
       timeout: 10000
     });
@@ -99,20 +111,23 @@ router.get('/system/:instanceId/:endpointId', async (req, res) => {
     const instance = instances.find(i => i.id === req.params.instanceId);
     if (!instance) return res.status(404).json({ error: 'Instance not found' });
 
-    validateInstanceUrl(instance);
+    // SSRF Protection: Validate and use the sanitized URL
+    const validatedUrl = getValidatedUrl(instance);
     const headers = getHeaders(instance);
-    const endpointId = req.params.endpointId;
+    
+    // Validate endpointId - must be a number
+    const endpointId = parseInt(req.params.endpointId, 10);
+    if (isNaN(endpointId) || endpointId < 0) {
+      return res.status(400).json({ error: 'Invalid endpoint ID' });
+    }
 
     // Get Docker system info via Portainer API proxy
+    const infoUrl = buildSafeUrl(validatedUrl, `/api/endpoints/${endpointId}/docker/info`);
+    const versionUrl = buildSafeUrl(validatedUrl, `/api/endpoints/${endpointId}/docker/version`);
+    
     const [infoResponse, versionResponse] = await Promise.allSettled([
-      axios.get(`${instance.url}/api/endpoints/${endpointId}/docker/info`, {
-        headers,
-        timeout: 10000
-      }),
-      axios.get(`${instance.url}/api/endpoints/${endpointId}/docker/version`, {
-        headers,
-        timeout: 10000
-      })
+      axios.get(infoUrl, { headers, timeout: 10000 }),
+      axios.get(versionUrl, { headers, timeout: 10000 })
     ]);
 
     const info = infoResponse.status === 'fulfilled' ? infoResponse.value.data : null;
@@ -150,12 +165,19 @@ router.get('/containers/:instanceId/:endpointId', async (req, res) => {
     const instance = instances.find(i => i.id === req.params.instanceId);
     if (!instance) return res.status(404).json({ error: 'Instance not found' });
 
-    validateInstanceUrl(instance);
+    // SSRF Protection: Validate and use the sanitized URL
+    const validatedUrl = getValidatedUrl(instance);
     const headers = getHeaders(instance);
-    const endpointId = req.params.endpointId;
+    
+    // Validate endpointId - must be a number
+    const endpointId = parseInt(req.params.endpointId, 10);
+    if (isNaN(endpointId) || endpointId < 0) {
+      return res.status(400).json({ error: 'Invalid endpoint ID' });
+    }
 
     // Get all containers via Portainer API proxy to Docker API
-    const response = await axios.get(`${instance.url}/api/endpoints/${endpointId}/docker/containers/json`, {
+    const containersUrl = buildSafeUrl(validatedUrl, `/api/endpoints/${endpointId}/docker/containers/json`);
+    const response = await axios.get(containersUrl, {
       headers,
       timeout: 10000,
       params: {
@@ -188,9 +210,16 @@ router.post('/container/action/:instanceId/:endpointId', async (req, res) => {
     const instance = instances.find(i => i.id === req.params.instanceId);
     if (!instance) return res.status(404).json({ error: 'Instance not found' });
 
-    validateInstanceUrl(instance);
+    // SSRF Protection: Validate and use the sanitized URL
+    const validatedUrl = getValidatedUrl(instance);
     const headers = getHeaders(instance);
-    const { endpointId } = req.params;
+    
+    // Validate endpointId - must be a number
+    const endpointId = parseInt(req.params.endpointId, 10);
+    if (isNaN(endpointId) || endpointId < 0) {
+      return res.status(400).json({ error: 'Invalid endpoint ID' });
+    }
+    
     const { containerId, action } = req.body;
 
     // Validate action
@@ -210,11 +239,8 @@ router.post('/container/action/:instanceId/:endpointId', async (req, res) => {
     }
 
     // Execute the action via Portainer API proxy to Docker API
-    const response = await axios.post(
-      `${instance.url}/api/endpoints/${endpointId}/docker/containers/${containerId}/${action}`,
-      {},
-      { headers, timeout: 15000 }
-    );
+    const actionUrl = buildSafeUrl(validatedUrl, `/api/endpoints/${endpointId}/docker/containers/${containerId}/${action}`);
+    await axios.post(actionUrl, {}, { headers, timeout: 15000 });
 
     res.json({ success: true, action, containerId });
   } catch (error) {
@@ -239,14 +265,26 @@ router.get('/container/stats/:instanceId/:endpointId/:containerId', async (req, 
     const instance = instances.find(i => i.id === req.params.instanceId);
     if (!instance) return res.status(404).json({ error: 'Instance not found' });
 
-    validateInstanceUrl(instance);
+    // SSRF Protection: Validate and use the sanitized URL
+    const validatedUrl = getValidatedUrl(instance);
     const headers = getHeaders(instance);
-    const { endpointId, containerId } = req.params;
+    
+    // Validate endpointId - must be a number
+    const endpointId = parseInt(req.params.endpointId, 10);
+    if (isNaN(endpointId) || endpointId < 0) {
+      return res.status(400).json({ error: 'Invalid endpoint ID' });
+    }
+    
+    const { containerId } = req.params;
+
+    // Validate containerId format - Docker container IDs are hex strings
+    if (!containerId || !/^[a-zA-Z0-9]+$/.test(containerId)) {
+      return res.status(400).json({ error: 'Invalid container ID format' });
+    }
 
     // Get container stats (one-shot, not streaming)
-    const response = await axios.get(
-      `${instance.url}/api/endpoints/${endpointId}/docker/containers/${containerId}/stats`,
-      {
+    const statsUrl = buildSafeUrl(validatedUrl, `/api/endpoints/${endpointId}/docker/containers/${containerId}/stats`);
+    const response = await axios.get(statsUrl, {
         headers,
         timeout: 10000,
         params: {
@@ -291,10 +329,12 @@ router.get('/stacks/:instanceId', async (req, res) => {
     const instance = instances.find(i => i.id === req.params.instanceId);
     if (!instance) return res.status(404).json({ error: 'Instance not found' });
 
-    validateInstanceUrl(instance);
+    // SSRF Protection: Validate and use the sanitized URL
+    const validatedUrl = getValidatedUrl(instance);
     const headers = getHeaders(instance);
 
-    const response = await axios.get(`${instance.url}/api/stacks`, {
+    const stacksUrl = buildSafeUrl(validatedUrl, '/api/stacks');
+    const response = await axios.get(stacksUrl, {
       headers,
       timeout: 10000
     });

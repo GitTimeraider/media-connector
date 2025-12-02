@@ -331,7 +331,10 @@ function Dashboard() {
           monitored,
           tags: tagsArray,
           seasonFolder: true,
-          addOptions: { searchForMissingEpisodes: searchOnAdd }
+          addOptions: { 
+            searchForMissingEpisodes: searchOnAdd,
+            monitor: 'all'
+          }
         });
         alert(`Added "${matchedSeries.title}" to Sonarr!`);
       }
@@ -497,8 +500,8 @@ function Dashboard() {
                   height: '100%',
                   objectFit: 'cover',
                   objectPosition: 'center top',
-                  transition: 'transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                  transform: isHovered ? 'scale(1.15) rotate(1deg)' : 'scale(1)',
+                  transition: 'transform 0.3s ease-out',
+                  transform: isHovered ? 'scale(1.08)' : 'scale(1)',
                   display: 'block',
                   filter: isHovered ? 'brightness(1.1) contrast(1.1)' : 'brightness(1)'
                 }}

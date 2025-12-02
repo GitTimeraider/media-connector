@@ -384,10 +384,15 @@ function Settings() {
         <Tabs 
           value={tabValue} 
           onChange={(e, v) => setTabValue(v)}
-          variant="fullWidth"
+          variant="scrollable"
+          scrollButtons="auto"
+          allowScrollButtonsMobile
           sx={{
             '& .MuiTab-root': {
               py: 2,
+              px: { xs: 1.5, sm: 3 },
+              minWidth: { xs: 'auto', sm: 120 },
+              fontSize: { xs: '0.75rem', sm: '0.875rem' },
               fontWeight: 'bold',
               transition: 'all 0.3s ease',
               '&:hover': {
@@ -400,6 +405,9 @@ function Settings() {
             '& .MuiTabs-indicator': {
               height: 3,
               background: 'linear-gradient(135deg, #1976d2 0%, #9c27b0 100%)',
+            },
+            '& .MuiSvgIcon-root': {
+              fontSize: { xs: '1rem', sm: '1.25rem' }
             }
           }}
         >

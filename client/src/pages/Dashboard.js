@@ -522,12 +522,7 @@ function Dashboard() {
                     sx={{ 
                       fontWeight: 600,
                       background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                      boxShadow: '0 2px 8px rgba(102,126,234,0.3)',
-                      transition: 'all 0.3s',
-                      '&:hover': {
-                        transform: 'translateY(-2px)',
-                        boxShadow: '0 4px 12px rgba(102,126,234,0.5)'
-                      }
+                      boxShadow: '0 2px 8px rgba(102,126,234,0.3)'
                     }} 
                   />
                 )}
@@ -539,12 +534,7 @@ function Dashboard() {
                     sx={{ 
                       fontWeight: 600,
                       background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-                      boxShadow: '0 2px 8px rgba(245,87,108,0.3)',
-                      transition: 'all 0.3s',
-                      '&:hover': {
-                        transform: 'translateY(-2px)',
-                        boxShadow: '0 4px 12px rgba(245,87,108,0.5)'
-                      }
+                      boxShadow: '0 2px 8px rgba(245,87,108,0.3)'
                     }}
                   />
                 )}
@@ -580,12 +570,7 @@ function Dashboard() {
                     sx={{ 
                       fontWeight: 600,
                       background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-                      boxShadow: '0 2px 8px rgba(79,172,254,0.3)',
-                      transition: 'all 0.3s',
-                      '&:hover': {
-                        transform: 'translateY(-2px)',
-                        boxShadow: '0 4px 12px rgba(79,172,254,0.5)'
-                      }
+                      boxShadow: '0 2px 8px rgba(79,172,254,0.3)'
                     }}
                   />
                 )}
@@ -629,15 +614,7 @@ function Dashboard() {
           backdropFilter: 'blur(20px)',
           border: '1px solid rgba(255,255,255,0.2)',
           borderRadius: 3,
-          boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
-          width: '100%',
-          maxWidth: '100%',
-          boxSizing: 'border-box',
-          transition: 'all 0.3s',
-          '&:hover': {
-            boxShadow: '0 12px 40px rgba(156,39,176,0.3)',
-            transform: 'translateY(-2px)'
-          }
+          boxShadow: '0 8px 32px rgba(0,0,0,0.3)'
         }}
       >
         <TextField
@@ -697,25 +674,7 @@ function Dashboard() {
               overflowX: 'auto',
               overflowY: 'hidden',
               pb: 2,
-              cursor: 'grab',
-              width: '100%',
-              maxWidth: '100%',
-              '&::-webkit-scrollbar': {
-                height: 8,
-              },
-              '&::-webkit-scrollbar-track': {
-                backgroundColor: 'rgba(255,255,255,0.1)',
-                borderRadius: 4,
-              },
-              '&::-webkit-scrollbar-thumb': {
-                backgroundColor: 'rgba(255,255,255,0.3)',
-                borderRadius: 4,
-                '&:hover': {
-                  backgroundColor: 'rgba(255,255,255,0.4)',
-                },
-              },
-              overscrollBehavior: 'contain auto',
-              WebkitOverflowScrolling: 'touch'
+              cursor: 'grab'
             }}
           >
             {searchResults.map((item, index) => (
@@ -885,28 +844,7 @@ function Dashboard() {
             borderRadius: 3,
             borderLeft: '6px solid',
             borderImage: 'linear-gradient(to bottom, #ff5722, #ffc107) 1',
-            boxShadow: '0 4px 20px rgba(255,87,34,0.2)',
-            transition: 'all 0.3s',
-            position: 'relative',
-            overflow: 'hidden',
-            '&:hover': {
-              transform: 'translateX(8px)',
-              boxShadow: '0 6px 30px rgba(255,87,34,0.4)'
-            },
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              background: 'linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%)',
-              animation: 'shimmer 8s infinite',
-            },
-            '@keyframes shimmer': {
-              '0%': { transform: 'translateX(-100%)' },
-              '100%': { transform: 'translateX(100%)' }
-            }
+            boxShadow: '0 4px 20px rgba(255,87,34,0.2)'
           }}
         >
           <Movie sx={{ mr: 1.5, fontSize: 32, color: 'warning.main', filter: 'drop-shadow(0 2px 4px rgba(255,87,34,0.5))' }} />
@@ -937,26 +875,7 @@ function Dashboard() {
             overflowX: 'auto',
             overflowY: 'hidden',
             pb: 2,
-            cursor: 'grab',
-            '&::-webkit-scrollbar': {
-              height: 10
-            },
-            '&::-webkit-scrollbar-track': {
-              background: 'linear-gradient(90deg, rgba(156,39,176,0.1) 0%, rgba(33,150,243,0.1) 100%)',
-              borderRadius: 10,
-              border: '1px solid rgba(255,255,255,0.1)'
-            },
-            '&::-webkit-scrollbar-thumb': {
-              background: 'linear-gradient(90deg, #9c27b0 0%, #2196f3 100%)',
-              borderRadius: 10,
-              transition: 'all 0.3s',
-              '&:hover': {
-                background: 'linear-gradient(90deg, #7b1fa2 0%, #1976d2 100%)',
-                boxShadow: '0 0 10px rgba(156,39,176,0.5)'
-              }
-            },
-            overscrollBehavior: 'contain auto',
-            WebkitOverflowScrolling: 'touch'
+            cursor: 'grab'
           }}>
             {trendingMovies.map((item, index) => (
               <Box key={index} sx={{ width: { xs: 140, sm: 160, md: 200 }, minWidth: { xs: 140, sm: 160, md: 200 }, maxWidth: { xs: 140, sm: 160, md: 200 }, flexShrink: 0 }}>
@@ -984,24 +903,7 @@ function Dashboard() {
             borderRadius: 3,
             borderLeft: '6px solid',
             borderImage: 'linear-gradient(to bottom, #9c27b0, #673ab7) 1',
-            boxShadow: '0 4px 20px rgba(156,39,176,0.2)',
-            transition: 'all 0.3s',
-            position: 'relative',
-            overflow: 'hidden',
-            '&:hover': {
-              transform: 'translateX(8px)',
-              boxShadow: '0 6px 30px rgba(156,39,176,0.4)'
-            },
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              background: 'linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%)',
-              animation: 'shimmer 8s infinite',
-            }
+            boxShadow: '0 4px 20px rgba(156,39,176,0.2)'
           }}
         >
           <LiveTv sx={{ mr: 1.5, fontSize: 32, color: 'secondary.main', filter: 'drop-shadow(0 2px 4px rgba(156,39,176,0.5))' }} />
@@ -1032,25 +934,7 @@ function Dashboard() {
             overflowX: 'auto',
             overflowY: 'hidden',
             pb: 2,
-            cursor: 'grab',
-            width: '100%',
-            maxWidth: '100%',
-            '&::-webkit-scrollbar': {
-              height: 8
-            },
-            '&::-webkit-scrollbar-track': {
-              background: 'rgba(255,255,255,0.05)',
-              borderRadius: 4
-            },
-            '&::-webkit-scrollbar-thumb': {
-              background: 'rgba(255,255,255,0.2)',
-              borderRadius: 4,
-              '&:hover': {
-                background: 'rgba(255,255,255,0.3)'
-              }
-            },
-            overscrollBehavior: 'contain auto',
-            WebkitOverflowScrolling: 'touch'
+            cursor: 'grab'
           }}>
             {trendingTV.map((item, index) => (
               <Box key={index} sx={{ width: { xs: 140, sm: 160, md: 200 }, minWidth: { xs: 140, sm: 160, md: 200 }, maxWidth: { xs: 140, sm: 160, md: 200 }, flexShrink: 0 }}>
@@ -1078,24 +962,7 @@ function Dashboard() {
             borderRadius: 3,
             borderLeft: '6px solid',
             borderImage: 'linear-gradient(to bottom, #2196f3, #03a9f4) 1',
-            boxShadow: '0 4px 20px rgba(33,150,243,0.2)',
-            transition: 'all 0.3s',
-            position: 'relative',
-            overflow: 'hidden',
-            '&:hover': {
-              transform: 'translateX(8px)',
-              boxShadow: '0 6px 30px rgba(33,150,243,0.4)'
-            },
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              background: 'linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%)',
-              animation: 'shimmer 8s infinite',
-            }
+            boxShadow: '0 4px 20px rgba(33,150,243,0.2)'
           }}
         >
           <CalendarToday sx={{ mr: 1.5, fontSize: 32, color: 'primary.main', filter: 'drop-shadow(0 2px 4px rgba(33,150,243,0.5))' }} />
@@ -1126,25 +993,7 @@ function Dashboard() {
             overflowX: 'auto',
             overflowY: 'hidden',
             pb: 2,
-            cursor: 'grab',
-            width: '100%',
-            maxWidth: '100%',
-            '&::-webkit-scrollbar': {
-              height: 8
-            },
-            '&::-webkit-scrollbar-track': {
-              background: 'rgba(255,255,255,0.05)',
-              borderRadius: 4
-            },
-            '&::-webkit-scrollbar-thumb': {
-              background: 'rgba(255,255,255,0.2)',
-              borderRadius: 4,
-              '&:hover': {
-                background: 'rgba(255,255,255,0.3)'
-              }
-            },
-            overscrollBehavior: 'contain auto',
-            WebkitOverflowScrolling: 'touch'
+            cursor: 'grab'
           }}>
             {upcomingMovies.map((item, index) => (
               <Box key={index} sx={{ width: { xs: 140, sm: 160, md: 200 }, minWidth: { xs: 140, sm: 160, md: 200 }, maxWidth: { xs: 140, sm: 160, md: 200 }, flexShrink: 0 }}>
@@ -1169,24 +1018,7 @@ function Dashboard() {
               borderRadius: 3,
               borderLeft: '6px solid',
               borderImage: 'linear-gradient(to bottom, #4caf50, #8bc34a) 1',
-              boxShadow: '0 4px 20px rgba(76,175,80,0.2)',
-              transition: 'all 0.3s',
-              position: 'relative',
-              overflow: 'hidden',
-              '&:hover': {
-                transform: 'translateX(8px)',
-                boxShadow: '0 6px 30px rgba(76,175,80,0.4)'
-              },
-              '&::before': {
-                content: '""',
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                background: 'linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%)',
-                animation: 'shimmer 8s infinite',
-              }
+              boxShadow: '0 4px 20px rgba(76,175,80,0.2)'
             }}
           >
             <Download sx={{ mr: 1.5, fontSize: { xs: 24, sm: 32 }, color: 'success.main', filter: 'drop-shadow(0 2px 4px rgba(76,175,80,0.5))' }} />
@@ -1215,25 +1047,7 @@ function Dashboard() {
                 overflowX: 'auto',
                 overflowY: 'hidden',
                 pb: 2,
-                cursor: 'grab',
-                width: '100%',
-                maxWidth: '100%',
-                '&::-webkit-scrollbar': {
-                  height: 8
-                },
-                '&::-webkit-scrollbar-track': {
-                  background: 'rgba(255,255,255,0.05)',
-                  borderRadius: 4
-                },
-                '&::-webkit-scrollbar-thumb': {
-                  background: 'rgba(255,255,255,0.2)',
-                  borderRadius: 4,
-                  '&:hover': {
-                    background: 'rgba(255,255,255,0.3)'
-                  }
-                },
-                overscrollBehavior: 'contain auto',
-                WebkitOverflowScrolling: 'touch'
+                cursor: 'grab'
               }}>
                 {recentDownloads.movies.slice(0, 10).map((movie, index) => (
                   <Box key={index} sx={{ width: { xs: 140, sm: 160, md: 200 }, minWidth: { xs: 140, sm: 160, md: 200 }, maxWidth: { xs: 140, sm: 160, md: 200 }, flexShrink: 0 }}>
@@ -1261,25 +1075,7 @@ function Dashboard() {
                 overflowX: 'auto',
                 overflowY: 'hidden',
                 pb: 2,
-                cursor: 'grab',
-                width: '100%',
-                maxWidth: '100%',
-                '&::-webkit-scrollbar': {
-                  height: 8
-                },
-                '&::-webkit-scrollbar-track': {
-                  background: 'rgba(255,255,255,0.05)',
-                  borderRadius: 4
-                },
-                '&::-webkit-scrollbar-thumb': {
-                  background: 'rgba(255,255,255,0.2)',
-                  borderRadius: 4,
-                  '&:hover': {
-                    background: 'rgba(255,255,255,0.3)'
-                  }
-                },
-                overscrollBehavior: 'contain auto',
-                WebkitOverflowScrolling: 'touch'
+                cursor: 'grab'
               }}>
                 {recentDownloads.series.slice(0, 10).map((series, index) => (
                   <Box key={index} sx={{ width: { xs: 140, sm: 160, md: 200 }, minWidth: { xs: 140, sm: 160, md: 200 }, maxWidth: { xs: 140, sm: 160, md: 200 }, flexShrink: 0 }}>

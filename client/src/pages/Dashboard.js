@@ -407,16 +407,39 @@ function Dashboard() {
   };
 
   const MediaCard = ({ item, type, index, showReleaseDate, isDownloaded }) => {
-    const [isStable, setIsStable] = useState(false);
+    const [isDragging, setIsDragging] = useState(false);
+    const dragStartPos = useRef(null);
     
-    useEffect(() => {
-      // Stabilize hover effects after a delay to prevent flickering during initial layout
-      // Stagger the delay based on index to prevent all cards from stabilizing at once
-      const timer = setTimeout(() => {
-        setIsStable(true);
-      }, 500 + (index * 50));
-      return () => clearTimeout(timer);
-    }, [index]);
+    const handleCardMouseDown = (e) => {
+      dragStartPos.current = { x: e.clientX, y: e.clientY };
+      setIsDragging(false);
+    };
+    
+    const handleCardMouseMove = (e) => {
+      if (dragStartPos.current) {
+        const deltaX = Math.abs(e.clientX - dragStartPos.current.x);
+        const deltaY = Math.abs(e.clientY - dragStartPos.current.y);
+        // If moved more than 5px, consider it a drag
+        if (deltaX > 5 || deltaY > 5) {
+          setIsDragging(true);
+        }
+      }
+    };
+    
+    const handleCardMouseUp = (e) => {
+      dragStartPos.current = null;
+    };
+    
+    const handleCardClick = (e) => {
+      // Only allow click if not dragging
+      if (isDragging) {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+        return;
+      }
+      handleOpenDialog(item);
+    };
     
     const imageUrl = item.poster_path || item.posterUrl
       ? `https://image.tmdb.org/t/p/w500${item.poster_path || item.posterUrl}`
@@ -447,16 +470,14 @@ function Dashboard() {
           width: '100%',
           height: '100%',
           position: 'relative',
-          pointerEvents: isStable ? 'auto' : 'none',
           cursor: 'pointer !important',
           '& *': {
             cursor: 'pointer !important'
           }
         }}
-        onMouseDown={(e) => e.stopPropagation()}
-        onMouseMove={(e) => e.stopPropagation()}
-        onMouseUp={(e) => e.stopPropagation()}
-        onMouseLeave={(e) => e.stopPropagation()}
+        onMouseDown={handleCardMouseDown}
+        onMouseMove={handleCardMouseMove}
+        onMouseUp={handleCardMouseUp}
       >
         <Card 
           sx={{ 
@@ -466,22 +487,20 @@ function Dashboard() {
             flexDirection: 'column',
             position: 'relative',
             overflow: 'hidden',
-            transition: isStable ? 'transform 0.3s ease, box-shadow 0.3s ease, border 0.3s ease, background 0.3s ease' : 'none',
+            transition: 'transform 0.3s ease, box-shadow 0.3s ease, border 0.3s ease, background 0.3s ease',
             cursor: 'pointer !important',
             background: 'linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%)',
             backdropFilter: 'blur(10px)',
             border: '1px solid rgba(255,255,255,0.1)',
             borderRadius: 3,
             transformOrigin: 'center center',
-            ...(isStable && {
-              '.media-card-wrapper:hover &': {
-                transform: 'scale(1.05)',
-                boxShadow: '0 16px 32px rgba(0,0,0,0.4)',
-                zIndex: 10,
-                border: '1px solid rgba(255,255,255,0.3)',
-                background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)',
-              }
-            }),
+            '.media-card-wrapper:hover &': {
+              transform: 'scale(1.05)',
+              boxShadow: '0 16px 32px rgba(0,0,0,0.4)',
+              zIndex: 10,
+              border: '1px solid rgba(255,255,255,0.3)',
+              background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)',
+            },
             '&::before': {
               content: '""',
               position: 'absolute',
@@ -493,18 +512,16 @@ function Dashboard() {
               pointerEvents: 'none',
               zIndex: 1
             },
-            ...(isStable && {
-              '.media-card-wrapper:hover &::before': {
-                animation: 'shine 0.75s ease-in-out',
-              }
-            }),
+            '.media-card-wrapper:hover &::before': {
+              animation: 'shine 0.75s ease-in-out',
+            },
             '@keyframes shine': {
               '0%': { left: '-100%' },
               '100%': { left: '100%' }
             }
           }}
         >
-        <CardActionArea onClick={() => handleOpenDialog(item)}>
+        <CardActionArea onClick={handleCardClick}>
           <Box sx={{ 
             position: 'relative', 
             overflow: 'hidden', 
@@ -519,14 +536,12 @@ function Dashboard() {
               height: '100%',
               background: 'rgba(0,0,0,0.2)',
               opacity: 0,
-              transition: isStable ? 'opacity 0.4s' : 'none',
+              transition: 'opacity 0.4s',
               pointerEvents: 'none'
             },
-            ...(isStable && {
-              '.media-card-wrapper:hover &::after': {
-                opacity: 1
-              }
-            })
+            '.media-card-wrapper:hover &::after': {
+              opacity: 1
+            }
           }}>
               <CardMedia
                 component="img"
@@ -551,13 +566,11 @@ function Dashboard() {
                   alignItems: 'flex-end',
                   p: 2,
                   opacity: 0,
-                  transition: isStable ? 'opacity 0.3s ease-out' : 'none',
+                  transition: 'opacity 0.3s ease-out',
                   zIndex: 2,
-                  ...(isStable && {
-                    '.media-card-wrapper:hover &': {
-                      opacity: 1
-                    }
-                  })
+                  '.media-card-wrapper:hover &': {
+                    opacity: 1
+                  }
                 }}
               >
                   <Box display="flex" gap={1}>

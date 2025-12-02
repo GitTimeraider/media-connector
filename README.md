@@ -6,8 +6,8 @@
 </p>
 <div align="center">
 
-![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/GitTimeraider/media-connector/docker-publish.yml)
-![License](https://img.shields.io/github/license/GitTimeraider/media-connector)
+![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/GitTimeraider/media-connector-docker/docker-publish.yml)
+![License](https://img.shields.io/github/license/GitTimeraider/media-connector-docker)
 
 **A comprehensive web-based media server manager**
 
@@ -81,14 +81,14 @@ Manage your entire media stack from one web interface. Control Sonarr, Radarr, d
 
 ```bash
 docker run -d \
-  --name=media-connector \
+  --name=media-connector-docker \
   -p 3001:3001 \
   -e PUID=1000 \
   -e PGID=1000 \
   -e JWT_SECRET=your-secret-key-here \
   -v /path/to/data:/app/server/data \
   --restart unless-stopped \
-  ghcr.io/gittimerider/media-connector:latest
+  ghcr.io/gittimerider/media-connector-docker:latest
 ```
 
 ### Using Docker Compose
@@ -97,9 +97,9 @@ docker run -d \
 version: '3.8'
 
 services:
-  media-connector:
-    image: ghcr.io/gittimerider/media-connector:latest
-    container_name: media-connector
+  media-connector-docker:
+    image: ghcr.io/gittimerider/media-connector-docker:latest
+    container_name: media-connector-docker
     restart: unless-stopped
     ports:
       - "3001:3001"
@@ -202,7 +202,7 @@ If a user forgets their password:
 2. Enter your username
 3. Click **Reset Password**
 4. A new randomly generated 32-character password will be logged in the Docker container logs
-5. Check the logs with: `docker logs media-connector`
+5. Check the logs with: `docker logs media-connector-docker`
 6. Look for the password reset section in the logs
 7. Use the new password to log in
 8. Immediately change the password to something memorable
@@ -216,7 +216,7 @@ Media Connector uses an SQLite database to securely store:
 - **User accounts** - Usernames, hashed passwords, roles
 - **Service configurations** - URLs, API keys, credentials
 
-**Database Location**: `server/data/media-connector.db`
+**Database Location**: `server/data/media-connector-docker.db`
 
 ### Security Features
 - ✅ **Password Hashing** - bcrypt with salt rounds for user passwords
@@ -229,11 +229,11 @@ Media Connector uses an SQLite database to securely store:
 The SQLite database file contains all your configuration. Back it up regularly:
 ```bash
 # Backup the database
-docker cp media-connector:/app/server/data/media-connector.db ./backup.db
+docker cp media-connector-docker:/app/server/data/media-connector-docker.db ./backup.db
 
 # Restore from backup
-docker cp ./backup.db media-connector:/app/server/data/media-connector.db
-docker restart media-connector
+docker cp ./backup.db media-connector-docker:/app/server/data/media-connector-docker.db
+docker restart media-connector-docker
 ```
 
 ### Environment Variables
@@ -272,8 +272,8 @@ This repository is configured with GitHub Actions to automatically build and pus
 - **Pull requests** → Builds test images (not pushed)
 
 ### Available Image Tags:
-- `ghcr.io/gittimerider/media-connector:latest` - Latest stable release
-- `ghcr.io/gittimerider/media-connector:main` - Latest main branch
+- `ghcr.io/gittimerider/media-connector-docker:latest` - Latest stable release
+- `ghcr.io/gittimerider/media-connector-docker:main` - Latest main branch
 
 ### Multi-Architecture Support:
 Images are built for both `linux/amd64` and `linux/arm64` platforms.

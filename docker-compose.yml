@@ -1,9 +1,9 @@
 version: '3.8'
 
 services:
-  media-connector:
-    image: ghcr.io/gittimerider/media-connector:latest
-    container_name: media-connector
+  media-connector-docker:
+    image: ghcr.io/gittimerider/media-connector-docker:latest
+    container_name: media-connector-docker
     restart: unless-stopped
     ports:
       - "3001:3001"

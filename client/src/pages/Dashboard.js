@@ -407,6 +407,16 @@ function Dashboard() {
   };
 
   const MediaCard = ({ item, type, index, showReleaseDate, isDownloaded }) => {
+    const [isStable, setIsStable] = useState(false);
+    
+    useEffect(() => {
+      // Stabilize hover effects after a short delay to prevent flickering during initial layout
+      const timer = setTimeout(() => {
+        setIsStable(true);
+      }, 100);
+      return () => clearTimeout(timer);
+    }, []);
+    
     const imageUrl = item.poster_path || item.posterUrl
       ? `https://image.tmdb.org/t/p/w500${item.poster_path || item.posterUrl}`
       : item.images?.find(img => img.coverType === 'poster')?.remoteUrl || 'https://via.placeholder.com/300x450?text=No+Image';
@@ -435,7 +445,8 @@ function Dashboard() {
         sx={{ 
           width: '100%',
           height: '100%',
-          position: 'relative'
+          position: 'relative',
+          pointerEvents: isStable ? 'auto' : 'none'
         }}
       >
         <Card 
@@ -446,20 +457,22 @@ function Dashboard() {
             flexDirection: 'column',
             position: 'relative',
             overflow: 'hidden',
-            transition: 'transform 0.3s ease, box-shadow 0.3s ease, border 0.3s ease, background 0.3s ease',
+            transition: isStable ? 'transform 0.3s ease, box-shadow 0.3s ease, border 0.3s ease, background 0.3s ease' : 'none',
             cursor: 'pointer',
             background: 'linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%)',
             backdropFilter: 'blur(10px)',
             border: '1px solid rgba(255,255,255,0.1)',
             borderRadius: 3,
             transformOrigin: 'center center',
-            '.media-card-wrapper:hover &': {
-              transform: 'scale(1.05)',
-              boxShadow: '0 16px 32px rgba(0,0,0,0.4)',
-              zIndex: 10,
-              border: '1px solid rgba(255,255,255,0.3)',
-              background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)',
-            },
+            ...(isStable && {
+              '.media-card-wrapper:hover &': {
+                transform: 'scale(1.05)',
+                boxShadow: '0 16px 32px rgba(0,0,0,0.4)',
+                zIndex: 10,
+                border: '1px solid rgba(255,255,255,0.3)',
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)',
+              }
+            }),
             '&::before': {
               content: '""',
               position: 'absolute',
@@ -471,9 +484,11 @@ function Dashboard() {
               pointerEvents: 'none',
               zIndex: 1
             },
-            '.media-card-wrapper:hover &::before': {
-              animation: 'shine 0.75s ease-in-out',
-            },
+            ...(isStable && {
+              '.media-card-wrapper:hover &::before': {
+                animation: 'shine 0.75s ease-in-out',
+              }
+            }),
             '@keyframes shine': {
               '0%': { left: '-100%' },
               '100%': { left: '100%' }
@@ -495,12 +510,14 @@ function Dashboard() {
               height: '100%',
               background: 'rgba(0,0,0,0.2)',
               opacity: 0,
-              transition: 'opacity 0.4s',
+              transition: isStable ? 'opacity 0.4s' : 'none',
               pointerEvents: 'none'
             },
-            '.media-card-wrapper:hover &::after': {
-              opacity: 1
-            }
+            ...(isStable && {
+              '.media-card-wrapper:hover &::after': {
+                opacity: 1
+              }
+            })
           }}>
               <CardMedia
                 component="img"
@@ -525,11 +542,13 @@ function Dashboard() {
                   alignItems: 'flex-end',
                   p: 2,
                   opacity: 0,
-                  transition: 'opacity 0.3s ease-out',
+                  transition: isStable ? 'opacity 0.3s ease-out' : 'none',
                   zIndex: 2,
-                  '.media-card-wrapper:hover &': {
-                    opacity: 1
-                  }
+                  ...(isStable && {
+                    '.media-card-wrapper:hover &': {
+                      opacity: 1
+                    }
+                  })
                 }}
               >
                   <Box display="flex" gap={1}>

@@ -408,8 +408,9 @@ function Dashboard() {
 
   const MediaCard = ({ item, type, index, showReleaseDate, isDownloaded }) => {
     const [isDragging, setIsDragging] = useState(false);
+    const [isHovering, setIsHovering] = useState(false);
     const dragStartPos = useRef(null);
-    const cardRef = useRef(null);
+    const hoverLayerRef = useRef(null);
     
     const handleCardMouseDown = (e) => {
       dragStartPos.current = { x: e.clientX, y: e.clientY };
@@ -466,24 +467,35 @@ function Dashboard() {
     
     return (
       <Box
-        ref={cardRef}
         className="media-card-wrapper"
         sx={{ 
           width: '100%',
           height: '100%',
           position: 'relative',
           cursor: 'pointer !important',
-          isolation: 'isolate',
-          containIntrinsicSize: 'auto 450px',
-          contentVisibility: 'auto',
           '& *': {
             cursor: 'pointer !important'
           }
         }}
-        onMouseDown={handleCardMouseDown}
-        onMouseMove={handleCardMouseMove}
-        onMouseUp={handleCardMouseUp}
       >
+        {/* Stable hover detection layer - prevents layout shifts from affecting hover */}
+        <Box
+          ref={hoverLayerRef}
+          onMouseEnter={() => setIsHovering(true)}
+          onMouseLeave={() => setIsHovering(false)}
+          onMouseDown={handleCardMouseDown}
+          onMouseMove={handleCardMouseMove}
+          onMouseUp={handleCardMouseUp}
+          sx={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 100,
+            pointerEvents: 'auto'
+          }}
+        />
         <Card 
           sx={{ 
             width: '100%',
@@ -499,8 +511,14 @@ function Dashboard() {
             border: '1px solid rgba(255,255,255,0.1)',
             borderRadius: 3,
             transformOrigin: 'center center',
-            willChange: 'transform',
-            contain: 'layout style paint',
+            pointerEvents: 'none',
+            ...(isHovering && {
+              transform: 'scale(1.05)',
+              boxShadow: '0 16px 32px rgba(0,0,0,0.4)',
+              zIndex: 10,
+              border: '1px solid rgba(255,255,255,0.3)',
+              background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)',
+            }),
             '&::before': {
               content: '""',
               position: 'absolute',
@@ -510,19 +528,10 @@ function Dashboard() {
               height: '100%',
               background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)',
               pointerEvents: 'none',
-              zIndex: 1
-            },
-            '@media (hover: hover) and (pointer: fine)': {
-              '.media-card-wrapper:hover &': {
-                transform: 'scale(1.05)',
-                boxShadow: '0 16px 32px rgba(0,0,0,0.4)',
-                zIndex: 10,
-                border: '1px solid rgba(255,255,255,0.3)',
-                background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)',
-              },
-              '.media-card-wrapper:hover &::before': {
+              zIndex: 1,
+              ...(isHovering && {
                 animation: 'shine 0.75s ease-in-out',
-              }
+              })
             },
             '@keyframes shine': {
               '0%': { left: '-100%' },
@@ -544,14 +553,9 @@ function Dashboard() {
               width: '100%',
               height: '100%',
               background: 'rgba(0,0,0,0.2)',
-              opacity: 0,
+              opacity: isHovering ? 1 : 0,
               transition: 'opacity 0.4s',
               pointerEvents: 'none'
-            },
-            '@media (hover: hover) and (pointer: fine)': {
-              '.media-card-wrapper:hover &::after': {
-                opacity: 1
-              }
             }
           }}>
               <CardMedia
@@ -577,13 +581,12 @@ function Dashboard() {
                   display: 'flex',
                   alignItems: 'flex-end',
                   p: 2,
-                  opacity: 0,
+                  opacity: isHovering ? 1 : 0,
                   transition: 'opacity 0.3s ease-out',
                   zIndex: 2,
-                  '@media (hover: hover) and (pointer: fine)': {
-                    '.media-card-wrapper:hover &': {
-                      opacity: 1
-                    }
+                  pointerEvents: 'none',
+                  '& > *': {
+                    pointerEvents: 'auto'
                   }
                 }}
               >

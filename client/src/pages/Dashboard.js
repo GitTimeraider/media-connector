@@ -448,6 +448,10 @@ function Dashboard() {
           position: 'relative',
           pointerEvents: isStable ? 'auto' : 'none'
         }}
+        onMouseDown={(e) => e.stopPropagation()}
+        onMouseMove={(e) => e.stopPropagation()}
+        onMouseUp={(e) => e.stopPropagation()}
+        onMouseLeave={(e) => e.stopPropagation()}
       >
         <Card 
           sx={{ 

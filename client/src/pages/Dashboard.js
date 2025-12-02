@@ -408,7 +408,28 @@ function Dashboard() {
 
   const MediaCard = ({ item, type, index, showReleaseDate, isDownloaded }) => {
     const [isDragging, setIsDragging] = useState(false);
+    const [imageLoaded, setImageLoaded] = useState(false);
     const dragStartPos = useRef(null);
+    const hoverTimeoutRef = useRef(null);
+    const [forceStable, setForceStable] = useState(false);
+    
+    useEffect(() => {
+      // Force stable state after image loads or 2 seconds, whichever comes first
+      const timer = setTimeout(() => {
+        setForceStable(true);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }, []);
+    
+    useEffect(() => {
+      if (imageLoaded) {
+        // Wait a bit after image loads to ensure layout is stable
+        const timer = setTimeout(() => {
+          setForceStable(true);
+        }, 100);
+        return () => clearTimeout(timer);
+      }
+    }, [imageLoaded]);
     
     const handleCardMouseDown = (e) => {
       dragStartPos.current = { x: e.clientX, y: e.clientY };
@@ -439,6 +460,10 @@ function Dashboard() {
         return;
       }
       handleOpenDialog(item);
+    };
+    
+    const handleImageLoad = () => {
+      setImageLoaded(true);
     };
     
     const imageUrl = item.poster_path || item.posterUrl
@@ -487,20 +512,22 @@ function Dashboard() {
             flexDirection: 'column',
             position: 'relative',
             overflow: 'hidden',
-            transition: 'transform 0.3s ease, box-shadow 0.3s ease, border 0.3s ease, background 0.3s ease',
+            transition: forceStable ? 'transform 0.3s ease, box-shadow 0.3s ease, border 0.3s ease, background 0.3s ease' : 'none',
             cursor: 'pointer !important',
             background: 'linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%)',
             backdropFilter: 'blur(10px)',
             border: '1px solid rgba(255,255,255,0.1)',
             borderRadius: 3,
             transformOrigin: 'center center',
-            '.media-card-wrapper:hover &': {
-              transform: 'scale(1.05)',
-              boxShadow: '0 16px 32px rgba(0,0,0,0.4)',
-              zIndex: 10,
-              border: '1px solid rgba(255,255,255,0.3)',
-              background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)',
-            },
+            ...(forceStable && {
+              '.media-card-wrapper:hover &': {
+                transform: 'scale(1.05)',
+                boxShadow: '0 16px 32px rgba(0,0,0,0.4)',
+                zIndex: 10,
+                border: '1px solid rgba(255,255,255,0.3)',
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)',
+              }
+            }),
             '&::before': {
               content: '""',
               position: 'absolute',
@@ -512,9 +539,11 @@ function Dashboard() {
               pointerEvents: 'none',
               zIndex: 1
             },
-            '.media-card-wrapper:hover &::before': {
-              animation: 'shine 0.75s ease-in-out',
-            },
+            ...(forceStable && {
+              '.media-card-wrapper:hover &::before': {
+                animation: 'shine 0.75s ease-in-out',
+              }
+            }),
             '@keyframes shine': {
               '0%': { left: '-100%' },
               '100%': { left: '100%' }
@@ -536,17 +565,20 @@ function Dashboard() {
               height: '100%',
               background: 'rgba(0,0,0,0.2)',
               opacity: 0,
-              transition: 'opacity 0.4s',
+              transition: forceStable ? 'opacity 0.4s' : 'none',
               pointerEvents: 'none'
             },
-            '.media-card-wrapper:hover &::after': {
-              opacity: 1
-            }
+            ...(forceStable && {
+              '.media-card-wrapper:hover &::after': {
+                opacity: 1
+              }
+            })
           }}>
               <CardMedia
                 component="img"
                 image={imageUrl}
                 alt={title}
+                onLoad={handleImageLoad}
                 sx={{ 
                   width: '100%',
                   height: '100%',
@@ -566,11 +598,13 @@ function Dashboard() {
                   alignItems: 'flex-end',
                   p: 2,
                   opacity: 0,
-                  transition: 'opacity 0.3s ease-out',
+                  transition: forceStable ? 'opacity 0.3s ease-out' : 'none',
                   zIndex: 2,
-                  '.media-card-wrapper:hover &': {
-                    opacity: 1
-                  }
+                  ...(forceStable && {
+                    '.media-card-wrapper:hover &': {
+                      opacity: 1
+                    }
+                  })
                 }}
               >
                   <Box display="flex" gap={1}>

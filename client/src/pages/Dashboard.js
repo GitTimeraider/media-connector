@@ -446,23 +446,13 @@ function Dashboard() {
           backdropFilter: 'blur(10px)',
           border: '1px solid rgba(255,255,255,0.1)',
           borderRadius: 3,
-          '&:hover': {
+          ...(isHovered && {
             transform: 'translateY(-8px)',
             boxShadow: '0 16px 32px rgba(0,0,0,0.4)',
             zIndex: 10,
             border: '1px solid rgba(255,255,255,0.3)',
             background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)',
-            '&::after': {
-              content: '""',
-              position: 'absolute',
-              top: '-15px',
-              left: '-15px',
-              right: '-15px',
-              bottom: '-15px',
-              pointerEvents: 'auto',
-              zIndex: 20
-            }
-          },
+          }),
           '&::before': {
             content: '""',
             position: 'absolute',
@@ -472,10 +462,10 @@ function Dashboard() {
             height: '100%',
             background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)',
             pointerEvents: 'none',
-            zIndex: 1
-          },
-          '&:hover::before': {
-            animation: 'shine 0.75s ease-in-out',
+            zIndex: 1,
+            ...(isHovered && {
+              animation: 'shine 0.75s ease-in-out',
+            })
           },
           '@keyframes shine': {
             '0%': { left: '-100%' },
@@ -526,11 +516,9 @@ function Dashboard() {
                   display: 'flex',
                   alignItems: 'flex-end',
                   p: 2,
-                  opacity: 0,
+                  opacity: isHovered ? 1 : 0,
                   transition: 'opacity 0.3s ease-out',
-                  '.MuiCard-root:hover &': {
-                    opacity: 1
-                  }
+                  zIndex: 2
                 }}
               >
                   <Box display="flex" gap={1}>

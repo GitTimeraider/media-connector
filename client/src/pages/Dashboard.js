@@ -432,49 +432,58 @@ function Dashboard() {
     );
     
     return (
-      <Card 
+      <Box
         sx={{ 
           width: '100%',
-          height: '100%', 
-          display: 'flex', 
-          flexDirection: 'column',
+          height: '100%',
           position: 'relative',
-          overflow: 'hidden',
-          transition: 'transform 0.3s ease-out, box-shadow 0.3s ease-out, border 0.3s ease-out, background 0.3s ease-out',
-          cursor: 'pointer',
-          background: 'linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%)',
-          backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(255,255,255,0.1)',
-          borderRadius: 3,
-          ...(isHovered && {
-            transform: 'translateY(-8px)',
-            boxShadow: '0 16px 32px rgba(0,0,0,0.4)',
-            zIndex: 10,
-            border: '1px solid rgba(255,255,255,0.3)',
-            background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)',
-          }),
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            top: 0,
-            left: '-100%',
-            width: '100%',
-            height: '100%',
-            background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)',
-            pointerEvents: 'none',
-            zIndex: 1,
-            ...(isHovered && {
-              animation: 'shine 0.75s ease-in-out',
-            })
-          },
-          '@keyframes shine': {
-            '0%': { left: '-100%' },
-            '100%': { left: '100%' }
-          }
+          padding: '10px',
+          margin: '-10px'
         }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
+        <Card 
+          sx={{ 
+            width: '100%',
+            height: '100%', 
+            display: 'flex', 
+            flexDirection: 'column',
+            position: 'relative',
+            overflow: 'hidden',
+            transition: 'transform 0.3s ease-out, box-shadow 0.3s ease-out, border 0.3s ease-out, background 0.3s ease-out',
+            cursor: 'pointer',
+            background: 'linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%)',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: 3,
+            ...(isHovered && {
+              transform: 'translateY(-8px)',
+              boxShadow: '0 16px 32px rgba(0,0,0,0.4)',
+              zIndex: 10,
+              border: '1px solid rgba(255,255,255,0.3)',
+              background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)',
+            }),
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: '-100%',
+              width: '100%',
+              height: '100%',
+              background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)',
+              pointerEvents: 'none',
+              zIndex: 1,
+              ...(isHovered && {
+                animation: 'shine 0.75s ease-in-out',
+              })
+            },
+            '@keyframes shine': {
+              '0%': { left: '-100%' },
+              '100%': { left: '100%' }
+            }
+          }}
+        >
         <CardActionArea onClick={() => handleOpenDialog(item)}>
           <Box sx={{ 
             position: 'relative', 
@@ -722,6 +731,7 @@ function Dashboard() {
             </CardContent>
         </CardActionArea>
       </Card>
+      </Box>
     );
   };
 
@@ -939,6 +949,28 @@ function Dashboard() {
             </DialogContent>
             <DialogActions sx={{ p: 2 }}>
               <Button onClick={handleCloseDialog}>Close</Button>
+              <Button 
+                variant="outlined"
+                startIcon={<PlayArrow />}
+                onClick={async () => {
+                  try {
+                    const mediaType = selectedItem.media_type || (selectedItem.title ? 'movie' : 'tv');
+                    const tmdbId = selectedItem.tmdbId || selectedItem.id;
+                    const videos = await api.getTMDBVideos(tmdbId, mediaType);
+                    const trailer = videos.find(v => v.type === 'Trailer' && v.site === 'YouTube');
+                    if (trailer) {
+                      window.open(`https://www.youtube.com/watch?v=${trailer.key}`, '_blank');
+                    } else {
+                      alert('No trailer available');
+                    }
+                  } catch (error) {
+                    console.error('Error loading trailer:', error);
+                    alert('Failed to load trailer');
+                  }
+                }}
+              >
+                View Trailer
+              </Button>
               {!Boolean(
                 selectedItem.hasFile || 
                 (selectedItem.id && (selectedItem.monitored !== undefined || selectedItem.tvdbId !== undefined || selectedItem.imdbId !== undefined))

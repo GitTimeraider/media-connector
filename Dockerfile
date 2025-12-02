@@ -5,8 +5,12 @@ WORKDIR /app/client
 COPY client/package*.json ./
 RUN npm install --omit=dev
 COPY client/ ./
-# Only build on amd64 to avoid QEMU issues
-RUN if [ "$TARGETPLATFORM" = "linux/amd64" ]; then npm run build; fi
+# Only build on amd64 to avoid QEMU issues, create empty build dir for ARM64
+RUN if [ "$TARGETPLATFORM" = "linux/amd64" ]; then \
+      npm run build; \
+    else \
+      mkdir -p build && echo "Built on host platform" > build/.placeholder; \
+    fi
 
 # Build stage for backend
 FROM node:25-alpine AS backend-build
@@ -27,9 +31,8 @@ COPY --from=backend-build /app/node_modules ./node_modules
 COPY --from=backend-build /app/package*.json ./
 COPY --from=backend-build /app/server ./server
 
-# Copy frontend build - try from build stage first, fallback to local pre-built
-COPY --from=frontend-build /app/client/build* ./client/build* 2>/dev/null || true
-COPY client/build* ./client/build* 2>/dev/null || true
+# Copy frontend build from build stage
+COPY --from=frontend-build /app/client ./client
 
 # Create config directory with proper permissions
 RUN mkdir -p /config

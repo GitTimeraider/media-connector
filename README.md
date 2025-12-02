@@ -2,7 +2,7 @@
 
 
 <p align="center" width="100%">
-    <img width="33%" src="https://github.com/GitTimeraider/Assets/blob/main/Media-Connector-docker/img/MediaConnector_Icon.png">
+    <img width="33%" src="https://github.com/GitTimeraider/Assets/blob/main/Media-Connector-docker/img/MediaConnector_Logo.png">
 </p>
 <div align="center">
 

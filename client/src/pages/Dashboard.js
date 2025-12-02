@@ -436,15 +436,8 @@ function Dashboard() {
           width: '100%',
           height: '100%',
           position: 'relative',
-          '&:hover::after': {
-            content: '""',
-            position: 'absolute',
-            top: '-12px',
-            left: '-12px',
-            right: '-12px',
-            bottom: '-12px',
-            zIndex: 5
-          }
+          padding: '12px 12px 20px 12px',
+          margin: '-12px -12px -20px -12px'
         }}
       >
         <Card 
@@ -461,6 +454,7 @@ function Dashboard() {
             backdropFilter: 'blur(10px)',
             border: '1px solid rgba(255,255,255,0.1)',
             borderRadius: 3,
+            willChange: 'transform',
             '.media-card-wrapper:hover &': {
               transform: 'translateY(-8px)',
               boxShadow: '0 16px 32px rgba(0,0,0,0.4)',

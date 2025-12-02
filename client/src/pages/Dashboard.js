@@ -410,12 +410,13 @@ function Dashboard() {
     const [isStable, setIsStable] = useState(false);
     
     useEffect(() => {
-      // Stabilize hover effects after a short delay to prevent flickering during initial layout
+      // Stabilize hover effects after a delay to prevent flickering during initial layout
+      // Stagger the delay based on index to prevent all cards from stabilizing at once
       const timer = setTimeout(() => {
         setIsStable(true);
-      }, 100);
+      }, 500 + (index * 50));
       return () => clearTimeout(timer);
-    }, []);
+    }, [index]);
     
     const imageUrl = item.poster_path || item.posterUrl
       ? `https://image.tmdb.org/t/p/w500${item.poster_path || item.posterUrl}`
@@ -446,7 +447,11 @@ function Dashboard() {
           width: '100%',
           height: '100%',
           position: 'relative',
-          pointerEvents: isStable ? 'auto' : 'none'
+          pointerEvents: isStable ? 'auto' : 'none',
+          cursor: 'pointer !important',
+          '& *': {
+            cursor: 'pointer !important'
+          }
         }}
         onMouseDown={(e) => e.stopPropagation()}
         onMouseMove={(e) => e.stopPropagation()}
@@ -462,7 +467,7 @@ function Dashboard() {
             position: 'relative',
             overflow: 'hidden',
             transition: isStable ? 'transform 0.3s ease, box-shadow 0.3s ease, border 0.3s ease, background 0.3s ease' : 'none',
-            cursor: 'pointer',
+            cursor: 'pointer !important',
             background: 'linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%)',
             backdropFilter: 'blur(10px)',
             border: '1px solid rgba(255,255,255,0.1)',

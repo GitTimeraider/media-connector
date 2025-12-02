@@ -1,5 +1,5 @@
 # Build stage for React frontend
-FROM node:18-alpine AS frontend-build
+FROM node:25-alpine AS frontend-build
 WORKDIR /app/client
 COPY client/package*.json ./
 RUN npm install --omit=dev
@@ -7,14 +7,14 @@ COPY client/ ./
 RUN npm run build
 
 # Build stage for backend
-FROM node:18-alpine AS backend-build
+FROM node:25-alpine AS backend-build
 WORKDIR /app
 COPY package*.json ./
 RUN npm install --omit=dev
 COPY server/ ./server/
 
 # Production stage
-FROM node:18-alpine
+FROM node:25-alpine
 WORKDIR /app
 
 # Install dumb-init, shadow for user management, and su-exec for user switching

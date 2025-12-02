@@ -457,21 +457,18 @@ function Dashboard() {
         onClick={handleCardClick}
         sx={{ 
           width: '100%',
-          height: '100%',
-          cursor: 'pointer', 
-            width: '100%',
-            height: '100%', 
-            display: 'flex', 
-            flexDirection: 'column',
-            position: 'relative',
-            overflow: 'hidden',
-            cursor: 'pointer',
-            background: 'linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%)',
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255,255,255,0.1)',
-            borderRadius: 3
-          }}
-        >
+          height: '100%', 
+          display: 'flex', 
+          flexDirection: 'column',
+          position: 'relative',
+          overflow: 'hidden',
+          cursor: 'pointer',
+          background: 'linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%)',
+          backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(255,255,255,0.1)',
+          borderRadius: 3
+        }}
+      >
           <Box sx={{ 
             position: 'relative', 
             overflow: 'hidden', 

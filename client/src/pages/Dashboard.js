@@ -440,7 +440,7 @@ function Dashboard() {
           flexDirection: 'column',
           position: 'relative',
           overflow: 'hidden',
-          transition: 'all 0.3s ease-out',
+          transition: 'transform 0.3s ease-out, box-shadow 0.3s ease-out, border 0.3s ease-out, background 0.3s ease-out',
           cursor: 'pointer',
           background: 'linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%)',
           backdropFilter: 'blur(10px)',
@@ -452,6 +452,16 @@ function Dashboard() {
             zIndex: 10,
             border: '1px solid rgba(255,255,255,0.3)',
             background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)',
+            '&::after': {
+              content: '""',
+              position: 'absolute',
+              top: '-15px',
+              left: '-15px',
+              right: '-15px',
+              bottom: '-15px',
+              pointerEvents: 'auto',
+              zIndex: 20
+            }
           },
           '&::before': {
             content: '""',

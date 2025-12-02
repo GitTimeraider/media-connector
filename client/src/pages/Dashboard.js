@@ -411,10 +411,6 @@ function Dashboard() {
     const dragStartPos = useRef(null);
     
     const handleCardMouseDown = (e) => {
-      // Don't interfere with button clicks
-      if (e.target.closest('button')) {
-        return;
-      }
       dragStartPos.current = { x: e.clientX, y: e.clientY };
       setIsDragging(false);
     };
@@ -431,19 +427,10 @@ function Dashboard() {
     };
     
     const handleCardMouseUp = (e) => {
-      // Don't interfere with button clicks
-      if (e.target.closest('button')) {
-        dragStartPos.current = null;
-        return;
-      }
       dragStartPos.current = null;
     };
     
     const handleCardClick = (e) => {
-      // Don't interfere with button clicks
-      if (e.target.closest('button')) {
-        return;
-      }
       // Only allow click if not dragging
       if (isDragging) {
         e.preventDefault();
@@ -490,13 +477,14 @@ function Dashboard() {
         }}
       >
         <Card 
+          onClick={handleCardClick}
           sx={{ 
             width: '100%',
             height: '100%', 
             display: 'flex', 
             flexDirection: 'column',
             position: 'relative',
-            overflow: 'visible',
+            overflow: 'hidden',
             cursor: 'pointer',
             background: 'linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%)',
             backdropFilter: 'blur(10px)',
@@ -504,7 +492,6 @@ function Dashboard() {
             borderRadius: 3
           }}
         >
-        <CardActionArea onClick={handleCardClick}>
           <Box sx={{ 
             position: 'relative', 
             overflow: 'hidden', 
@@ -524,125 +511,23 @@ function Dashboard() {
                   display: 'block'
                 }}
               />
-              {/* Action buttons - always visible, positioned at bottom */}
-              <Box
-                sx={{
-                  position: 'absolute',
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  p: 1,
-                  background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.6) 50%, transparent 100%)',
-                  zIndex: 2
-                }}
-              >
-                  <Box display="flex" gap={0.5}>
-                    <Tooltip title="View Details" arrow TransitionComponent={Zoom}>
-                      <IconButton 
-                        size="small" 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          e.preventDefault();
-                          handleOpenDialog(item);
-                        }}
-                        sx={{ 
-                          bgcolor: 'rgba(33,150,243,0.95)', 
-                          color: 'white',
-                          width: 32,
-                          height: 32,
-                          '&:hover': { 
-                            bgcolor: 'rgba(33,150,243,1)',
-                            transform: 'scale(1.1)'
-                          }
-                        }}
-                      >
-                        <Info fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Play Trailer" arrow TransitionComponent={Zoom}>
-                      <IconButton 
-                        size="small"
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          e.preventDefault();
-                          try {
-                            const mediaType = type || item.media_type || (item.title ? 'movie' : 'tv');
-                            const tmdbId = item.tmdbId || item.id;
-                            const videos = await api.getTMDBVideos(tmdbId, mediaType);
-                            const trailer = videos.find(v => v.type === 'Trailer' && v.site === 'YouTube');
-                            if (trailer) {
-                              window.open(`https://www.youtube.com/watch?v=${trailer.key}`, '_blank');
-                            } else {
-                              alert('No trailer available');
-                            }
-                          } catch (error) {
-                            console.error('Error loading trailer:', error);
-                            alert('Failed to load trailer');
-                          }
-                        }}
-                        sx={{ 
-                          bgcolor: 'rgba(76,175,80,0.95)', 
-                          color: 'white',
-                          width: 32,
-                          height: 32,
-                          '&:hover': { 
-                            bgcolor: 'rgba(76,175,80,1)',
-                            transform: 'scale(1.1)'
-                          }
-                        }}
-                      >
-                        <PlayArrow fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                    {!isInLibrary && (
-                      <Tooltip title="Add to Library" arrow TransitionComponent={Zoom}>
-                        <IconButton 
-                          size="small" 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            e.preventDefault();
-                            console.log('Add button clicked on MediaCard');
-                            const mediaType = type || item.media_type;
-                            console.log('Calling handleOpenAddDialog with:', { item, mediaType });
-                            handleOpenAddDialog(item, mediaType);
-                          }}
-                          sx={{ 
-                            bgcolor: 'rgba(255,87,34,0.95)', 
-                            color: 'white',
-                            width: 32,
-                            height: 32,
-                            '&:hover': { 
-                              bgcolor: 'rgba(255,87,34,1)',
-                              transform: 'scale(1.1)'
-                            }
-                          }}
-                        >
-                          <Add fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    )}
-                  </Box>
-                </Box>
             </Box>
-            <CardContent sx={{ flexGrow: 1, pb: 2 }}>
-              <Typography 
-                variant="subtitle1" 
-                sx={{ 
-                  fontWeight: 600,
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  display: '-webkit-box',
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: 'vertical',
-                  minHeight: '3em'
-                }} 
-                title={title}
-              >
-                {title}
-              </Typography>
+          <CardContent sx={{ flexGrow: 1, pb: 2 }}>
+            <Typography 
+              variant="subtitle1" 
+              sx={{ 
+                fontWeight: 600,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+                minHeight: '3em'
+              }} 
+              title={title}
+            >
+              {title}
+            </Typography>
               <Box display="flex" alignItems="center" gap={1} mt={1} flexWrap="wrap">
                 {year && (
                   <Chip 
@@ -719,26 +604,25 @@ function Dashboard() {
                   />
                 )}
               </Box>
-              {item.cast && Array.isArray(item.cast) && item.cast.length > 0 && (
-                <Typography 
-                  variant="caption" 
-                  color="text.secondary" 
-                  sx={{ 
-                    mt: 1,
-                    display: 'block',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    fontSize: '0.7rem'
-                  }}
-                  title={item.cast.slice(0, 5).map(actor => typeof actor === 'string' ? actor : actor?.name || '').filter(n => n).join(', ')}
-                >
-                  ⭐ {item.cast.slice(0, 3).map(actor => typeof actor === 'string' ? actor : actor?.name || '').filter(n => n).join(', ')}
-                </Typography>
-              )}
-            </CardContent>
-        </CardActionArea>
-      </Card>
+            {item.cast && Array.isArray(item.cast) && item.cast.length > 0 && (
+              <Typography 
+                variant="caption" 
+                color="text.secondary" 
+                sx={{ 
+                  mt: 1,
+                  display: 'block',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  fontSize: '0.7rem'
+                }}
+                title={item.cast.slice(0, 5).map(actor => typeof actor === 'string' ? actor : actor?.name || '').filter(n => n).join(', ')}
+              >
+                ⭐ {item.cast.slice(0, 3).map(actor => typeof actor === 'string' ? actor : actor?.name || '').filter(n => n).join(', ')}
+              </Typography>
+            )}
+          </CardContent>
+        </Card>
       </Box>
     );
   };

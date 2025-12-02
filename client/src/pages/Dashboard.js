@@ -489,12 +489,16 @@ function Dashboard() {
                 image={imageUrl}
                 alt={title}
                 loading="lazy"
+                draggable="false"
+                onDragStart={(e) => e.preventDefault()}
                 sx={{ 
                   width: '100%',
                   height: '100%',
                   objectFit: 'cover',
                   objectPosition: 'center top',
-                  display: 'block'
+                  display: 'block',
+                  pointerEvents: 'none',
+                  userSelect: 'none'
                 }}
               />
             </Box>

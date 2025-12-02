@@ -46,36 +46,60 @@ function Dashboard() {
   const [trendingMovies, setTrendingMovies] = useState([]);
   const [trendingTV, setTrendingTV] = useState([]);
   
-  // Drag-to-scroll functionality
+  // Drag-to-scroll functionality with proper cleanup
+  const dragState = useRef({ isDown: false, startX: 0, scrollLeft: 0, slider: null });
+
   const handleMouseDown = (e) => {
     const slider = e.currentTarget;
-    slider.isDown = true;
-    slider.startX = e.pageX - slider.offsetLeft;
-    slider.scrollLeftStart = slider.scrollLeft;
+    dragState.current = {
+      isDown: true,
+      startX: e.pageX - slider.offsetLeft,
+      scrollLeft: slider.scrollLeft,
+      slider: slider
+    };
     slider.style.cursor = 'grabbing';
     slider.style.userSelect = 'none';
   };
 
   const handleMouseLeave = (e) => {
-    const slider = e.currentTarget;
-    slider.isDown = false;
-    slider.style.cursor = 'grab';
+    if (dragState.current.isDown) {
+      dragState.current.isDown = false;
+      if (dragState.current.slider) {
+        dragState.current.slider.style.cursor = 'grab';
+      }
+    }
   };
 
   const handleMouseUp = (e) => {
-    const slider = e.currentTarget;
-    slider.isDown = false;
-    slider.style.cursor = 'grab';
+    dragState.current.isDown = false;
+    if (dragState.current.slider) {
+      dragState.current.slider.style.cursor = 'grab';
+    }
   };
 
   const handleMouseMove = (e) => {
-    const slider = e.currentTarget;
-    if (!slider.isDown) return;
+    if (!dragState.current.isDown) return;
     e.preventDefault();
+    const slider = dragState.current.slider;
+    if (!slider) return;
     const x = e.pageX - slider.offsetLeft;
-    const walk = (x - slider.startX) * 2; // Multiply by 2 for faster scrolling
-    slider.scrollLeft = slider.scrollLeftStart - walk;
+    const walk = (x - dragState.current.startX) * 2;
+    slider.scrollLeft = dragState.current.scrollLeft - walk;
   };
+
+  // Global mouse up to ensure drag stops even if mouse leaves window
+  useEffect(() => {
+    const handleGlobalMouseUp = () => {
+      if (dragState.current.isDown) {
+        dragState.current.isDown = false;
+        if (dragState.current.slider) {
+          dragState.current.slider.style.cursor = 'grab';
+        }
+      }
+    };
+    window.addEventListener('mouseup', handleGlobalMouseUp);
+    return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
+  }, []);
   const [upcomingMovies, setUpcomingMovies] = useState([]);
   const [recentDownloads, setRecentDownloads] = useState({ movies: [], series: [] });
   const [tmdbLoading, setTmdbLoading] = useState(true);

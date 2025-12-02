@@ -247,6 +247,14 @@ function Search() {
             return b.seeders - a.seeders;
           }
           return 0;
+        })
+        .map(result => {
+          // Fix category display if it's an object
+          let categoryDisplay = result.categoryDisplay;
+          if (typeof categoryDisplay === 'object' && categoryDisplay !== null) {
+            categoryDisplay = categoryDisplay.label || categoryDisplay.name || categoryDisplay.value || 'Unknown';
+          }
+          return { ...result, categoryDisplay };
         });
       
       setSearchResults(relevantResults);

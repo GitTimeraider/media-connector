@@ -407,8 +407,6 @@ function Dashboard() {
   };
 
   const MediaCard = ({ item, type, index, showReleaseDate, isDownloaded }) => {
-    const [isHovered, setIsHovered] = useState(false);
-    
     const imageUrl = item.poster_path || item.posterUrl
       ? `https://image.tmdb.org/t/p/w500${item.poster_path || item.posterUrl}`
       : item.images?.find(img => img.coverType === 'poster')?.remoteUrl || 'https://via.placeholder.com/300x450?text=No+Image';
@@ -433,15 +431,21 @@ function Dashboard() {
     
     return (
       <Box
+        className="media-card-wrapper"
         sx={{ 
           width: '100%',
           height: '100%',
           position: 'relative',
-          padding: '10px',
-          margin: '-10px'
+          '&:hover::after': {
+            content: '""',
+            position: 'absolute',
+            top: '-12px',
+            left: '-12px',
+            right: '-12px',
+            bottom: '-12px',
+            zIndex: 5
+          }
         }}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
       >
         <Card 
           sx={{ 
@@ -457,13 +461,13 @@ function Dashboard() {
             backdropFilter: 'blur(10px)',
             border: '1px solid rgba(255,255,255,0.1)',
             borderRadius: 3,
-            ...(isHovered && {
+            '.media-card-wrapper:hover &': {
               transform: 'translateY(-8px)',
               boxShadow: '0 16px 32px rgba(0,0,0,0.4)',
               zIndex: 10,
               border: '1px solid rgba(255,255,255,0.3)',
               background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)',
-            }),
+            },
             '&::before': {
               content: '""',
               position: 'absolute',
@@ -473,10 +477,10 @@ function Dashboard() {
               height: '100%',
               background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)',
               pointerEvents: 'none',
-              zIndex: 1,
-              ...(isHovered && {
-                animation: 'shine 0.75s ease-in-out',
-              })
+              zIndex: 1
+            },
+            '.media-card-wrapper:hover &::before': {
+              animation: 'shine 0.75s ease-in-out',
             },
             '@keyframes shine': {
               '0%': { left: '-100%' },
@@ -498,9 +502,12 @@ function Dashboard() {
               width: '100%',
               height: '100%',
               background: 'rgba(0,0,0,0.2)',
-              opacity: isHovered ? 1 : 0,
+              opacity: 0,
               transition: 'opacity 0.4s',
               pointerEvents: 'none'
+            },
+            '.media-card-wrapper:hover &::after': {
+              opacity: 1
             }
           }}>
               <CardMedia
@@ -525,9 +532,12 @@ function Dashboard() {
                   display: 'flex',
                   alignItems: 'flex-end',
                   p: 2,
-                  opacity: isHovered ? 1 : 0,
+                  opacity: 0,
                   transition: 'opacity 0.3s ease-out',
-                  zIndex: 2
+                  zIndex: 2,
+                  '.media-card-wrapper:hover &': {
+                    opacity: 1
+                  }
                 }}
               >
                   <Box display="flex" gap={1}>

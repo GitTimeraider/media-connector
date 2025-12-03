@@ -1,5 +1,5 @@
-# Media Connector .. UNDER DEV, do NOT use yet!
-
+# Media Connector (Dockerized)
+# Still in heavy development, but safe to use
 
 <p align="center" width="100%">
     <img width="33%" src="https://github.com/GitTimeraider/Assets/blob/main/Media-Connector-docker/img/MediaConnector_Logo.png">
@@ -8,6 +8,10 @@
 
 ![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/GitTimeraider/media-connector-docker/docker-publish.yml)
 ![License](https://img.shields.io/github/license/GitTimeraider/media-connector-docker)
+
+### Disclaimers: 
+#### AI is responsible for over half of the coding. Also keep in mind that this software is mostly developed for personal use by myself and thus might not receive all feature requests desired.
+###################################################
 
 **A comprehensive web-based media server manager**
 
@@ -71,7 +75,7 @@ Manage your entire media stack from one web interface. Control Sonarr, Radarr, d
 - **Dark Mode** - Easy on the eyes
 - **Real-time Updates** - Live download progress and notifications
 - **Material Design** - Clean and intuitive interface
-- **Secure** - API key authentication for all services
+- **Secure** - API key authentication for most services
 
 ---
 

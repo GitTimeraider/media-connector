@@ -86,6 +86,7 @@ function PortainerContent() {
   const [endpoints, setEndpoints] = useState([]);
   const [selectedEndpoint, setSelectedEndpoint] = useState(null);
   const [systemInfo, setSystemInfo] = useState(null);
+  const [usageStats, setUsageStats] = useState(null);
   const [containers, setContainers] = useState([]);
   const [portainerStatus, setPortainerStatus] = useState(null);
 
@@ -147,9 +148,10 @@ function PortainerContent() {
     if (!selectedEndpoint) return;
     
     try {
-      const [sysInfo, containerData] = await Promise.allSettled([
+      const [sysInfo, containerData, stats] = await Promise.allSettled([
         api.getPortainerSystemInfo(selectedInstance, selectedEndpoint),
-        api.getPortainerContainers(selectedInstance, selectedEndpoint)
+        api.getPortainerContainers(selectedInstance, selectedEndpoint),
+        api.getPortainerStats(selectedInstance, selectedEndpoint)
       ]);
 
       if (sysInfo.status === 'fulfilled') {
@@ -165,6 +167,10 @@ function PortainerContent() {
           return nameA.localeCompare(nameB);
         });
         setContainers(sorted);
+      }
+      
+      if (stats.status === 'fulfilled') {
+        setUsageStats(stats.value);
       }
     } catch (error) {
       console.error('Error loading endpoint data:', error);
@@ -282,11 +288,19 @@ function PortainerContent() {
                   <Typography variant="h6">CPU</Typography>
                 </Box>
                 <Typography variant="h4" color="primary">
-                  {safeNumber(systemInfo.cpus)}
+                  {usageStats ? `${usageStats.cpu.percent.toFixed(1)}%` : `${safeNumber(systemInfo.cpus)} cores`}
                 </Typography>
                 <Typography variant="caption">
-                  CPU Cores Available
+                  {usageStats ? `${safeNumber(systemInfo.cpus)} CPU Cores` : 'CPU Cores Available'}
                 </Typography>
+                {usageStats && (
+                  <LinearProgress 
+                    variant="determinate" 
+                    value={Math.min(usageStats.cpu.percent, 100)} 
+                    sx={{ mt: 1, height: 6, borderRadius: 1 }}
+                    color={usageStats.cpu.percent > 80 ? 'error' : usageStats.cpu.percent > 60 ? 'warning' : 'primary'}
+                  />
+                )}
               </CardContent>
             </Card>
           </Grid>
@@ -299,11 +313,19 @@ function PortainerContent() {
                   <Typography variant="h6">Memory</Typography>
                 </Box>
                 <Typography variant="h4">
-                  {formatBytes(systemInfo.memoryTotal)}
+                  {usageStats ? `${usageStats.memory.percent.toFixed(1)}%` : formatBytes(systemInfo.memoryTotal)}
                 </Typography>
                 <Typography variant="caption">
-                  Total Memory
+                  {usageStats ? `${formatBytes(usageStats.memory.used)} / ${formatBytes(systemInfo.memoryTotal)}` : 'Total Memory'}
                 </Typography>
+                {usageStats && (
+                  <LinearProgress 
+                    variant="determinate" 
+                    value={Math.min(usageStats.memory.percent, 100)} 
+                    sx={{ mt: 1, height: 6, borderRadius: 1 }}
+                    color={usageStats.memory.percent > 80 ? 'error' : usageStats.memory.percent > 60 ? 'warning' : 'success'}
+                  />
+                )}
               </CardContent>
             </Card>
           </Grid>

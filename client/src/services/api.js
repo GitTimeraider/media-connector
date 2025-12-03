@@ -395,6 +395,11 @@ class ApiService {
     return response.data;
   }
 
+  async getPortainerStats(instanceId, endpointId) {
+    const response = await this.client.get(`/portainer/stats/${instanceId}/${endpointId}`);
+    return response.data;
+  }
+
   async portainerContainerAction(instanceId, endpointId, containerId, action) {
     const response = await this.client.post(`/portainer/container/action/${instanceId}/${endpointId}`, { containerId, action });
     return response.data;

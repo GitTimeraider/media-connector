@@ -158,7 +158,7 @@ router.get('/system/:instanceId/:endpointId', async (req, res) => {
   }
 });
 
-// Get containers for a specific endpoint
+// Get containers for a specific endpoint with stats
 router.get('/containers/:instanceId/:endpointId', async (req, res) => {
   try {
     const instances = await configManager.getServices('portainer');
@@ -200,6 +200,94 @@ router.get('/containers/:instanceId/:endpointId', async (req, res) => {
   } catch (error) {
     console.error('Portainer containers error:', error.message);
     res.json({ containers: [] });
+  }
+});
+
+// Get system-wide usage stats (CPU and memory)
+router.get('/stats/:instanceId/:endpointId', async (req, res) => {
+  try {
+    const instances = await configManager.getServices('portainer');
+    const instance = instances.find(i => i.id === req.params.instanceId);
+    if (!instance) return res.status(404).json({ error: 'Instance not found' });
+
+    const validatedUrl = getValidatedUrl(instance);
+    const headers = getHeaders(instance);
+    
+    const endpointId = parseInt(req.params.endpointId, 10);
+    if (isNaN(endpointId) || endpointId < 0) {
+      return res.status(400).json({ error: 'Invalid endpoint ID' });
+    }
+
+    // Get system info for total resources
+    const infoUrl = buildSafeUrl(validatedUrl, `/api/endpoints/${endpointId}/docker/info`);
+    const infoResponse = await axios.get(infoUrl, { headers, timeout: 10000 });
+    const info = infoResponse.data;
+
+    // Get all running containers
+    const containersUrl = buildSafeUrl(validatedUrl, `/api/endpoints/${endpointId}/docker/containers/json`);
+    const containersResponse = await axios.get(containersUrl, {
+      headers,
+      timeout: 10000,
+      params: { filters: JSON.stringify({ status: ['running'] }) }
+    });
+
+    const containers = containersResponse.data || [];
+    
+    // Fetch stats for all running containers (no-stream for single snapshot)
+    const statsPromises = containers.slice(0, 20).map(async (container) => {
+      try {
+        const statsUrl = buildSafeUrl(validatedUrl, `/api/endpoints/${endpointId}/docker/containers/${container.Id}/stats`);
+        const statsResponse = await axios.get(statsUrl, {
+          headers,
+          timeout: 5000,
+          params: { stream: false }
+        });
+        return statsResponse.data;
+      } catch (err) {
+        return null;
+      }
+    });
+
+    const allStats = (await Promise.all(statsPromises)).filter(s => s);
+
+    // Calculate total CPU and memory usage
+    let totalCpuPercent = 0;
+    let totalMemoryUsed = 0;
+
+    allStats.forEach(stat => {
+      if (stat.cpu_stats && stat.precpu_stats) {
+        // Calculate CPU percentage
+        const cpuDelta = stat.cpu_stats.cpu_usage.total_usage - stat.precpu_stats.cpu_usage.total_usage;
+        const systemDelta = stat.cpu_stats.system_cpu_usage - stat.precpu_stats.system_cpu_usage;
+        const cpuCount = stat.cpu_stats.online_cpus || info.NCPU || 1;
+        
+        if (systemDelta > 0 && cpuDelta >= 0) {
+          totalCpuPercent += (cpuDelta / systemDelta) * cpuCount * 100;
+        }
+      }
+      
+      if (stat.memory_stats) {
+        totalMemoryUsed += stat.memory_stats.usage || 0;
+      }
+    });
+
+    const memoryTotal = info.MemTotal || 0;
+    const memoryPercent = memoryTotal > 0 ? (totalMemoryUsed / memoryTotal) * 100 : 0;
+
+    res.json({
+      cpu: {
+        percent: Math.min(totalCpuPercent, 100),
+        cores: info.NCPU || 0
+      },
+      memory: {
+        used: totalMemoryUsed,
+        total: memoryTotal,
+        percent: memoryPercent
+      }
+    });
+  } catch (error) {
+    console.error('Portainer stats error:', error.message);
+    res.json({ cpu: { percent: 0, cores: 0 }, memory: { used: 0, total: 0, percent: 0 } });
   }
 });
 

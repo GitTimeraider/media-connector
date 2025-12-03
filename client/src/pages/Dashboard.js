@@ -329,95 +329,103 @@ function Dashboard() {
         });
         alert(`Added "${itemToAdd.title}" to Radarr!`);
       } else if (mediaType === 'tv' && services.sonarr?.length > 0) {
-        // Lookup the series in Sonarr using TMDB ID for 100% accurate match
+        // Lookup all available series in Sonarr and let user choose
         const seriesTitle = itemToAdd.name || itemToAdd.title;
         const itemYear = itemToAdd.first_air_date ? new Date(itemToAdd.first_air_date).getFullYear() : null;
         const originCountry = itemToAdd.origin_country?.[0] || null;
         
         console.log('Looking up series:', { title: seriesTitle, year: itemYear, country: originCountry, tmdbId: itemToAdd.id });
         
-        let matchedSeries = null;
+        // Get all possible matches from Sonarr
+        let allResults = [];
         
-        // Try TMDB ID lookup first (most accurate)
+        // Try TMDB ID lookup first
         if (itemToAdd.id) {
           try {
             const tmdbResults = await api.lookupSonarrByTmdb(services.sonarr[0].id, itemToAdd.id);
             console.log('TMDB lookup results:', tmdbResults);
-            matchedSeries = tmdbResults[0];
+            allResults.push(...tmdbResults);
           } catch (error) {
-            console.warn('TMDB lookup failed, falling back to title search:', error);
+            console.warn('TMDB lookup failed:', error);
           }
         }
         
-        // Fallback to title search if TMDB lookup fails
-        if (!matchedSeries) {
-          const lookupResults = await api.searchSonarr(services.sonarr[0].id, seriesTitle);
+        // Also search by title to get all versions
+        try {
+          const titleResults = await api.searchSonarr(services.sonarr[0].id, seriesTitle);
+          console.log('Title search results:', titleResults);
           
-          console.log('Title search fallback - results:', lookupResults);
-          
-          // Match by title, year, and optionally country
-          if (itemYear && originCountry) {
-            // Try to match with country code (e.g., 'NL' for Netherlands)
-            matchedSeries = lookupResults.find(s => 
-              s.title?.toLowerCase() === seriesTitle.toLowerCase() && 
-              s.year === itemYear &&
-              (s.network?.toLowerCase().includes(originCountry.toLowerCase()) || 
-               s.certification?.toLowerCase().includes(originCountry.toLowerCase()))
-            );
-          }
-          
-          // Match by title and year only
-          if (!matchedSeries && itemYear) {
-            const yearMatches = lookupResults.filter(s => 
-              s.title?.toLowerCase() === seriesTitle.toLowerCase() && 
-              s.year === itemYear
-            );
-            
-            // If multiple matches, let user know
-            if (yearMatches.length > 1) {
-              const options = yearMatches.map((s, i) => 
-                `${i + 1}. ${s.title} (${s.year}) - ${s.network || 'Unknown network'}`
-              ).join('\n');
-              
-              const choice = prompt(
-                `Multiple shows found with the same title and year:\n\n${options}\n\nEnter number to select (or cancel):`
-              );
-              
-              if (choice) {
-                const index = parseInt(choice) - 1;
-                if (index >= 0 && index < yearMatches.length) {
-                  matchedSeries = yearMatches[index];
-                }
-              }
-              
-              if (!matchedSeries) {
-                throw new Error('Selection cancelled');
-              }
-            } else {
-              matchedSeries = yearMatches[0];
+          // Add title results, avoiding duplicates by tvdbId
+          titleResults.forEach(series => {
+            if (!allResults.find(s => s.tvdbId === series.tvdbId)) {
+              allResults.push(series);
             }
-          }
-          
-          // Fallback to exact title
-          if (!matchedSeries) {
-            matchedSeries = lookupResults.find(s => 
-              s.title?.toLowerCase() === seriesTitle.toLowerCase()
-            );
-          }
-          
-          // Last resort
-          if (!matchedSeries) {
-            matchedSeries = lookupResults[0];
-          }
+          });
+        } catch (error) {
+          console.warn('Title search failed:', error);
         }
         
-        if (!matchedSeries) {
-          throw new Error('Could not find series in Sonarr lookup');
+        if (allResults.length === 0) {
+          throw new Error('Could not find any matching series in Sonarr');
         }
         
-        console.log('Adding to Sonarr:', matchedSeries);
+        console.log('All available series options:', allResults);
         
-        await api.addSonarrSeries(services.sonarr[0].id, {
+        // Filter to most relevant results (same title or year)
+        let relevantResults = allResults.filter(s => 
+          s.title?.toLowerCase().includes(seriesTitle.toLowerCase()) || 
+          (itemYear && s.year === itemYear)
+        );
+        
+        if (relevantResults.length === 0) {
+          relevantResults = allResults;
+        }
+        
+        // Sort by relevance: exact title + year match first
+        relevantResults.sort((a, b) => {
+          const aExactTitle = a.title?.toLowerCase() === seriesTitle.toLowerCase();
+          const bExactTitle = b.title?.toLowerCase() === seriesTitle.toLowerCase();
+          const aYearMatch = itemYear && a.year === itemYear;
+          const bYearMatch = itemYear && b.year === itemYear;
+          
+          if (aExactTitle && aYearMatch && !(bExactTitle && bYearMatch)) return -1;
+          if (bExactTitle && bYearMatch && !(aExactTitle && aYearMatch)) return 1;
+          if (aExactTitle && !bExactTitle) return -1;
+          if (bExactTitle && !aExactTitle) return 1;
+          if (aYearMatch && !bYearMatch) return -1;
+          if (bYearMatch && !aYearMatch) return 1;
+          
+          return 0;
+        });
+        
+        // Show selection dialog with all options
+        const options = relevantResults.slice(0, 10).map((s, i) => {
+          const network = s.network || 'Unknown network';
+          const year = s.year || '????';
+          const status = s.status ? ` [${s.status}]` : '';
+          return `${i + 1}. ${s.title} (${year}) - ${network}${status}`;
+        }).join('\n');
+        
+        const choice = prompt(
+          `Found ${relevantResults.length} series in Sonarr. Select which one to add:\n\n${options}\n\nEnter number (1-${Math.min(10, relevantResults.length)}) or cancel:`
+        );
+        
+        if (!choice) {
+          setAddDialogOpen(false);
+          setItemToAdd(null);
+          return;
+        }
+        
+        const index = parseInt(choice) - 1;
+        if (isNaN(index) || index < 0 || index >= relevantResults.length) {
+          alert('Invalid selection');
+          return;
+        }
+        
+        const matchedSeries = relevantResults[index];
+        console.log('User selected series:', matchedSeries);
+        
+        const result = await api.addSonarrSeries(services.sonarr[0].id, {
           tvdbId: matchedSeries.tvdbId,
           title: matchedSeries.title,
           qualityProfileId: parseInt(selectedProfile),
@@ -430,6 +438,8 @@ function Dashboard() {
             monitor: 'all'
           }
         });
+        
+        console.log('Sonarr add result:', result);
         alert(`Added "${matchedSeries.title}" to Sonarr!`);
       }
       
@@ -438,7 +448,9 @@ function Dashboard() {
       setTags('');
     } catch (error) {
       console.error('Error adding to library:', error);
-      alert(`Failed to add: ${error.response?.data?.message || error.message}`);
+      console.error('Error details:', error.response?.data);
+      const errorMsg = error.response?.data?.error || error.response?.data?.message || error.message;
+      alert(`Failed to add: ${errorMsg}`);
     }
   };
 
@@ -622,6 +634,14 @@ function Dashboard() {
                     size="small"
                     icon={item.media_type === 'movie' ? <Movie sx={{ fontSize: 16 }} /> : <LiveTv sx={{ fontSize: 16 }} />}
                     variant="outlined"
+                  />
+                )}
+                {item.origin_country && Array.isArray(item.origin_country) && item.origin_country.length > 0 && (
+                  <Chip 
+                    label={item.origin_country[0]} 
+                    size="small"
+                    variant="outlined"
+                    sx={{ fontWeight: 600 }}
                   />
                 )}
                 {item.genre_ids && Array.isArray(item.genre_ids) && item.genre_ids.length > 0 && (

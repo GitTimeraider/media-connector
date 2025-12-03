@@ -117,6 +117,7 @@ function Dashboard() {
   const [tags, setTags] = useState('');
   const [monitored, setMonitored] = useState(true);
   const [searchOnAdd, setSearchOnAdd] = useState(true);
+  const [showAllMatches, setShowAllMatches] = useState(false);
   
   // Ref to track if component is mounted (for cancelling background operations)
   const isMountedRef = useRef(true);
@@ -398,31 +399,49 @@ function Dashboard() {
           return 0;
         });
         
-        // Show selection dialog with all options
-        const options = relevantResults.slice(0, 10).map((s, i) => {
-          const network = s.network || 'Unknown network';
-          const year = s.year || '????';
-          const status = s.status ? ` [${s.status}]` : '';
-          return `${i + 1}. ${s.title} (${year}) - ${network}${status}`;
-        }).join('\n');
-        
-        const choice = prompt(
-          `Found ${relevantResults.length} series in Sonarr. Select which one to add:\n\n${options}\n\nEnter number (1-${Math.min(10, relevantResults.length)}) or cancel:`
+        // Find exact matches (same title and year)
+        const exactMatches = relevantResults.filter(s => 
+          s.title?.toLowerCase() === seriesTitle.toLowerCase() && 
+          (!itemYear || s.year === itemYear)
         );
         
-        if (!choice) {
-          setAddDialogOpen(false);
-          setItemToAdd(null);
-          return;
-        }
+        let matchedSeries = null;
         
-        const index = parseInt(choice) - 1;
-        if (isNaN(index) || index < 0 || index >= relevantResults.length) {
-          alert('Invalid selection');
-          return;
+        // Only show selection dialog if:
+        // 1. User enabled "Show all matches" toggle, OR
+        // 2. There are multiple exact matches (same title+year, different networks)
+        if (showAllMatches || exactMatches.length > 1) {
+          const seriesToShow = showAllMatches ? relevantResults : exactMatches;
+          
+          const options = seriesToShow.slice(0, 10).map((s, i) => {
+            const network = s.network || 'Unknown network';
+            const year = s.year || '????';
+            const status = s.status ? ` [${s.status}]` : '';
+            return `${i + 1}. ${s.title} (${year}) - ${network}${status}`;
+          }).join('\n');
+          
+          const choice = prompt(
+            `Found ${seriesToShow.length} series in Sonarr. Select which one to add:\n\n${options}\n\nEnter number (1-${Math.min(10, seriesToShow.length)}) or cancel:`
+          );
+          
+          if (!choice) {
+            setAddDialogOpen(false);
+            setItemToAdd(null);
+            return;
+          }
+          
+          const index = parseInt(choice) - 1;
+          if (isNaN(index) || index < 0 || index >= seriesToShow.length) {
+            alert('Invalid selection');
+            return;
+          }
+          
+          matchedSeries = seriesToShow[index];
+        } else {
+          // Auto-select the best match
+          matchedSeries = relevantResults[0];
+          console.log('Auto-selected best match:', matchedSeries);
         }
-        
-        const matchedSeries = relevantResults[index];
         console.log('User selected series:', matchedSeries);
         
         const result = await api.addSonarrSeries(services.sonarr[0].id, {
@@ -1264,6 +1283,13 @@ function Dashboard() {
                         onChange={(e) => setSearchOnAdd(e.target.checked)}
                       />
                       <Typography variant="body2">Search on add</Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <Checkbox
+                        checked={showAllMatches}
+                        onChange={(e) => setShowAllMatches(e.target.checked)}
+                      />
+                      <Typography variant="body2">Show all available versions</Typography>
                     </Box>
                   </Box>
                 </Box>

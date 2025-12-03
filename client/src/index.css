@@ -13,7 +13,12 @@ html, body {
 
 /* Prevent layout shift when dialogs open by always showing scrollbar gutter */
 html {
+  overflow-y: scroll;
   scrollbar-gutter: stable;
+}
+
+body {
+  overflow-y: scroll;
 }
 
 #root {

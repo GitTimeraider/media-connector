@@ -158,14 +158,12 @@ class ApiService {
     // Use GET with query params to avoid proxy POST restrictions
     const params = {
       tvdbId: data.tvdbId,
-      title: data.title,
       qualityProfileId: data.qualityProfileId,
       rootFolderPath: data.rootFolderPath,
       monitored: data.monitored,
       seasonFolder: data.seasonFolder,
-      tags: Array.isArray(data.tags) ? data.tags.join(',') : '',
-      searchForMissingEpisodes: data.addOptions?.searchForMissingEpisodes,
-      monitor: data.addOptions?.monitor
+      tags: '', // Tags must be tag IDs, not names - leave empty for now
+      searchForMissingEpisodes: data.addOptions?.searchForMissingEpisodes
     };
     const response = await this.client.get(`/sonarr/add/${instanceId}`, { params });
     return response.data;
@@ -220,7 +218,16 @@ class ApiService {
   }
 
   async addRadarrMovie(instanceId, data) {
-    const response = await this.client.post(`/radarr/movie/${instanceId}`, data);
+    // Use GET with query params to avoid proxy POST restrictions
+    const params = {
+      tmdbId: data.tmdbId,
+      qualityProfileId: data.qualityProfileId,
+      rootFolderPath: data.rootFolderPath,
+      monitored: data.monitored,
+      tags: '', // Tags must be tag IDs, not names - leave empty for now
+      searchForMovie: data.addOptions?.searchForMovie
+    };
+    const response = await this.client.get(`/radarr/add/${instanceId}`, { params });
     return response.data;
   }
 

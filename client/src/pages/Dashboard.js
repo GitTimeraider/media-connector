@@ -320,12 +320,9 @@ function Dashboard() {
       if (mediaType === 'movie' && services.radarr?.length > 0) {
         await api.addRadarrMovie(services.radarr[0].id, {
           tmdbId: itemToAdd.id,
-          title: itemToAdd.title,
-          year: itemToAdd.release_date ? new Date(itemToAdd.release_date).getFullYear() : null,
           qualityProfileId: parseInt(selectedProfile),
           rootFolderPath: selectedFolder,
           monitored,
-          tags: tagsArray,
           addOptions: { searchForMovie: searchOnAdd }
         });
         alert(`Added "${itemToAdd.title}" to Radarr!`);
@@ -446,15 +443,12 @@ function Dashboard() {
         
         const result = await api.addSonarrSeries(services.sonarr[0].id, {
           tvdbId: matchedSeries.tvdbId,
-          title: matchedSeries.title,
           qualityProfileId: parseInt(selectedProfile),
           rootFolderPath: selectedFolder,
           monitored,
-          tags: tagsArray,
           seasonFolder: true,
           addOptions: { 
-            searchForMissingEpisodes: searchOnAdd,
-            monitor: 'all'
+            searchForMissingEpisodes: searchOnAdd
           }
         });
         

@@ -152,6 +152,54 @@ router.get('/search/:instanceId', async (req, res) => {
 });
 
 // Add movie
+// Add movie via GET (avoids proxy POST restrictions)
+router.get('/add/:instanceId', async (req, res) => {
+  try {
+    const instances = await configManager.getServices('radarr');
+    const instance = instances.find(i => i.id === req.params.instanceId);
+    
+    if (!instance) {
+      return res.status(404).json({ error: 'Instance not found' });
+    }
+
+    const client = new ApiClient(instance.url, instance.apiKey);
+    
+    // First, lookup the movie to get the complete object
+    const tmdbId = parseInt(req.query.tmdbId);
+    const lookupResults = await client.searchMovies({ term: `tmdb:${tmdbId}` });
+    
+    if (!lookupResults || lookupResults.length === 0) {
+      return res.status(404).json({ error: 'Movie not found in Radarr lookup' });
+    }
+    
+    // Get the complete movie object from lookup
+    const movieData = lookupResults[0];
+    
+    // Override with user-selected options
+    movieData.qualityProfileId = parseInt(req.query.qualityProfileId);
+    movieData.rootFolderPath = req.query.rootFolderPath;
+    movieData.monitored = req.query.monitored === 'true';
+    
+    // Handle tags - only add if provided and not empty
+    if (req.query.tags && req.query.tags.trim()) {
+      movieData.tags = req.query.tags.split(',').map(t => parseInt(t.trim())).filter(t => !isNaN(t));
+    } else {
+      movieData.tags = [];
+    }
+    
+    movieData.addOptions = {
+      searchForMovie: req.query.searchForMovie === 'true'
+    };
+
+    const result = await client.addMovie(movieData);
+    res.json(result);
+  } catch (error) {
+    console.error('Radarr add error:', error.response?.data || error.message);
+    res.status(500).json({ error: error.response?.data?.message || error.message });
+  }
+});
+
+// Add movie via POST (legacy, may be blocked by some proxies)
 router.post('/movie/:instanceId', async (req, res) => {
   try {
     const instances = await configManager.getServices('radarr');

@@ -170,7 +170,8 @@ function Search() {
     setSearching(true);
     try {
       const params = {
-        query: searchQuery
+        query: searchQuery,
+        limit: 100  // Request maximum results per batch
       };
       
       // Add categories based on selection
@@ -190,7 +191,28 @@ function Search() {
         }
       }
       
-      const results = await api.searchProwlarr(prowlarrInstance, params);
+      // Make multiple requests to get more results from all indexers
+      // Prowlarr queries indexers in batches, so multiple requests can yield more results
+      const allResults = [];
+      const maxRequests = 3; // Fetch up to 3 batches (300 results max)
+      
+      for (let i = 0; i < maxRequests; i++) {
+        const batchParams = { ...params, offset: i * 100 };
+        const batchResults = await api.searchProwlarr(prowlarrInstance, batchParams);
+        
+        if (!batchResults || batchResults.length === 0) {
+          break; // No more results available
+        }
+        
+        allResults.push(...batchResults);
+        
+        // If we got fewer than 100 results, we've reached the end
+        if (batchResults.length < 100) {
+          break;
+        }
+      }
+      
+      const results = allResults;
       
       // Filter and score results for relevance
       const filteredResults = Array.isArray(results) ? results : [];

@@ -64,11 +64,17 @@ router.delete('/services/:type/:id', async (req, res) => {
 });
 
 // Test service connection
-router.post('/test/:type', async (req, res) => {
+// Using GET to avoid reverse proxy POST blocking issues
+router.get('/test/:type', async (req, res) => {
   try {
     const ApiClient = require('../utils/apiClient');
     const urlValidator = require('../utils/urlValidator');
-    const { url, apiKey } = req.body;
+    // Read from query params instead of body for GET request
+    const { url, apiKey, password } = req.query;
+    
+    if (!url || !apiKey) {
+      return res.status(400).json({ success: false, error: 'Missing url or apiKey' });
+    }
     
     // Validate URL for SSRF protection
     const validation = urlValidator.validateServiceUrl(url);
@@ -76,15 +82,16 @@ router.post('/test/:type', async (req, res) => {
       return res.status(400).json({ success: false, error: validation.error });
     }
     
+    // Use ApiClient for consistent request handling
+    const axios = require('axios');
+    
     // Use dedicated method based on service type
     if (req.params.type === 'prowlarr') {
       const client = new ApiClient(url, apiKey);
       const result = await client.getV1SystemStatus();
       return res.json({ success: true, data: result });
     } else if (req.params.type === 'sabnzbd') {
-      const axios = require('axios');
       // SAFE: URL has been validated by urlValidator.validateServiceUrl above
-      // Construct URL object to ensure safe path joining
       const safeUrl = new URL('/api', validation.url);
       const response = await axios.get(safeUrl.toString(), {
         params: { mode: 'version', output: 'json', apikey: apiKey },
@@ -92,11 +99,8 @@ router.post('/test/:type', async (req, res) => {
       });
       return res.json({ success: true, data: response.data });
     } else if (req.params.type === 'deluge') {
-      const axios = require('axios');
-      // Deluge uses password field for authentication
-      const { password } = req.body;
+      // Deluge uses password field for authentication (from query params)
       // SAFE: URL has been validated by urlValidator.validateServiceUrl above
-      // Construct URL object to ensure safe path joining
       const safeUrl = new URL('/json', validation.url);
       const response = await axios.post(safeUrl.toString(), {
         method: 'web.connected',
@@ -111,7 +115,6 @@ router.post('/test/:type', async (req, res) => {
       });
       return res.json({ success: true, data: response.data });
     } else if (req.params.type === 'unraid') {
-      const axios = require('axios');
       // Unraid uses GraphQL API with API key in headers
       const safeUrl = new URL('/graphql', validation.url);
       const response = await axios.post(safeUrl.toString(), {
@@ -126,7 +129,6 @@ router.post('/test/:type', async (req, res) => {
       });
       return res.json({ success: true, data: response.data });
     } else if (req.params.type === 'portainer') {
-      const axios = require('axios');
       // Portainer uses REST API with X-API-Key header
       const safeUrl = new URL('/api/status', validation.url);
       const response = await axios.get(safeUrl.toString(), {
@@ -139,7 +141,7 @@ router.post('/test/:type', async (req, res) => {
       return res.json({ success: true, data: response.data });
     }
     
-    // Default for Radarr/Sonarr
+    // Default for Radarr/Sonarr (both use v3 API)
     const client = new ApiClient(url, apiKey);
     const result = await client.getSystemStatus();
     res.json({ success: true, data: result });

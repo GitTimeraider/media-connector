@@ -44,8 +44,17 @@ router.get('/search/:instanceId', async (req, res) => {
 
     const client = new ApiClient(instance.url, instance.apiKey);
     
-    // Build query params
+    // Build query params with proper limits to get more results
     let queryString = `/api/v1/search?query=${encodeURIComponent(req.query.query)}&type=search`;
+    
+    // Add limit (default to 100 for more results, Prowlarr's max per request)
+    const limit = req.query.limit || 100;
+    queryString += `&limit=${limit}`;
+    
+    // Add offset for pagination if specified
+    if (req.query.offset) {
+      queryString += `&offset=${req.query.offset}`;
+    }
     
     // Add categories if specified (comma-separated string)
     if (req.query.categories) {
@@ -61,7 +70,7 @@ router.get('/search/:instanceId', async (req, res) => {
       headers: {
         'X-Api-Key': instance.apiKey
       },
-      timeout: 30000
+      timeout: 60000
     });
     
     // Enrich results with category names

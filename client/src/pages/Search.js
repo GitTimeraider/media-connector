@@ -176,18 +176,13 @@ function Search() {
       
       // Add categories based on selection
       if (selectedCategory !== 'all') {
-        const category = categories.find(c => c.value === selectedCategory);
-        
         if (selectedSubcategory !== 'all') {
           // Only search specific subcategory
           params.categories = selectedSubcategory;
         } else {
           // Search all subcategories in the main category
-          const categoryIds = [selectedCategory];
-          if (category?.subcategories) {
-            categoryIds.push(...category.subcategories.filter(s => s.value !== 'all').map(s => s.value));
-          }
-          params.categories = categoryIds.join(',');
+          // Use only the main category ID - Prowlarr will automatically include all subcategories
+          params.categories = selectedCategory;
         }
       }
       

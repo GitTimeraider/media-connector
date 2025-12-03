@@ -330,7 +330,11 @@ function Dashboard() {
         alert(`Added "${itemToAdd.title}" to Radarr!`);
       } else if (mediaType === 'tv' && services.sonarr?.length > 0) {
         // Lookup the series in Sonarr using TMDB ID for 100% accurate match
-        console.log('Looking up series by TMDB ID:', itemToAdd.id);
+        const seriesTitle = itemToAdd.name || itemToAdd.title;
+        const itemYear = itemToAdd.first_air_date ? new Date(itemToAdd.first_air_date).getFullYear() : null;
+        const originCountry = itemToAdd.origin_country?.[0] || null;
+        
+        console.log('Looking up series:', { title: seriesTitle, year: itemYear, country: originCountry, tmdbId: itemToAdd.id });
         
         let matchedSeries = null;
         
@@ -347,19 +351,51 @@ function Dashboard() {
         
         // Fallback to title search if TMDB lookup fails
         if (!matchedSeries) {
-          const seriesTitle = itemToAdd.name || itemToAdd.title;
-          const itemYear = itemToAdd.first_air_date ? new Date(itemToAdd.first_air_date).getFullYear() : null;
           const lookupResults = await api.searchSonarr(services.sonarr[0].id, seriesTitle);
           
-          console.log('Title search fallback:', { title: seriesTitle, year: itemYear });
-          console.log('Search results:', lookupResults);
+          console.log('Title search fallback - results:', lookupResults);
           
-          // Match by title and year
-          if (itemYear) {
+          // Match by title, year, and optionally country
+          if (itemYear && originCountry) {
+            // Try to match with country code (e.g., 'NL' for Netherlands)
             matchedSeries = lookupResults.find(s => 
+              s.title?.toLowerCase() === seriesTitle.toLowerCase() && 
+              s.year === itemYear &&
+              (s.network?.toLowerCase().includes(originCountry.toLowerCase()) || 
+               s.certification?.toLowerCase().includes(originCountry.toLowerCase()))
+            );
+          }
+          
+          // Match by title and year only
+          if (!matchedSeries && itemYear) {
+            const yearMatches = lookupResults.filter(s => 
               s.title?.toLowerCase() === seriesTitle.toLowerCase() && 
               s.year === itemYear
             );
+            
+            // If multiple matches, let user know
+            if (yearMatches.length > 1) {
+              const options = yearMatches.map((s, i) => 
+                `${i + 1}. ${s.title} (${s.year}) - ${s.network || 'Unknown network'}`
+              ).join('\n');
+              
+              const choice = prompt(
+                `Multiple shows found with the same title and year:\n\n${options}\n\nEnter number to select (or cancel):`
+              );
+              
+              if (choice) {
+                const index = parseInt(choice) - 1;
+                if (index >= 0 && index < yearMatches.length) {
+                  matchedSeries = yearMatches[index];
+                }
+              }
+              
+              if (!matchedSeries) {
+                throw new Error('Selection cancelled');
+              }
+            } else {
+              matchedSeries = yearMatches[0];
+            }
           }
           
           // Fallback to exact title
@@ -379,7 +415,7 @@ function Dashboard() {
           throw new Error('Could not find series in Sonarr lookup');
         }
         
-        console.log('Matched series:', matchedSeries);
+        console.log('Adding to Sonarr:', matchedSeries);
         
         await api.addSonarrSeries(services.sonarr[0].id, {
           tvdbId: matchedSeries.tvdbId,

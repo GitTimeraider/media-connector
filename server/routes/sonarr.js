@@ -178,7 +178,40 @@ router.get('/search/:instanceId', async (req, res) => {
   }
 });
 
-// Add series
+// Add series (using GET with query params to avoid proxy POST blocking)
+router.get('/add/:instanceId', async (req, res) => {
+  try {
+    const instances = await configManager.getServices('sonarr');
+    const instance = instances.find(i => i.id === req.params.instanceId);
+    
+    if (!instance) {
+      return res.status(404).json({ error: 'Instance not found' });
+    }
+
+    // Parse data from query params
+    const data = {
+      tvdbId: parseInt(req.query.tvdbId),
+      title: req.query.title,
+      qualityProfileId: parseInt(req.query.qualityProfileId),
+      rootFolderPath: req.query.rootFolderPath,
+      monitored: req.query.monitored === 'true',
+      seasonFolder: req.query.seasonFolder === 'true',
+      tags: req.query.tags ? req.query.tags.split(',').map(t => t.trim()) : [],
+      addOptions: {
+        searchForMissingEpisodes: req.query.searchForMissingEpisodes === 'true',
+        monitor: req.query.monitor || 'all'
+      }
+    };
+
+    const client = new ApiClient(instance.url, instance.apiKey);
+    const result = await client.addSeries(data);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Add series (POST - legacy, may be blocked by some proxies)
 router.post('/series/:instanceId', async (req, res) => {
   try {
     const instances = await configManager.getServices('sonarr');

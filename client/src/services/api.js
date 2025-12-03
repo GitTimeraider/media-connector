@@ -155,7 +155,19 @@ class ApiService {
   }
 
   async addSonarrSeries(instanceId, data) {
-    const response = await this.client.post(`/sonarr/series/${instanceId}`, data);
+    // Use GET with query params to avoid proxy POST restrictions
+    const params = {
+      tvdbId: data.tvdbId,
+      title: data.title,
+      qualityProfileId: data.qualityProfileId,
+      rootFolderPath: data.rootFolderPath,
+      monitored: data.monitored,
+      seasonFolder: data.seasonFolder,
+      tags: Array.isArray(data.tags) ? data.tags.join(',') : '',
+      searchForMissingEpisodes: data.addOptions?.searchForMissingEpisodes,
+      monitor: data.addOptions?.monitor
+    };
+    const response = await this.client.get(`/sonarr/add/${instanceId}`, { params });
     return response.data;
   }
 

@@ -314,7 +314,6 @@ function Dashboard() {
     if (!itemToAdd || !selectedProfile || !selectedFolder) return;
     
     try {
-      const tagsArray = tags.split(',').map(t => t.trim()).filter(t => t);
       const mediaType = itemToAdd.mediaType;
       
       if (mediaType === 'movie' && services.radarr?.length > 0) {

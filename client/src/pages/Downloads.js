@@ -151,10 +151,10 @@ function Downloads() {
                 <Box mb={1}>
                   <Box display="flex" justifyContent="space-between" mb={0.5}>
                     <Typography variant="body2">
-                      {item.percentage || item.progress || 0}% complete
+                      {parseFloat(item.percentage || item.progress || 0).toFixed(1)}% complete
                     </Typography>
                     <Typography variant="body2">
-                      {formatBytes(item.size || item.total_size)}
+                      {item.mb ? `${item.mb} MB` : formatBytes(item.size || item.total_size || 0)}
                     </Typography>
                   </Box>
                   <LinearProgress 

@@ -12,6 +12,10 @@ const UnraidSubscriptionManager = require('./utils/unraidSubscription');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Trust proxy - required when behind reverse proxy (nginx, etc.)
+// This allows express-rate-limit to correctly identify users via X-Forwarded-For header
+app.set('trust proxy', true);
+
 // Initialize Unraid subscription manager
 const unraidManager = new UnraidSubscriptionManager();
 

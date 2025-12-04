@@ -127,8 +127,16 @@ router.get('/search/:instanceId', async (req, res) => {
         categoryDisplay = categoryIds.map(id => `Category ${id}`).join(', ');
       }
       
+      // Replace internal Prowlarr URLs with proxied URLs that the backend can access
+      let downloadUrl = result.downloadUrl;
+      if (downloadUrl && !downloadUrl.startsWith('magnet:')) {
+        // Encode the original download URL so it can be proxied through our backend
+        downloadUrl = `/api/prowlarr/download/${req.params.instanceId}?url=${encodeURIComponent(result.downloadUrl)}`;
+      }
+      
       return {
         ...result,
+        downloadUrl,
         categoryNames,
         categoryDisplay,
         // Cover/poster images from various possible fields
@@ -140,6 +148,46 @@ router.get('/search/:instanceId', async (req, res) => {
   } catch (error) {
     console.error('Prowlarr search error:', error.response?.data || error.message);
     res.status(500).json({ error: error.message, details: error.response?.data });
+  }
+});
+
+// Download proxy endpoint - allows SABnzbd/Deluge to download from Prowlarr
+router.get('/download/:instanceId', async (req, res) => {
+  try {
+    const instances = await configManager.getServices('prowlarr');
+    const instance = instances.find(i => i.id === req.params.instanceId);
+    if (!instance) return res.status(404).json({ error: 'Instance not found' });
+
+    const { url } = req.query;
+    if (!url) return res.status(400).json({ error: 'URL parameter required' });
+
+    const axios = require('axios');
+    
+    // Fetch the file from Prowlarr and stream it back
+    const response = await axios.get(url, {
+      headers: {
+        'X-Api-Key': instance.apiKey
+      },
+      responseType: 'stream',
+      timeout: 30000
+    });
+
+    // Forward the content type and other relevant headers
+    if (response.headers['content-type']) {
+      res.setHeader('content-type', response.headers['content-type']);
+    }
+    if (response.headers['content-disposition']) {
+      res.setHeader('content-disposition', response.headers['content-disposition']);
+    }
+    if (response.headers['content-length']) {
+      res.setHeader('content-length', response.headers['content-length']);
+    }
+
+    // Stream the response
+    response.data.pipe(res);
+  } catch (error) {
+    console.error('Prowlarr download proxy error:', error.message);
+    res.status(500).json({ error: error.message });
   }
 });
 

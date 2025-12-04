@@ -115,16 +115,19 @@ router.get('/add/:instanceId', async (req, res) => {
             responseType: 'arraybuffer'
           });
           
-          // Convert to base64 and send to SABnzbd
-          const base64Content = Buffer.from(fileResponse.data).toString('base64');
-          console.log(`SABnzbd: Sending ${fileResponse.data.length} bytes as base64 (${base64Content.length} chars)`);
-          const response = await axios.get(`${instance.url}/api`, {
-            params: { 
-              mode: 'addfile', 
-              name: base64Content,
-              output: 'json', 
-              apikey: instance.apiKey 
-            }
+          // Send NZB file to SABnzbd via POST with multipart/form-data
+          console.log(`SABnzbd: Sending ${fileResponse.data.length} bytes as file upload`);
+          const FormData = require('form-data');
+          const form = new FormData();
+          form.append('name', Buffer.from(fileResponse.data), {
+            filename: 'download.nzb',
+            contentType: 'application/x-nzb'
+          });
+          form.append('output', 'json');
+          form.append('apikey', instance.apiKey);
+          
+          const response = await axios.post(`${instance.url}/api?mode=addfile`, form, {
+            headers: form.getHeaders()
           });
           console.log(`SABnzbd: Add file response:`, response.data);
           return res.json(response.data);

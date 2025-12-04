@@ -129,9 +129,10 @@ router.get('/search/:instanceId', async (req, res) => {
       
       // Replace internal Prowlarr URLs with proxied URLs that the backend can access
       let downloadUrl = result.downloadUrl;
+      const originalDownloadUrl = result.downloadUrl;
       if (downloadUrl && !downloadUrl.startsWith('magnet:')) {
         // Encode the original download URL so it can be proxied through our backend
-        downloadUrl = `/api/prowlarr/download/${req.params.instanceId}?url=${encodeURIComponent(result.downloadUrl)}`;
+        downloadUrl = `/api/prowlarr/download/${req.params.instanceId}?url=${encodeURIComponent(originalDownloadUrl)}`;
       }
       
       return {

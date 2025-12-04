@@ -117,6 +117,7 @@ router.get('/add/:instanceId', async (req, res) => {
           
           // Convert to base64 and send to SABnzbd
           const base64Content = Buffer.from(fileResponse.data).toString('base64');
+          console.log(`SABnzbd: Sending ${fileResponse.data.length} bytes as base64 (${base64Content.length} chars)`);
           const response = await axios.get(`${instance.url}/api`, {
             params: { 
               mode: 'addfile', 
@@ -125,17 +126,22 @@ router.get('/add/:instanceId', async (req, res) => {
               apikey: instance.apiKey 
             }
           });
-          console.log(`SABnzbd: Response:`, response.data);
+          console.log(`SABnzbd: Add file response:`, response.data);
           return res.json(response.data);
+        } else {
+          console.error(`SABnzbd: Prowlarr instance ${prowlarrInstanceId} not found`);
         }
+      } else {
+        console.error(`SABnzbd: Could not parse proxied URL: ${url}`);
       }
     }
     
     // Fallback to URL method for direct URLs (magnet links, etc.)
+    console.log(`SABnzbd: Using addurl method for: ${url}`);
     const response = await axios.get(`${instance.url}/api`, {
       params: { mode: 'addurl', name: url, output: 'json', apikey: instance.apiKey }
     });
-    console.log(`SABnzbd: Response:`, response.data);
+    console.log(`SABnzbd: Add URL response:`, response.data);
     res.json(response.data);
   } catch (error) {
     res.status(500).json({ error: error.message });

@@ -285,7 +285,8 @@ class ApiService {
   }
 
   async addToSabnzbd(instanceId, url) {
-    const response = await this.client.post(`/sabnzbd/add/${instanceId}`, { url });
+    // Use GET with query params to avoid proxy POST restrictions
+    const response = await this.client.get(`/sabnzbd/add/${instanceId}`, { params: { url } });
     return response.data;
   }
 
@@ -301,7 +302,8 @@ class ApiService {
   }
 
   async addToDeluge(instanceId, url) {
-    const response = await this.client.post(`/deluge/add/${instanceId}`, { url });
+    // Use GET with query params to avoid proxy POST restrictions
+    const response = await this.client.get(`/deluge/add/${instanceId}`, { params: { url } });
     return response.data;
   }
 

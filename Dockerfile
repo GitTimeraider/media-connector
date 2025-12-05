@@ -24,7 +24,10 @@ FROM node:25-alpine
 WORKDIR /app
 
 # Install dumb-init, shadow for user management, and su-exec for user switching
-RUN apk add --no-cache dumb-init shadow su-exec
+# Use --no-scripts to avoid QEMU emulation issues with busybox triggers on ARM64
+RUN apk add --no-cache --no-scripts dumb-init shadow su-exec && \
+    # Manually run the trigger that would have been executed
+    /bin/busybox --install -s || true
 
 # Copy backend dependencies and code
 COPY --from=backend-build /app/node_modules ./node_modules

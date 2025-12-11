@@ -26,6 +26,15 @@ import {
 import { Search, Add, Delete, Close, ViewModule, ViewList, FilterList, Sort, CheckCircle, RadioButtonUnchecked, CloudDownload, CloudOff } from '@mui/icons-material';
 import api from '../services/api';
 
+// Helper function to format bytes to human-readable size
+const formatBytes = (bytes) => {
+  if (!bytes || bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+};
+
 function Radarr() {
   const [loading, setLoading] = useState(true);
   const [instances, setInstances] = useState([]);
@@ -257,11 +266,11 @@ function Radarr() {
 
   return (
     <Container maxWidth="xl" sx={{ overflowX: 'hidden', width: '100%' }}>
-      <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={3} flexWrap="wrap" gap={2}>
-        <Typography variant="h4" sx={{ mt: 1 }}>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} flexWrap="wrap" gap={2}>
+        <Typography variant="h4">
           Movies
         </Typography>
-        <Box display="flex" gap={1} flexWrap="wrap" alignItems="flex-start">
+        <Box display="flex" gap={1} flexWrap="wrap" alignItems="center">
           {/* View Mode Toggle */}
           <Box sx={{ display: 'flex', gap: 0.5, border: 1, borderColor: 'divider', borderRadius: 1 }}>
             <Button
@@ -283,7 +292,7 @@ function Radarr() {
           </Box>
           
           {/* Monitored Filter */}
-          <FormControl size="small" sx={{ minWidth: 140 }}>
+          <FormControl size="small" sx={{ minWidth: 140, width: 140 }}>
             <InputLabel>Monitor Status</InputLabel>
             <Select
               value={monitoredFilter}
@@ -298,7 +307,7 @@ function Radarr() {
           </FormControl>
           
           {/* Downloaded Filter */}
-          <FormControl size="small" sx={{ minWidth: 140 }}>
+          <FormControl size="small" sx={{ minWidth: 140, width: 150 }}>
             <InputLabel>Download Status</InputLabel>
             <Select
               value={downloadedFilter}
@@ -313,7 +322,7 @@ function Radarr() {
           </FormControl>
           
           {/* Sort By */}
-          <FormControl size="small" sx={{ minWidth: 130 }}>
+          <FormControl size="small" sx={{ minWidth: 130, width: 130 }}>
             <InputLabel>Sort By</InputLabel>
             <Select
               value={sortBy}
@@ -691,9 +700,14 @@ function Radarr() {
                   {movieToView.movieFile && (
                     <>
                       <Typography variant="h6" gutterBottom>Downloaded File</Typography>
-                      <Typography variant="body2" color="text.secondary" paragraph>
+                      <Typography variant="body2" color="text.secondary">
                         {movieToView.movieFile.relativePath || movieToView.movieFile.path}
                       </Typography>
+                      {movieToView.movieFile.size && (
+                        <Typography variant="body2" color="text.secondary" paragraph>
+                          <strong>Size:</strong> {formatBytes(movieToView.movieFile.size)}
+                        </Typography>
+                      )}
                     </>
                   )}
                   

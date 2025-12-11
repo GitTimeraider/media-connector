@@ -170,60 +170,7 @@ function Dashboard() {
       // Check if still mounted before updating state
       if (!isMountedRef.current) return;
       
-      // Helper to delay between requests
-      const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-      
-      // Fetch cast for each item with rate limiting - process in small batches
-      const enrichWithCast = async (items, mediaType, setStateFn) => {
-        if (!items || items.length === 0) return;
-        if (!isMountedRef.current) return;
-        
-        const BATCH_SIZE = 2; // Process 2 items at a time to be gentle on TMDB API
-        const DELAY_MS = 500; // Wait 500ms between batches
-        const enriched = [...items];
-        
-        // Set initial items immediately (without cast/genres enrichment)
-        setStateFn(items);
-        
-        // Then enrich in background with rate limiting
-        for (let i = 0; i < items.length; i += BATCH_SIZE) {
-          // Check if still mounted before each batch
-          if (!isMountedRef.current) return;
-          
-          const batch = items.slice(i, i + BATCH_SIZE);
-          const batchResults = await Promise.allSettled(
-            batch.map(async (item) => {
-              try {
-                const details = await api.getTMDBDetails(item.id, mediaType);
-                return { ...item, cast: details.credits?.cast || [], genres: details.genres || [] };
-              } catch (error) {
-                return item;
-              }
-            })
-          );
-          
-          // Check if still mounted before updating state
-          if (!isMountedRef.current) return;
-          
-          // Update enriched array with results
-          batchResults.forEach((result, index) => {
-            const originalIndex = i + index;
-            if (result.status === 'fulfilled') {
-              enriched[originalIndex] = result.value;
-            }
-          });
-          
-          // Update state progressively so UI shows enriched data as it loads
-          setStateFn([...enriched]);
-          
-          // Delay before next batch (except for last batch)
-          if (i + BATCH_SIZE < items.length) {
-            await delay(DELAY_MS);
-          }
-        }
-      };
-      
-      // Set initial data immediately
+      // Set data immediately without enrichment to avoid flickering
       if (trendingMoviesRes.status === 'fulfilled') {
         setTrendingMovies(trendingMoviesRes.value || []);
       }
@@ -232,22 +179,6 @@ function Dashboard() {
       }
       if (upcomingRes.status === 'fulfilled') {
         setUpcomingMovies(upcomingRes.value || []);
-      }
-      
-      // Mark loading as done so user sees content immediately
-      if (isMountedRef.current) {
-        setTmdbLoading(false);
-      }
-      
-      // Enrich with cast data in background (sequentially to avoid rate limits)
-      if (trendingMoviesRes.status === 'fulfilled' && isMountedRef.current) {
-        await enrichWithCast(trendingMoviesRes.value, 'movie', setTrendingMovies);
-      }
-      if (trendingTVRes.status === 'fulfilled' && isMountedRef.current) {
-        await enrichWithCast(trendingTVRes.value, 'tv', setTrendingTV);
-      }
-      if (upcomingRes.status === 'fulfilled' && isMountedRef.current) {
-        await enrichWithCast(upcomingRes.value, 'movie', setUpcomingMovies);
       }
       
     } catch (error) {

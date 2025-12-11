@@ -184,8 +184,6 @@ router.get('/vms/:instanceId', async (req, res) => {
       }
     `;
 
-    console.log('Attempting Unraid VMs request to:', instance.url + '/graphql');
-
     const response = await axios.post(`${instance.url}/graphql`,
       { query },
       { headers, timeout: 10000 }
@@ -242,8 +240,6 @@ router.get('/array/:instanceId', async (req, res) => {
         }
       }
     `;
-
-    console.log('Attempting Unraid array request to:', instance.url + '/graphql');
 
     const response = await axios.post(`${instance.url}/graphql`,
       { query },

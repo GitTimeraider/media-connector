@@ -116,11 +116,11 @@ function AppLayout() {
   ];
 
   const drawer = (
-    <Box sx={{ height: '100%', background: 'linear-gradient(180deg, rgba(18,18,18,1) 0%, rgba(30,30,30,1) 100%)' }}>
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'linear-gradient(180deg, rgba(18,18,18,1) 0%, rgba(30,30,30,1) 100%)' }}>
       <Toolbar sx={{ 
         background: 'linear-gradient(135deg, rgba(25,118,210,0.2) 0%, rgba(156,39,176,0.2) 100%)',
         borderBottom: '1px solid rgba(255,255,255,0.1)',
-        minHeight: { xs: 64, sm: 70 }
+        minHeight: { xs: 56, sm: 64 }
       }}>
         <Typography 
           variant="h6" 
@@ -140,7 +140,7 @@ function AppLayout() {
         </Typography>
       </Toolbar>
       <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)' }} />
-      <List sx={{ py: 2, px: 1 }}>
+      <List sx={{ py: 2, px: 1, flexGrow: 1 }}>
         {menuItems.map((item, index) => 
           item.divider ? (
             <Divider key={`divider-${index}`} sx={{ my: 1.5, borderColor: 'rgba(255,255,255,0.1)' }} />
@@ -194,99 +194,100 @@ function AppLayout() {
           )
         )}
       </List>
+      {/* User Profile Section at Bottom */}
+      <Box sx={{ mt: 'auto', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+        <List sx={{ py: 1, px: 1 }}>
+          <ListItem disablePadding sx={{ mb: 0.5 }}>
+            <ListItemButton
+              onClick={() => {
+                navigate('/profile');
+                setMobileOpen(false);
+              }}
+              sx={{
+                borderRadius: 2,
+                mx: 0.5,
+                transition: 'all 0.3s',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, rgba(25,118,210,0.15) 0%, rgba(156,39,176,0.15) 100%)',
+                  transform: 'translateX(8px)',
+                  boxShadow: '0 4px 12px rgba(25,118,210,0.2)'
+                }
+              }}
+            >
+              <ListItemIcon sx={{ color: 'rgba(255,255,255,0.7)', minWidth: 40 }}>
+                <Person />
+              </ListItemIcon>
+              <ListItemText 
+                primary={user?.username || 'Profile'}
+                primaryTypographyProps={{
+                  fontWeight: 400,
+                  fontSize: '0.95rem',
+                  color: 'rgba(255,255,255,0.7)'
+                }}
+              />
+            </ListItemButton>
+          </ListItem>
+          <ListItem disablePadding>
+            <ListItemButton
+              onClick={() => {
+                logout();
+                navigate('/login');
+              }}
+              sx={{
+                borderRadius: 2,
+                mx: 0.5,
+                transition: 'all 0.3s',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, rgba(244,67,54,0.15) 0%, rgba(156,39,176,0.15) 100%)',
+                  transform: 'translateX(8px)',
+                  boxShadow: '0 4px 12px rgba(244,67,54,0.2)'
+                }
+              }}
+            >
+              <ListItemIcon sx={{ color: 'rgba(255,255,255,0.7)', minWidth: 40 }}>
+                <Logout />
+              </ListItemIcon>
+              <ListItemText 
+                primary="Logout"
+                primaryTypographyProps={{
+                  fontWeight: 400,
+                  fontSize: '0.95rem',
+                  color: 'rgba(255,255,255,0.7)'
+                }}
+              />
+            </ListItemButton>
+          </ListItem>
+        </List>
+      </Box>
     </Box>
   );
 
   return (
     <Box sx={{ display: 'flex' }}>
-      <AppBar
-        position="fixed"
-        elevation={0}
-        sx={{
-          width: { xs: '100%', sm: `calc(100% - ${drawerWidth}px)` },
-          ml: { sm: `${drawerWidth}px` },
-          maxWidth: '100vw',
-          boxSizing: 'border-box',
-          background: 'linear-gradient(135deg, rgba(25,118,210,0.2) 0%, rgba(156,39,176,0.2) 100%)',
-          backgroundColor: 'rgba(18,18,18,0.95)',
+      {/* Mobile menu button - floating */}
+      <IconButton
+        color="inherit"
+        aria-label="open drawer"
+        edge="start"
+        onClick={handleDrawerToggle}
+        sx={{ 
+          position: 'fixed',
+          top: 16,
+          left: 16,
+          zIndex: 1300,
+          display: { sm: 'none' },
+          background: 'rgba(18,18,18,0.95)',
           backdropFilter: 'blur(20px)',
-          borderBottom: '1px solid rgba(255,255,255,0.1)',
-          boxShadow: '0 4px 30px rgba(0,0,0,0.3)'
+          border: '1px solid rgba(255,255,255,0.1)',
+          '&:hover': {
+            background: 'rgba(25,118,210,0.3)',
+            transform: 'scale(1.05)'
+          },
+          transition: 'all 0.2s'
         }}
       >
-        <Toolbar sx={{ minHeight: { xs: 64, sm: 70 } }}>
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            edge="start"
-            onClick={handleDrawerToggle}
-            sx={{ 
-              mr: 2, 
-              display: { sm: 'none' },
-              '&:hover': {
-                background: 'rgba(255,255,255,0.15)',
-                transform: 'scale(1.05)'
-              },
-              transition: 'all 0.2s'
-            }}
-          >
-            <MenuIcon />
-          </IconButton>
-          <Typography 
-            variant="h6" 
-            noWrap 
-            component="div" 
-            sx={{ 
-              flexGrow: 1,
-              fontWeight: 700,
-              fontSize: { xs: '1rem', sm: '1.25rem' },
-              letterSpacing: 0.5,
-              textShadow: '0 2px 4px rgba(0,0,0,0.2)'
-            }}
-          >
-            {menuItems.find(item => item.path === location.pathname)?.text || 'Media Connector'}
-          </Typography>
-          <Box display="flex" alignItems="center" gap={1}>
-            <Typography variant="body2" sx={{ display: { xs: 'none', sm: 'block' } }}>
-              {user?.username}
-            </Typography>
-            <IconButton 
-              onClick={handleProfileMenuOpen} 
-              color="inherit"
-              sx={{
-                '&:hover': {
-                  transform: 'scale(1.1)',
-                  background: 'rgba(255,255,255,0.15)'
-                },
-                transition: 'all 0.2s'
-              }}
-            >
-              <Avatar sx={{ 
-                width: 32, 
-                height: 32, 
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
-                fontWeight: 600
-              }}>
-                {user?.username?.charAt(0).toUpperCase()}
-              </Avatar>
-            </IconButton>
-          </Box>
-          <Menu
-            anchorEl={anchorEl}
-            open={Boolean(anchorEl)}
-            onClose={handleProfileMenuClose}
-          >
-            <MenuItem onClick={() => { navigate('/profile'); handleProfileMenuClose(); }}>
-              <Person sx={{ mr: 1 }} /> My Profile
-            </MenuItem>
-            <Divider />
-            <MenuItem onClick={handleLogout}>
-              <Logout sx={{ mr: 1 }} /> Logout
-            </MenuItem>
-          </Menu>
-        </Toolbar>
-      </AppBar>
+        <MenuIcon />
+      </IconButton>
       
       <Box
         component="nav"
@@ -336,7 +337,6 @@ function AppLayout() {
           p: 3,
           width: { xs: '100%', sm: `calc(100% - ${drawerWidth}px)` },
           maxWidth: '100vw',
-          mt: 8,
           overflowX: 'hidden',
           boxSizing: 'border-box'
         }}

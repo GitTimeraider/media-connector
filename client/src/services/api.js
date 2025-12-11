@@ -111,8 +111,6 @@ class ApiService {
     const response = await this.client.put('/auth/preferences', { preferences });
     return response.data.preferences;
   }
-    return response.data;
-  }
 
   // Config endpoints
   async getServices() {

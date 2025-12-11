@@ -569,17 +569,26 @@ function Sonarr() {
                     {seriesToView.overview || 'No overview available.'}
                   </Typography>
                   
-                  {seriesToView.episodeFileCount > 0 && (
+                  {(seriesToView.episodeFileCount > 0 || seriesToView.statistics?.episodeFileCount > 0) && (
                     <>
                       <Typography variant="h6" gutterBottom>Downloaded Episodes</Typography>
                       <Typography variant="body2" color="text.secondary">
-                        {seriesToView.episodeFileCount} / {seriesToView.episodeCount} episodes
+                        {seriesToView.episodeFileCount || seriesToView.statistics?.episodeFileCount || 0} / {seriesToView.episodeCount || seriesToView.statistics?.episodeCount || 0} episodes
                       </Typography>
-                      {(seriesToView.sizeOnDisk || seriesToView.statistics?.sizeOnDisk) && (
-                        <Typography variant="body2" color="text.secondary" paragraph>
-                          <strong>Total Size:</strong> {formatBytes(seriesToView.sizeOnDisk || seriesToView.statistics?.sizeOnDisk)}
-                        </Typography>
-                      )}
+                      {(() => {
+                        const size = seriesToView.sizeOnDisk || 
+                                    seriesToView.statistics?.sizeOnDisk || 
+                                    seriesToView.statistics?.totalFileSize ||
+                                    seriesToView.totalFileSize;
+                        if (size && size > 0) {
+                          return (
+                            <Typography variant="body2" color="text.secondary" paragraph>
+                              <strong>Total Size:</strong> {formatBytes(size)}
+                            </Typography>
+                          );
+                        }
+                        return null;
+                      })()}
                     </>
                   )}
                   

@@ -234,6 +234,56 @@ function UnraidContent() {
             <Card>
               <CardContent>
                 <Box display="flex" alignItems="center" mb={1}>
+                  <Computer sx={{ mr: 1, color: 'info.main' }} />
+                  <Typography variant="h6">System</Typography>
+                </Box>
+                <Typography variant="body2" fontWeight={500}>
+                  {systemStats.os?.hostname || 'Unknown'}
+                </Typography>
+                {(systemStats.system?.manufacturer || systemStats.system?.model) && (
+                  <Typography variant="body2" color="text.secondary">
+                    {[systemStats.system?.manufacturer, systemStats.system?.model].filter(Boolean).join(' ')}
+                  </Typography>
+                )}
+                <Typography variant="body2" color="text.secondary">
+                  {systemStats.os?.distro || 'Unraid'} {systemStats.os?.release || ''}
+                </Typography>
+                <Typography variant="caption" display="block" sx={{ mt: 1 }}>
+                  Uptime: {(() => {
+                    const uptimeData = systemStats.os?.uptime;
+                    if (!uptimeData) return 'N/A';
+                    // Unraid returns uptime as an ISO datetime string (boot time)
+                    let uptimeSeconds;
+                    if (typeof uptimeData === 'string') {
+                      // Parse ISO datetime and calculate seconds since boot
+                      const bootTime = new Date(uptimeData);
+                      if (!isNaN(bootTime.getTime())) {
+                        uptimeSeconds = Math.floor((Date.now() - bootTime.getTime()) / 1000);
+                      } else {
+                        return uptimeData; // Return as-is if not valid date
+                      }
+                    } else if (typeof uptimeData === 'number') {
+                      uptimeSeconds = uptimeData;
+                    } else {
+                      return 'N/A';
+                    }
+                    const days = Math.floor(uptimeSeconds / 86400);
+                    const hours = Math.floor((uptimeSeconds % 86400) / 3600);
+                    const minutes = Math.floor((uptimeSeconds % 3600) / 60);
+                    return `${days}d ${hours}h ${minutes}m`;
+                  })()}
+                </Typography>
+                <Typography variant="caption" display="block">
+                  Platform: {systemStats.os?.platform || 'N/A'}
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          <Grid item xs={12} sm={6} md={3}>
+            <Card>
+              <CardContent>
+                <Box display="flex" alignItems="center" mb={1}>
                   <Memory sx={{ mr: 1, color: 'primary.main' }} />
                   <Typography variant="h6">CPU</Typography>
                 </Box>

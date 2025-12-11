@@ -257,11 +257,11 @@ function Radarr() {
 
   return (
     <Container maxWidth="xl" sx={{ overflowX: 'hidden', width: '100%' }}>
-      <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={3} flexWrap="wrap" gap={2}>
-        <Typography variant="h4" sx={{ mt: 1 }}>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} flexWrap="wrap" gap={2}>
+        <Typography variant="h4">
           Movies
         </Typography>
-        <Box display="flex" gap={1} flexWrap="wrap" alignItems="flex-start">
+        <Box display="flex" gap={1} flexWrap="wrap" alignItems="center">
           {/* View Mode Toggle */}
           <Box sx={{ display: 'flex', gap: 0.5, border: 1, borderColor: 'divider', borderRadius: 1 }}>
             <Button
@@ -283,7 +283,7 @@ function Radarr() {
           </Box>
           
           {/* Monitored Filter */}
-          <FormControl size="small" sx={{ minWidth: 140 }}>
+          <FormControl size="small" sx={{ minWidth: 140, width: 140 }}>
             <InputLabel>Monitor Status</InputLabel>
             <Select
               value={monitoredFilter}
@@ -298,7 +298,7 @@ function Radarr() {
           </FormControl>
           
           {/* Downloaded Filter */}
-          <FormControl size="small" sx={{ minWidth: 140 }}>
+          <FormControl size="small" sx={{ minWidth: 140, width: 150 }}>
             <InputLabel>Download Status</InputLabel>
             <Select
               value={downloadedFilter}
@@ -313,7 +313,7 @@ function Radarr() {
           </FormControl>
           
           {/* Sort By */}
-          <FormControl size="small" sx={{ minWidth: 130 }}>
+          <FormControl size="small" sx={{ minWidth: 130, width: 130 }}>
             <InputLabel>Sort By</InputLabel>
             <Select
               value={sortBy}

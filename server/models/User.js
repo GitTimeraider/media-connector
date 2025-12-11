@@ -208,6 +208,41 @@ class UserModel {
       throw error;
     }
   }
+
+  async getPreferences(userId) {
+    try {
+      const user = await this.findById(userId);
+      if (!user) {
+        throw new Error('User not found');
+      }
+      return user.preferences ? JSON.parse(user.preferences) : {};
+    } catch (error) {
+      console.error('Error getting preferences:', error);
+      return {};
+    }
+  }
+
+  async updatePreferences(userId, preferences) {
+    try {
+      const user = await this.findById(userId);
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      const currentPrefs = user.preferences ? JSON.parse(user.preferences) : {};
+      const updatedPrefs = { ...currentPrefs, ...preferences };
+
+      await db.run(
+        'UPDATE users SET preferences = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+        [JSON.stringify(updatedPrefs), userId]
+      );
+
+      return updatedPrefs;
+    } catch (error) {
+      console.error('Error updating preferences:', error);
+      throw error;
+    }
+  }
 }
 
 module.exports = new UserModel();

@@ -40,6 +40,7 @@ class Database {
           username TEXT UNIQUE NOT NULL,
           password TEXT NOT NULL,
           role TEXT NOT NULL DEFAULT 'User',
+          preferences TEXT DEFAULT '{}',
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
@@ -47,6 +48,19 @@ class Database {
         if (err) {
           console.error('Error creating users table:', err);
         } else {
+          // Add preferences column if it doesn't exist (migration)
+          this.db.run(`
+            SELECT COUNT(*) as count FROM pragma_table_info('users') WHERE name='preferences'
+          `, [], (err, row) => {
+            // Check if column exists by trying to add it
+            this.db.run(`ALTER TABLE users ADD COLUMN preferences TEXT DEFAULT '{}'`, (err) => {
+              if (err && !err.message.includes('duplicate column')) {
+                console.error('Error adding preferences column:', err);
+              } else if (!err) {
+                console.log('✓ Added preferences column to users table');
+              }
+            });
+          });
           this.createDefaultUser();
         }
       });

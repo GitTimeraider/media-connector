@@ -23,7 +23,7 @@ import {
   MenuItem,
   OutlinedInput
 } from '@mui/material';
-import { Search, Add, Delete, Close } from '@mui/icons-material';
+import { Search, Add, Delete, Close, ViewModule, ViewList, FilterList, Sort, CheckCircle, RadioButtonUnchecked, CloudDownload, CloudOff } from '@mui/icons-material';
 import api from '../services/api';
 
 function Sonarr() {
@@ -48,6 +48,12 @@ function Sonarr() {
   const [editMode, setEditMode] = useState(false);
   const [editQualityProfile, setEditQualityProfile] = useState('');
   const [editMonitored, setEditMonitored] = useState(false);
+  
+  // View and filter states
+  const [viewMode, setViewMode] = useState('cards'); // 'cards' or 'list'
+  const [monitoredFilter, setMonitoredFilter] = useState('all'); // 'all', 'monitored', 'unmonitored'
+  const [downloadedFilter, setDownloadedFilter] = useState('all'); // 'all', 'downloaded', 'not-downloaded'
+  const [sortBy, setSortBy] = useState('alphabetical'); // 'alphabetical', 'newest', 'oldest'
 
   useEffect(() => {
     loadInstances();
@@ -175,9 +181,28 @@ function Sonarr() {
     setSelectedTags([]);
   };
 
-  const filteredSeries = series.filter(show =>
-    show.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredSeries = series
+    .filter(show => show.title.toLowerCase().includes(searchQuery.toLowerCase()))
+    .filter(show => {
+      if (monitoredFilter === 'monitored') return show.monitored === true;
+      if (monitoredFilter === 'unmonitored') return show.monitored === false;
+      return true;
+    })
+    .filter(show => {
+      if (downloadedFilter === 'downloaded') return show.statistics?.percentOfEpisodes === 100 || show.statistics?.episodeFileCount > 0;
+      if (downloadedFilter === 'not-downloaded') return !show.statistics?.episodeFileCount || show.statistics?.episodeFileCount === 0;
+      return true;
+    })
+    .sort((a, b) => {
+      if (sortBy === 'alphabetical') {
+        return a.title.localeCompare(b.title);
+      } else if (sortBy === 'newest') {
+        return (b.year || 0) - (a.year || 0);
+      } else if (sortBy === 'oldest') {
+        return (a.year || 0) - (b.year || 0);
+      }
+      return 0;
+    });
 
   const handleAddSeries = async () => {
     if (!selectedSeries) return;
@@ -227,17 +252,84 @@ function Sonarr() {
 
   return (
     <Container maxWidth="xl" sx={{ overflowX: 'hidden', width: '100%' }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h4">
+      <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={3} flexWrap="wrap" gap={2}>
+        <Typography variant="h4" sx={{ mt: 1 }}>
           TV Shows
         </Typography>
-        <Button
-          variant="contained"
-          startIcon={<Add />}
-          onClick={() => setSearchOpen(true)}
-        >
-          Add Series
-        </Button>
+        <Box display="flex" gap={1} flexWrap="wrap" alignItems="flex-start">
+          {/* View Mode Toggle */}
+          <Box sx={{ display: 'flex', gap: 0.5, border: 1, borderColor: 'divider', borderRadius: 1 }}>
+            <Button
+              size="small"
+              variant={viewMode === 'cards' ? 'contained' : 'text'}
+              onClick={() => setViewMode('cards')}
+              startIcon={<ViewModule />}
+            >
+              Cards
+            </Button>
+            <Button
+              size="small"
+              variant={viewMode === 'list' ? 'contained' : 'text'}
+              onClick={() => setViewMode('list')}
+              startIcon={<ViewList />}
+            >
+              List
+            </Button>
+          </Box>
+          
+          {/* Monitored Filter */}
+          <FormControl size="small" sx={{ minWidth: 140 }}>
+            <InputLabel>Monitor Status</InputLabel>
+            <Select
+              value={monitoredFilter}
+              label="Monitor Status"
+              onChange={(e) => setMonitoredFilter(e.target.value)}
+              startAdornment={<FilterList sx={{ mr: 1, color: 'action.active' }} />}
+            >
+              <MenuItem value="all">All</MenuItem>
+              <MenuItem value="monitored">Monitored</MenuItem>
+              <MenuItem value="unmonitored">Unmonitored</MenuItem>
+            </Select>
+          </FormControl>
+          
+          {/* Downloaded Filter */}
+          <FormControl size="small" sx={{ minWidth: 140 }}>
+            <InputLabel>Download Status</InputLabel>
+            <Select
+              value={downloadedFilter}
+              label="Download Status"
+              onChange={(e) => setDownloadedFilter(e.target.value)}
+              startAdornment={<FilterList sx={{ mr: 1, color: 'action.active' }} />}
+            >
+              <MenuItem value="all">All</MenuItem>
+              <MenuItem value="downloaded">Downloaded</MenuItem>
+              <MenuItem value="not-downloaded">Not Downloaded</MenuItem>
+            </Select>
+          </FormControl>
+          
+          {/* Sort By */}
+          <FormControl size="small" sx={{ minWidth: 130 }}>
+            <InputLabel>Sort By</InputLabel>
+            <Select
+              value={sortBy}
+              label="Sort By"
+              onChange={(e) => setSortBy(e.target.value)}
+              startAdornment={<Sort sx={{ mr: 1, color: 'action.active' }} />}
+            >
+              <MenuItem value="alphabetical">Alphabetical</MenuItem>
+              <MenuItem value="newest">Newest First</MenuItem>
+              <MenuItem value="oldest">Oldest First</MenuItem>
+            </Select>
+          </FormControl>
+          
+          <Button
+            variant="contained"
+            startIcon={<Add />}
+            onClick={() => setSearchOpen(true)}
+          >
+            Add Series
+          </Button>
+        </Box>
       </Box>
 
       <Box mb={3}>
@@ -260,7 +352,7 @@ function Sonarr() {
         <Box display="flex" justifyContent="center" p={4}>
           <CircularProgress />
         </Box>
-      ) : (
+      ) : viewMode === 'cards' ? (
         <Grid container spacing={3}>
           {filteredSeries.map((show) => (
             <Grid item xs={6} sm={6} md={4} lg={3} key={show.id}>
@@ -293,7 +385,7 @@ function Sonarr() {
                     component="img"
                     image={show.images.find(img => img.coverType === 'poster').remoteUrl}
                     alt={show.title}
-                    sx={{ objectFit: 'cover', height: { xs: 250, sm: 300, md: 350 }, width: '100%' }}
+                    sx={{ objectFit: 'cover', objectPosition: 'top', height: { xs: 125, sm: 300, md: 350 }, width: '100%' }}
                   />
                 )}
                 <CardContent sx={{ flexGrow: 1 }}>
@@ -301,14 +393,21 @@ function Sonarr() {
                     {show.title}
                   </Typography>
                   <Box display="flex" gap={1} flexWrap="wrap" mb={1}>
+                    <Chip label={show.year} size="small" />
                     <Chip 
-                      label={`${show.seasons?.length || 0} Seasons`} 
+                      icon={(show.statistics?.episodeFileCount > 0) ? <CloudDownload /> : <CloudOff />}
+                      label={(show.statistics?.episodeFileCount > 0) ? "Has Episodes" : "No Episodes"} 
                       size="small" 
-                      color="primary" 
+                      color={(show.statistics?.episodeFileCount > 0) ? "success" : "default"}
+                      variant={(show.statistics?.episodeFileCount > 0) ? "filled" : "outlined"}
                     />
-                    {show.monitored && (
-                      <Chip label="Monitored" size="small" color="success" />
-                    )}
+                    <Chip 
+                      icon={show.monitored ? <CheckCircle /> : <RadioButtonUnchecked />}
+                      label={show.monitored ? "Monitored" : "Unmonitored"} 
+                      size="small" 
+                      color={show.monitored ? "primary" : "default"}
+                      variant={show.monitored ? "filled" : "outlined"}
+                    />
                   </Box>
                   <Typography variant="body2" color="text.secondary">
                     {show.overview?.substring(0, 150)}...
@@ -318,6 +417,69 @@ function Sonarr() {
             </Grid>
           ))}
         </Grid>
+      ) : (
+        /* List View */
+        <Box>
+          {filteredSeries.map((show) => (
+            <Card 
+              key={show.id}
+              sx={{ 
+                mb: 1,
+                cursor: 'pointer',
+                transition: 'box-shadow 0.2s ease-in-out',
+                '&:hover': {
+                  boxShadow: 4
+                }
+              }}
+              onClick={() => handleOpenDetail(show)}
+            >
+              <CardContent sx={{ py: 1, '&:last-child': { pb: 1 } }}>
+                <Box display="flex" gap={2} alignItems="center">
+                  {show.images?.find(img => img.coverType === 'poster') && (
+                    <Box
+                      component="img"
+                      src={show.images.find(img => img.coverType === 'poster').remoteUrl}
+                      alt={show.title}
+                      sx={{ width: 60, height: 90, objectFit: 'cover', borderRadius: 1 }}
+                    />
+                  )}
+                  <Box flexGrow={1}>
+                    <Typography variant="h6" gutterBottom>
+                      {show.title}
+                    </Typography>
+                    <Box display="flex" gap={1} flexWrap="wrap" mb={1}>
+                      <Chip label={show.year} size="small" />
+                      <Chip 
+                        icon={(show.statistics?.episodeFileCount > 0) ? <CloudDownload /> : <CloudOff />}
+                        label={(show.statistics?.episodeFileCount > 0) ? "Has Episodes" : "No Episodes"} 
+                        size="small" 
+                        color={(show.statistics?.episodeFileCount > 0) ? "success" : "default"}
+                        variant={(show.statistics?.episodeFileCount > 0) ? "filled" : "outlined"}
+                      />
+                      <Chip 
+                        icon={show.monitored ? <CheckCircle /> : <RadioButtonUnchecked />}
+                        label={show.monitored ? "Monitored" : "Unmonitored"} 
+                        size="small" 
+                        color={show.monitored ? "primary" : "default"}
+                        variant={show.monitored ? "filled" : "outlined"}
+                      />
+                      {show.statistics && (
+                        <Chip 
+                          label={`${show.statistics.episodeFileCount || 0}/${show.statistics.episodeCount || 0} episodes`} 
+                          size="small"
+                          variant="outlined"
+                        />
+                      )}
+                    </Box>
+                    <Typography variant="body2" color="text.secondary">
+                      {show.overview?.substring(0, 200)}...
+                    </Typography>
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
+          ))}
+        </Box>
       )}
 
       {/* Series Detail Dialog */}

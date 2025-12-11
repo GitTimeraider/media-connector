@@ -23,7 +23,7 @@ import {
   MenuItem,
   OutlinedInput
 } from '@mui/material';
-import { Search, Add, Delete, Close } from '@mui/icons-material';
+import { Search, Add, Delete, Close, ViewModule, ViewList, FilterList, Sort, CheckCircle, RadioButtonUnchecked, CloudDownload, CloudOff } from '@mui/icons-material';
 import api from '../services/api';
 
 function Radarr() {
@@ -49,6 +49,12 @@ function Radarr() {
   const [editMode, setEditMode] = useState(false);
   const [editQualityProfile, setEditQualityProfile] = useState('');
   const [editMonitored, setEditMonitored] = useState(false);
+  
+  // View and filter states
+  const [viewMode, setViewMode] = useState('cards'); // 'cards' or 'list'
+  const [monitoredFilter, setMonitoredFilter] = useState('all'); // 'all', 'monitored', 'unmonitored'
+  const [downloadedFilter, setDownloadedFilter] = useState('all'); // 'all', 'downloaded', 'not-downloaded'
+  const [sortBy, setSortBy] = useState('alphabetical'); // 'alphabetical', 'newest', 'oldest'
 
   useEffect(() => {
     loadInstances();
@@ -208,9 +214,28 @@ function Radarr() {
     }
   };
 
-  const filteredMovies = movies.filter(movie =>
-    movie.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredMovies = movies
+    .filter(movie => movie.title.toLowerCase().includes(searchQuery.toLowerCase()))
+    .filter(movie => {
+      if (monitoredFilter === 'monitored') return movie.monitored === true;
+      if (monitoredFilter === 'unmonitored') return movie.monitored === false;
+      return true;
+    })
+    .filter(movie => {
+      if (downloadedFilter === 'downloaded') return movie.hasFile === true;
+      if (downloadedFilter === 'not-downloaded') return movie.hasFile === false;
+      return true;
+    })
+    .sort((a, b) => {
+      if (sortBy === 'alphabetical') {
+        return a.title.localeCompare(b.title);
+      } else if (sortBy === 'newest') {
+        return (b.year || 0) - (a.year || 0);
+      } else if (sortBy === 'oldest') {
+        return (a.year || 0) - (b.year || 0);
+      }
+      return 0;
+    });
 
   if (loading && instances.length === 0) {
     return (
@@ -232,13 +257,80 @@ function Radarr() {
 
   return (
     <Container maxWidth="xl" sx={{ overflowX: 'hidden', width: '100%' }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h4">
+      <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={3} flexWrap="wrap" gap={2}>
+        <Typography variant="h4" sx={{ mt: 1 }}>
           Movies
         </Typography>
-        <Button variant="contained" startIcon={<Add />} onClick={() => setAddDialogOpen(true)}>
-          Add Movie
-        </Button>
+        <Box display="flex" gap={1} flexWrap="wrap" alignItems="flex-start">
+          {/* View Mode Toggle */}
+          <Box sx={{ display: 'flex', gap: 0.5, border: 1, borderColor: 'divider', borderRadius: 1 }}>
+            <Button
+              size="small"
+              variant={viewMode === 'cards' ? 'contained' : 'text'}
+              onClick={() => setViewMode('cards')}
+              startIcon={<ViewModule />}
+            >
+              Cards
+            </Button>
+            <Button
+              size="small"
+              variant={viewMode === 'list' ? 'contained' : 'text'}
+              onClick={() => setViewMode('list')}
+              startIcon={<ViewList />}
+            >
+              List
+            </Button>
+          </Box>
+          
+          {/* Monitored Filter */}
+          <FormControl size="small" sx={{ minWidth: 140 }}>
+            <InputLabel>Monitor Status</InputLabel>
+            <Select
+              value={monitoredFilter}
+              label="Monitor Status"
+              onChange={(e) => setMonitoredFilter(e.target.value)}
+              startAdornment={<FilterList sx={{ mr: 1, color: 'action.active' }} />}
+            >
+              <MenuItem value="all">All</MenuItem>
+              <MenuItem value="monitored">Monitored</MenuItem>
+              <MenuItem value="unmonitored">Unmonitored</MenuItem>
+            </Select>
+          </FormControl>
+          
+          {/* Downloaded Filter */}
+          <FormControl size="small" sx={{ minWidth: 140 }}>
+            <InputLabel>Download Status</InputLabel>
+            <Select
+              value={downloadedFilter}
+              label="Download Status"
+              onChange={(e) => setDownloadedFilter(e.target.value)}
+              startAdornment={<FilterList sx={{ mr: 1, color: 'action.active' }} />}
+            >
+              <MenuItem value="all">All</MenuItem>
+              <MenuItem value="downloaded">Downloaded</MenuItem>
+              <MenuItem value="not-downloaded">Not Downloaded</MenuItem>
+            </Select>
+          </FormControl>
+          
+          {/* Sort By */}
+          <FormControl size="small" sx={{ minWidth: 130 }}>
+            <InputLabel>Sort By</InputLabel>
+            <Select
+              value={sortBy}
+              label="Sort By"
+              onChange={(e) => setSortBy(e.target.value)}
+              startAdornment={<Sort sx={{ mr: 1, color: 'action.active' }} />}
+            >
+              <MenuItem value="alphabetical">Alphabetical</MenuItem>
+              <MenuItem value="newest">Newest First</MenuItem>
+              <MenuItem value="oldest">Oldest First</MenuItem>
+            </Select>
+          </FormControl>
+          
+          <Button variant="contained" startIcon={<Add />} onClick={() => setAddDialogOpen(true)}>
+            Add Movie
+          </Button>
+        </Box>
       </Box>
 
       <Dialog open={addDialogOpen} onClose={() => setAddDialogOpen(false)} maxWidth="md" fullWidth>
@@ -395,7 +487,7 @@ function Radarr() {
         <Box display="flex" justifyContent="center" p={4}>
           <CircularProgress />
         </Box>
-      ) : (
+      ) : viewMode === 'cards' ? (
         <Grid container spacing={3}>
           {filteredMovies.map((movie) => (
             <Grid item xs={6} sm={6} md={4} lg={3} key={movie.id}>
@@ -428,7 +520,7 @@ function Radarr() {
                     component="img"
                     image={movie.images.find(img => img.coverType === 'poster').remoteUrl}
                     alt={movie.title}
-                    sx={{ objectFit: 'cover', height: { xs: 250, sm: 300, md: 350 }, width: '100%' }}
+                    sx={{ objectFit: 'cover', objectPosition: 'top', height: { xs: 125, sm: 300, md: 350 }, width: '100%' }}
                   />
                 )}
                 <CardContent sx={{ flexGrow: 1 }}>
@@ -437,12 +529,20 @@ function Radarr() {
                   </Typography>
                   <Box display="flex" gap={1} flexWrap="wrap" mb={1}>
                     <Chip label={movie.year} size="small" />
-                    {movie.hasFile && (
-                      <Chip label="Downloaded" size="small" color="success" />
-                    )}
-                    {movie.monitored && (
-                      <Chip label="Monitored" size="small" color="primary" />
-                    )}
+                    <Chip 
+                      icon={movie.hasFile ? <CloudDownload /> : <CloudOff />}
+                      label={movie.hasFile ? "Downloaded" : "Not Downloaded"} 
+                      size="small" 
+                      color={movie.hasFile ? "success" : "default"}
+                      variant={movie.hasFile ? "filled" : "outlined"}
+                    />
+                    <Chip 
+                      icon={movie.monitored ? <CheckCircle /> : <RadioButtonUnchecked />}
+                      label={movie.monitored ? "Monitored" : "Unmonitored"} 
+                      size="small" 
+                      color={movie.monitored ? "primary" : "default"}
+                      variant={movie.monitored ? "filled" : "outlined"}
+                    />
                   </Box>
                   <Typography variant="body2" color="text.secondary">
                     {movie.overview?.substring(0, 150)}...
@@ -452,6 +552,62 @@ function Radarr() {
             </Grid>
           ))}
         </Grid>
+      ) : (
+        /* List View */
+        <Box>
+          {filteredMovies.map((movie) => (
+            <Card 
+              key={movie.id}
+              sx={{ 
+                mb: 1,
+                cursor: 'pointer',
+                transition: 'box-shadow 0.2s ease-in-out',
+                '&:hover': {
+                  boxShadow: 4
+                }
+              }}
+              onClick={() => handleOpenDetail(movie)}
+            >
+              <CardContent sx={{ py: 1, '&:last-child': { pb: 1 } }}>
+                <Box display="flex" gap={2} alignItems="center">
+                  {movie.images?.find(img => img.coverType === 'poster') && (
+                    <Box
+                      component="img"
+                      src={movie.images.find(img => img.coverType === 'poster').remoteUrl}
+                      alt={movie.title}
+                      sx={{ width: 60, height: 90, objectFit: 'cover', borderRadius: 1 }}
+                    />
+                  )}
+                  <Box flexGrow={1}>
+                    <Typography variant="h6" gutterBottom>
+                      {movie.title}
+                    </Typography>
+                    <Box display="flex" gap={1} flexWrap="wrap" mb={1}>
+                      <Chip label={movie.year} size="small" />
+                      <Chip 
+                        icon={movie.hasFile ? <CloudDownload /> : <CloudOff />}
+                        label={movie.hasFile ? "Downloaded" : "Not Downloaded"} 
+                        size="small" 
+                        color={movie.hasFile ? "success" : "default"}
+                        variant={movie.hasFile ? "filled" : "outlined"}
+                      />
+                      <Chip 
+                        icon={movie.monitored ? <CheckCircle /> : <RadioButtonUnchecked />}
+                        label={movie.monitored ? "Monitored" : "Unmonitored"} 
+                        size="small" 
+                        color={movie.monitored ? "primary" : "default"}
+                        variant={movie.monitored ? "filled" : "outlined"}
+                      />
+                    </Box>
+                    <Typography variant="body2" color="text.secondary">
+                      {movie.overview?.substring(0, 200)}...
+                    </Typography>
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
+          ))}
+        </Box>
       )}
 
       {/* Movie Detail Dialog */}

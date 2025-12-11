@@ -575,9 +575,9 @@ function Sonarr() {
                       <Typography variant="body2" color="text.secondary">
                         {seriesToView.episodeFileCount} / {seriesToView.episodeCount} episodes
                       </Typography>
-                      {seriesToView.sizeOnDisk && (
+                      {(seriesToView.sizeOnDisk || seriesToView.statistics?.sizeOnDisk) && (
                         <Typography variant="body2" color="text.secondary" paragraph>
-                          <strong>Total Size:</strong> {formatBytes(seriesToView.sizeOnDisk)}
+                          <strong>Total Size:</strong> {formatBytes(seriesToView.sizeOnDisk || seriesToView.statistics?.sizeOnDisk)}
                         </Typography>
                       )}
                     </>

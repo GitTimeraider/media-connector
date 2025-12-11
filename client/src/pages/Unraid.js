@@ -287,23 +287,33 @@ function UnraidContent() {
                   <>
                     <Typography variant="h4">
                       {(() => {
-                        const used = safeNumber(systemStats.memory?.used);
+                        // Calculate actual memory usage excluding ZFS cache
+                        // Use 'available' memory to get true usage: (total - available) / total
                         const total = safeNumber(systemStats.memory?.total) || 1;
-                        return ((used / total) * 100).toFixed(1);
+                        const available = safeNumber(systemStats.memory?.available);
+                        const actualUsed = available > 0 ? total - available : safeNumber(systemStats.memory?.used);
+                        return ((actualUsed / total) * 100).toFixed(1);
                       })()}%
                     </Typography>
                     <Typography variant="caption">
-                      {formatBytes(safeNumber(systemStats.memory?.used))} / {formatBytes(safeNumber(systemStats.memory?.total))}
+                      {(() => {
+                        const total = safeNumber(systemStats.memory?.total) || 1;
+                        const available = safeNumber(systemStats.memory?.available);
+                        const actualUsed = available > 0 ? total - available : safeNumber(systemStats.memory?.used);
+                        return formatBytes(actualUsed);
+                      })()} / {formatBytes(safeNumber(systemStats.memory?.total))}
                     </Typography>
                     <LinearProgress 
                       variant="determinate" 
                       value={(() => {
-                        const used = safeNumber(systemStats.memory?.used);
                         const total = safeNumber(systemStats.memory?.total) || 1;
-                        return Math.min((used / total) * 100, 100);
+                        const available = safeNumber(systemStats.memory?.available);
+                        const actualUsed = available > 0 ? total - available : safeNumber(systemStats.memory?.used);
+                        return Math.min((actualUsed / total) * 100, 100);
                       })()} 
                       sx={{ mt: 1 }}
                     />
+                  </>
                   </>
                 ) : (
                   <>

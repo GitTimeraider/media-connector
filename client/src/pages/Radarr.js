@@ -257,11 +257,11 @@ function Radarr() {
 
   return (
     <Container maxWidth="xl" sx={{ overflowX: 'hidden', width: '100%' }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} flexWrap="wrap" gap={2}>
-        <Typography variant="h4">
+      <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={3} flexWrap="wrap" gap={2}>
+        <Typography variant="h4" sx={{ mt: 1 }}>
           Movies
         </Typography>
-        <Box display="flex" gap={1} flexWrap="wrap">
+        <Box display="flex" gap={1} flexWrap="wrap" alignItems="flex-start">
           {/* View Mode Toggle */}
           <Box sx={{ display: 'flex', gap: 0.5, border: 1, borderColor: 'divider', borderRadius: 1 }}>
             <Button
@@ -568,7 +568,7 @@ function Radarr() {
               }}
               onClick={() => handleOpenDetail(movie)}
             >
-              <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
+              <CardContent sx={{ py: 1, '&:last-child': { pb: 1 } }}>
                 <Box display="flex" gap={2} alignItems="center">
                   {movie.images?.find(img => img.coverType === 'poster') && (
                     <Box

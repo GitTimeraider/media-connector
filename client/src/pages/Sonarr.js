@@ -385,7 +385,7 @@ function Sonarr() {
                     component="img"
                     image={show.images.find(img => img.coverType === 'poster').remoteUrl}
                     alt={show.title}
-                    sx={{ objectFit: 'cover', height: { xs: 250, sm: 300, md: 350 }, width: '100%' }}
+                    sx={{ objectFit: 'cover', objectPosition: 'top', height: { xs: 125, sm: 300, md: 350 }, width: '100%' }}
                   />
                 )}
                 <CardContent sx={{ flexGrow: 1 }}>
@@ -424,7 +424,7 @@ function Sonarr() {
             <Card 
               key={show.id}
               sx={{ 
-                mb: 2,
+                mb: 1,
                 cursor: 'pointer',
                 transition: 'box-shadow 0.2s ease-in-out',
                 '&:hover': {
@@ -433,7 +433,7 @@ function Sonarr() {
               }}
               onClick={() => handleOpenDetail(show)}
             >
-              <CardContent>
+              <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
                 <Box display="flex" gap={2} alignItems="center">
                   {show.images?.find(img => img.coverType === 'poster') && (
                     <Box

@@ -520,7 +520,7 @@ function Radarr() {
                     component="img"
                     image={movie.images.find(img => img.coverType === 'poster').remoteUrl}
                     alt={movie.title}
-                    sx={{ objectFit: 'cover', height: { xs: 250, sm: 300, md: 350 }, width: '100%' }}
+                    sx={{ objectFit: 'cover', objectPosition: 'top', height: { xs: 125, sm: 300, md: 350 }, width: '100%' }}
                   />
                 )}
                 <CardContent sx={{ flexGrow: 1 }}>
@@ -559,7 +559,7 @@ function Radarr() {
             <Card 
               key={movie.id}
               sx={{ 
-                mb: 2,
+                mb: 1,
                 cursor: 'pointer',
                 transition: 'box-shadow 0.2s ease-in-out',
                 '&:hover': {
@@ -568,7 +568,7 @@ function Radarr() {
               }}
               onClick={() => handleOpenDetail(movie)}
             >
-              <CardContent>
+              <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
                 <Box display="flex" gap={2} alignItems="center">
                   {movie.images?.find(img => img.coverType === 'poster') && (
                     <Box

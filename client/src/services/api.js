@@ -285,12 +285,20 @@ class ApiService {
     return response.data;
   }
 
-  async pauseSabnzbd(instanceId) {
+  async pauseSabnzbd(instanceId, itemId) {
+    if (itemId) {
+      const response = await this.client.post(`/sabnzbd/pause/${instanceId}/${itemId}`);
+      return response.data;
+    }
     const response = await this.client.post(`/sabnzbd/pause/${instanceId}`);
     return response.data;
   }
 
-  async resumeSabnzbd(instanceId) {
+  async resumeSabnzbd(instanceId, itemId) {
+    if (itemId) {
+      const response = await this.client.post(`/sabnzbd/resume/${instanceId}/${itemId}`);
+      return response.data;
+    }
     const response = await this.client.post(`/sabnzbd/resume/${instanceId}`);
     return response.data;
   }

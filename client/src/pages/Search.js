@@ -30,6 +30,7 @@ function Search() {
   const [searchResults, setSearchResults] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedSubcategory, setSelectedSubcategory] = useState('all');
+  const [protocolFilter, setProtocolFilter] = useState('both'); // 'both', 'torrent', 'usenet'
   const [prowlarrInstance, setProwlarrInstance] = useState(null);
 
   const categories = [
@@ -383,7 +384,21 @@ function Search() {
               </FormControl>
             </Grid>
           )}
-          <Grid item xs={12} md={selectedCategory !== 'all' && categories.find(c => c.value === selectedCategory)?.subcategories ? 2 : 3}>
+          <Grid item xs={12} md={2}>
+            <FormControl fullWidth>
+              <InputLabel>Protocol</InputLabel>
+              <Select
+                value={protocolFilter}
+                label="Protocol"
+                onChange={(e) => setProtocolFilter(e.target.value)}
+              >
+                <MenuItem value="both">Both</MenuItem>
+                <MenuItem value="torrent">Torrent</MenuItem>
+                <MenuItem value="usenet">Usenet (NZB)</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
+          <Grid item xs={12} md={selectedCategory !== 'all' && categories.find(c => c.value === selectedCategory)?.subcategories ? 2 : 2}>
             <Button
               fullWidth
               variant="contained"
@@ -397,14 +412,20 @@ function Search() {
         </Grid>
       </Box>
 
-      {searchResults.length > 0 && (
+      {searchResults.length > 0 && (() => {
+        const filteredResults = protocolFilter === 'both' 
+          ? searchResults 
+          : searchResults.filter(result => result.protocol === protocolFilter);
+        
+        return (
         <>
           <Alert severity="success" sx={{ mb: 2 }}>
-            Found {searchResults.length} relevant result{searchResults.length !== 1 ? 's' : ''} for "{searchQuery}"
+            Found {filteredResults.length} relevant result{filteredResults.length !== 1 ? 's' : ''} for "{searchQuery}"
             {selectedCategory !== 'all' && ` in ${categories.find(c => c.value === selectedCategory)?.label}`}
+            {protocolFilter !== 'both' && ` (${protocolFilter === 'torrent' ? 'Torrent' : 'Usenet'} only)`}
           </Alert>
           <Grid container spacing={2}>
-            {searchResults.map((result, index) => (
+            {filteredResults.map((result, index) => (
             <Grid item xs={12} key={index}>
               <Card sx={{ 
                 border: result.relevanceScore >= 100 ? '2px solid #4caf50' : 
@@ -494,12 +515,11 @@ function Search() {
                 </Box>
               </Card>
             </Grid>
-          ))}
+            ))}
           </Grid>
         </>
-      )}
-
-      {searchResults.length === 0 && searchQuery && !searching && (
+        );
+      })()}      {searchResults.length === 0 && searchQuery && !searching && (
         <Alert severity="info">
           No results found. Try adjusting your search query or category.
         </Alert>

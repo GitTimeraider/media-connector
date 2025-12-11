@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { 
   Box, 
-  AppBar, 
   Toolbar, 
   Typography, 
   Drawer, 
@@ -13,10 +12,7 @@ import {
   ListItemButton,
   Divider,
   IconButton,
-  CircularProgress,
-  Avatar,
-  Menu,
-  MenuItem
+  CircularProgress
 } from '@mui/material';
 import {
   Dashboard as DashboardIcon,
@@ -75,27 +71,12 @@ const ProtectedRoute = ({ children, adminOnly = false }) => {
 // Main App Layout Component
 function AppLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [anchorEl, setAnchorEl] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout, isAdmin } = useAuth();
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
-  };
-
-  const handleProfileMenuOpen = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleProfileMenuClose = () => {
-    setAnchorEl(null);
-  };
-
-  const handleLogout = () => {
-    handleProfileMenuClose();
-    logout();
-    navigate('/login');
   };
 
   const menuItems = [

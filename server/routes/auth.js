@@ -84,6 +84,48 @@ router.get('/verify', authLimiter, async (req, res) => {
   }
 });
 
+// Get user preferences
+router.get('/preferences', authLimiter, async (req, res) => {
+  try {
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    if (!token) {
+      return res.status(401).json({ error: 'No token provided' });
+    }
+
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const preferences = await User.getPreferences(decoded.id);
+    
+    res.json({ preferences });
+  } catch (error) {
+    console.error('Get preferences error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Update user preferences
+router.put('/preferences', authLimiter, async (req, res) => {
+  try {
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    if (!token) {
+      return res.status(401).json({ error: 'No token provided' });
+    }
+
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const { preferences } = req.body;
+
+    if (!preferences || typeof preferences !== 'object') {
+      return res.status(400).json({ error: 'Invalid preferences format' });
+    }
+
+    const updatedPreferences = await User.updatePreferences(decoded.id, preferences);
+    
+    res.json({ preferences: updatedPreferences });
+  } catch (error) {
+    console.error('Update preferences error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Forgot password - generates new random password and logs it
 router.post('/forgot-password', authLimiter, async (req, res) => {
   try {

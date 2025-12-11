@@ -67,8 +67,20 @@ function Radarr() {
 
   useEffect(() => {
     loadInstances();
+    loadPreferences();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const loadPreferences = async () => {
+    try {
+      const prefs = await api.getPreferences();
+      if (prefs.defaultViewMode) {
+        setViewMode(prefs.defaultViewMode);
+      }
+    } catch (err) {
+      console.error('Failed to load preferences:', err);
+    }
+  };
 
   useEffect(() => {
     if (selectedInstance) {

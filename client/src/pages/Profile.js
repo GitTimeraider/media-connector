@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Container,
   Typography,
@@ -10,9 +10,13 @@ import {
   Alert,
   CircularProgress,
   InputAdornment,
-  IconButton
+  IconButton,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem
 } from '@mui/material';
-import { Visibility, VisibilityOff, Save } from '@mui/icons-material';
+import { Visibility, VisibilityOff, Save, ViewModule, ViewList } from '@mui/icons-material';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -28,6 +32,39 @@ function Profile() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [defaultViewMode, setDefaultViewMode] = useState('cards');
+  const [preferencesLoading, setPreferencesLoading] = useState(false);
+
+  useEffect(() => {
+    loadPreferences();
+  }, []);
+
+  const loadPreferences = async () => {
+    try {
+      const prefs = await api.getPreferences();
+      if (prefs.defaultViewMode) {
+        setDefaultViewMode(prefs.defaultViewMode);
+      }
+    } catch (err) {
+      console.error('Failed to load preferences:', err);
+    }
+  };
+
+  const handlePreferencesSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+    setPreferencesLoading(true);
+
+    try {
+      await api.updatePreferences({ defaultViewMode });
+      setSuccess('Preferences updated successfully');
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to update preferences');
+    } finally {
+      setPreferencesLoading(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -87,6 +124,52 @@ function Profile() {
           {success}
         </Alert>
       )}
+
+      <Card sx={{ mb: 3 }}>
+        <CardContent sx={{ p: 4 }}>
+          <Box component="form" onSubmit={handlePreferencesSubmit}>
+            <Typography variant="h6" gutterBottom>
+              Preferences
+            </Typography>
+            <Typography variant="body2" color="text.secondary" paragraph>
+              Customize your default view settings
+            </Typography>
+
+            <FormControl fullWidth sx={{ mt: 2, mb: 3 }}>
+              <InputLabel>Default View Mode (Movies & TV Shows)</InputLabel>
+              <Select
+                value={defaultViewMode}
+                label="Default View Mode (Movies & TV Shows)"
+                onChange={(e) => setDefaultViewMode(e.target.value)}
+                disabled={preferencesLoading}
+              >
+                <MenuItem value="cards">
+                  <Box display="flex" alignItems="center" gap={1}>
+                    <ViewModule fontSize="small" />
+                    Cards
+                  </Box>
+                </MenuItem>
+                <MenuItem value="list">
+                  <Box display="flex" alignItems="center" gap={1}>
+                    <ViewList fontSize="small" />
+                    List
+                  </Box>
+                </MenuItem>
+              </Select>
+            </FormControl>
+
+            <Button
+              type="submit"
+              variant="contained"
+              size="large"
+              disabled={preferencesLoading}
+              startIcon={preferencesLoading ? <CircularProgress size={20} /> : <Save />}
+            >
+              {preferencesLoading ? 'Saving...' : 'Save Preferences'}
+            </Button>
+          </Box>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardContent sx={{ p: 4 }}>

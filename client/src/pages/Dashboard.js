@@ -433,14 +433,55 @@ function Dashboard() {
     }
   };
 
-  const handleOpenDialog = (item) => {
+  const handleOpenDialog = async (item) => {
     try {
       // Ensure cast and genres are arrays
-      const sanitizedItem = {
+      let sanitizedItem = {
         ...item,
         cast: Array.isArray(item.cast) ? item.cast : [],
         genres: Array.isArray(item.genres) ? item.genres : []
       };
+      
+      // Check if this item is already in Radarr/Sonarr library
+      const mediaType = item.media_type || (item.title ? 'movie' : 'tv');
+      const tmdbId = item.tmdbId || item.id;
+      
+      if (mediaType === 'movie' && services.radarr?.length > 0) {
+        try {
+          const movies = await api.getRadarrMovies(services.radarr[0].id);
+          const existingMovie = movies.find(m => m.tmdbId === tmdbId);
+          if (existingMovie) {
+            // Item exists in library - add flags to prevent showing "Add to Library"
+            sanitizedItem = {
+              ...sanitizedItem,
+              monitored: existingMovie.monitored,
+              hasFile: existingMovie.hasFile,
+              id: existingMovie.id,
+              tmdbId: existingMovie.tmdbId
+            };
+          }
+        } catch (error) {
+          console.warn('Error checking Radarr library:', error);
+        }
+      } else if (mediaType === 'tv' && services.sonarr?.length > 0) {
+        try {
+          const series = await api.getSonarrSeries(services.sonarr[0].id);
+          const existingSeries = series.find(s => s.tmdbId === tmdbId);
+          if (existingSeries) {
+            // Item exists in library - add flags to prevent showing "Add to Library"
+            sanitizedItem = {
+              ...sanitizedItem,
+              monitored: existingSeries.monitored,
+              tvdbId: existingSeries.tvdbId,
+              id: existingSeries.id,
+              tmdbId: existingSeries.tmdbId
+            };
+          }
+        } catch (error) {
+          console.warn('Error checking Sonarr library:', error);
+        }
+      }
+      
       setSelectedItem(sanitizedItem);
       setDialogOpen(true);
     } catch (error) {

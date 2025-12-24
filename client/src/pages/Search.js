@@ -267,7 +267,37 @@ function Search() {
           return 0;
         });
       
-      setSearchResults(relevantResults);
+      // Deduplicate by title - keep the best version of each unique title
+      const deduplicatedResults = [];
+      const seenTitles = new Map();
+      
+      relevantResults.forEach(result => {
+        const title = result.title.toLowerCase().trim();
+        
+        if (!seenTitles.has(title)) {
+          // First occurrence of this title
+          seenTitles.set(title, result);
+          deduplicatedResults.push(result);
+        } else {
+          // We've seen this title before - keep the better one
+          const existing = seenTitles.get(title);
+          
+          // Prefer torrents with more seeders, or larger files
+          const shouldReplace = 
+            (result.seeders && existing.seeders && result.seeders > existing.seeders) ||
+            (!existing.seeders && result.seeders) ||
+            (result.size > existing.size);
+          
+          if (shouldReplace) {
+            // Replace the existing one with this better version
+            const index = deduplicatedResults.indexOf(existing);
+            deduplicatedResults[index] = result;
+            seenTitles.set(title, result);
+          }
+        }
+      });
+      
+      setSearchResults(deduplicatedResults);
     } catch (error) {
       console.error('Error searching:', error);
       setSearchResults([]);
